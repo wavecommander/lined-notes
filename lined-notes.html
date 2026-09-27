@@ -1,0 +1,3899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090a0f">
+<meta name="description" content="Lined Notes — Professional Audio & Video Timeline Annotation Studio">
+<title>Lined Notes — Audio & Video Annotation Studio</title>
+
+<!-- PWA Manifest & App Metadata -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lined Notes">
+<meta name="application-name" content="Lined Notes">
+<meta name="msapplication-TileColor" content="#090a0f">
+
+<!-- PWA Icons & Favicons -->
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<script>
+  (function() {
+    try {
+      const saved = localStorage.getItem('ln_theme');
+      const theme = saved || ((window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', theme);
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', theme === 'light' ? '#f4f6fa' : '#090a0f');
+    } catch (e) {}
+  })();
+</script>
+<style>
+  :root, html[data-theme="dark"] {
+    --bg-base: #090a0f;
+    --bg-surface: #11131a;
+    --bg-card: #171a24;
+    --bg-card-hover: #1e2230;
+    --bg-input: #12141c;
+    --border: #232838;
+    --border-subtle: #1c202d;
+    --border-bright: #363e56;
+    --border-focus: #06b6d4;
+
+    --accent-cyan: #06b6d4;
+    --accent-cyan-hover: #22d3ee;
+    --accent-cyan-dim: rgba(6, 182, 212, 0.12);
+    --accent-cyan-glow: rgba(6, 182, 212, 0.25);
+
+    --tag-note: #06b6d4;
+    --tag-action: #3b82f6;
+    --tag-highlight: #10b981;
+    --tag-issue: #f43f5e;
+    --tag-quote: #a855f7;
+
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #475569;
+    --text-dim: #334155;
+
+    --disc-card-bg: rgba(23, 26, 36, 0.7);
+    --disc-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    --disc-inner-bg: #11131a;
+    --disc-inner-border: #000000;
+    --drop-zone-bg: rgba(9, 10, 15, 0.85);
+    --modal-overlay-bg: rgba(0, 0, 0, 0.75);
+    --modal-card-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    --toast-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --play-btn-text: #041316;
+    --btn-primary-text: #041316;
+    --note-card-active-bg: rgba(6, 182, 212, 0.08);
+    --note-card-active-border: rgba(6, 182, 212, 0.4);
+    --note-card-active-shadow: 0 0 16px rgba(6, 182, 212, 0.1);
+
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+
+    --timeline-h: 76px;
+    --sidebar-w: 390px;
+    --header-h: 52px;
+  }
+
+  html[data-theme="light"] {
+    --bg-base: #f4f6fa;
+    --bg-surface: #ffffff;
+    --bg-card: #f8fafc;
+    --bg-card-hover: #edf2f7;
+    --bg-input: #ffffff;
+    --border: #e2e8f0;
+    --border-subtle: #cbd5e1;
+    --border-bright: #94a3b8;
+    --border-focus: #0891b2;
+
+    --accent-cyan: #0891b2;
+    --accent-cyan-hover: #06b6d4;
+    --accent-cyan-dim: rgba(8, 145, 178, 0.12);
+    --accent-cyan-glow: rgba(8, 145, 178, 0.2);
+
+    --tag-note: #0891b2;
+    --tag-action: #2563eb;
+    --tag-highlight: #059669;
+    --tag-issue: #e11d48;
+    --tag-quote: #9333ea;
+
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+
+    --disc-card-bg: rgba(255, 255, 255, 0.9);
+    --disc-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+    --disc-inner-bg: #ffffff;
+    --disc-inner-border: #cbd5e1;
+    --drop-zone-bg: rgba(244, 246, 250, 0.88);
+    --modal-overlay-bg: rgba(15, 23, 42, 0.45);
+    --modal-card-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+    --toast-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    --play-btn-text: #ffffff;
+    --btn-primary-text: #ffffff;
+    --note-card-active-bg: rgba(8, 145, 178, 0.08);
+    --note-card-active-border: rgba(8, 145, 178, 0.4);
+    --note-card-active-shadow: 0 0 16px rgba(8, 145, 178, 0.1);
+  }
+
+  /* Harmonized Theme Transitions: synchronized 0.2s duration across all elements */
+  body, header, #main-col, #notes-panel, #timeline-container, #timeline-canvas-wrap,
+  .timeline-toolbar, .notes-panel-header, #controls-area, .annotation-input-box,
+  .note-card, .btn, .btn-icon, .btn-primary, .btn-ghost, .btn-danger, .file-badge,
+  .modal-card, .modal-overlay, .tag-menu-dropdown, .tag-badge-btn, .tag-chip,
+  .stamp-button, input, select, textarea, .time-readout, .kbd-pill, .export-fmt-card,
+  .drop-box, #drop-zone, .logo, .logo-badge, .header-sep, .audio-disc-card,
+  .disc-inner, #audio-stage, #toast, .zoom-btn, .zoom-val, svg {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, fill 0.2s ease, stroke 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  /* Theme Toggle Icon Smooth Spin & Cross-fade */
+  .theme-toggle-btn {
+    position: relative;
+    overflow: hidden;
+  }
+  .theme-toggle-btn svg {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 14px;
+    height: 14px;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, color 0.2s ease;
+  }
+  html[data-theme="light"] .theme-icon-sun {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.5);
+    pointer-events: none;
+  }
+  html[data-theme="light"] .theme-icon-moon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+    pointer-events: auto;
+  }
+  html[data-theme="dark"] .theme-icon-sun {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+    pointer-events: auto;
+  }
+  html[data-theme="dark"] .theme-icon-moon {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+    pointer-events: none;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.5;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* ─── APP GRID LAYOUT ────────────────────────────────────────────── */
+  #app {
+    display: grid;
+    grid-template-rows: var(--header-h) 1fr;
+    grid-template-columns: 1fr var(--sidebar-w);
+    grid-template-areas:
+      "header  header"
+      "main    notes";
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
+
+  /* ─── HEADER ─────────────────────────────────────────────────────── */
+  header {
+    grid-area: header;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    gap: 14px;
+    position: relative;
+    z-index: 20;
+    user-select: none;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 2px 8px var(--accent-cyan-glow);
+  }
+  .logo-badge {
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    color: var(--accent-cyan);
+    background: var(--accent-cyan-dim);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+  }
+
+  .header-sep {
+    width: 1px;
+    height: 22px;
+    background: var(--border);
+  }
+
+  .file-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    color: var(--text-secondary);
+    max-width: 320px;
+  }
+  .file-badge .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .file-badge.active .dot {
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px var(--accent-cyan);
+  }
+  .file-badge-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  .spacer { flex: 1; }
+
+  /* ─── BUTTONS ────────────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 13px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    border-color: var(--border-bright);
+  }
+  .btn-primary {
+    background: var(--accent-cyan);
+    color: var(--btn-primary-text);
+    font-weight: 600;
+    border-color: transparent;
+  }
+  .btn-primary:hover {
+    background: var(--accent-cyan-hover);
+    box-shadow: 0 2px 12px var(--accent-cyan-glow);
+    transform: translateY(-1px);
+  }
+  .btn-danger {
+    background: transparent;
+    color: #f43f5e;
+    border-color: rgba(244, 63, 94, 0.3);
+  }
+  .btn-danger:hover {
+    background: rgba(244, 63, 94, 0.12);
+    border-color: #f43f5e;
+  }
+  .btn-sm {
+    padding: 4px 9px;
+    font-size: 11px;
+    border-radius: var(--radius-sm);
+  }
+  .btn-icon {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .btn-icon:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    border-color: var(--border-bright);
+  }
+  .btn-icon.active {
+    color: var(--accent-cyan);
+    border-color: var(--accent-cyan);
+    background: var(--accent-cyan-dim);
+  }
+  .btn-icon svg { width: 14px; height: 14px; }
+
+  /* ─── MAIN COLUMN ────────────────────────────────────────────────── */
+  #main-col {
+    grid-area: main;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+    background: var(--bg-base);
+  }
+
+  /* ─── PLAYER AREA ────────────────────────────────────────────────── */
+  #player-area {
+    flex: 1;
+    min-height: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #video-el {
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none;
+    outline: none;
+  }
+  #video-el.active { display: block; }
+
+  /* Audio Visualizer Stage */
+  #audio-stage {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, #171c2b 0%, #090a0f 75%);
+    position: relative;
+    user-select: none;
+    z-index: 1;
+  }
+  #audio-stage.active { display: flex; }
+
+  #audio-stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, #f1f5f9 0%, #e2e8f0 75%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: -1;
+  }
+  html[data-theme="light"] #audio-stage::after {
+    opacity: 1;
+  }
+
+  .audio-disc-card {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 32px;
+    background: var(--disc-card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--disc-card-shadow);
+    backdrop-filter: blur(12px);
+    width: 380px;
+    max-width: 90%;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .disc-visualizer {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #06b6d4, #3b82f6, #8b5cf6, #06b6d4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 30px rgba(6, 182, 212, 0.35);
+    animation: spin 8s linear infinite;
+    animation-play-state: paused;
+  }
+  .disc-visualizer.playing { animation-play-state: running; }
+  .disc-inner {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--disc-inner-bg);
+    border: 3px solid var(--disc-inner-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-cyan);
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  .audio-info-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+    word-break: break-all;
+    max-width: 100%;
+  }
+  .audio-info-sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .audio-bars-preview {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 28px;
+    width: 100%;
+    justify-content: center;
+  }
+  .audio-bar-seg {
+    width: 3px;
+    background: var(--accent-cyan);
+    border-radius: 2px;
+    min-height: 4px;
+    transition: height 0.08s ease;
+    opacity: 0.8;
+  }
+
+  /* Drop Zone */
+  #drop-zone {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    cursor: pointer;
+    background: var(--drop-zone-bg);
+    backdrop-filter: blur(8px);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    z-index: 5;
+  }
+  #drop-zone.dragging {
+    background: rgba(6, 182, 212, 0.08);
+    border: 2px dashed var(--accent-cyan);
+  }
+  #drop-zone:hover { background: rgba(17, 19, 26, 0.95); }
+  html[data-theme="light"] #drop-zone:hover { background: rgba(237, 242, 247, 0.95); }
+  #drop-zone.hidden { display: none; }
+
+  .drop-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 40px;
+    border: 2px dashed var(--border-bright);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    transition: border-color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+    max-width: 440px;
+    text-align: center;
+  }
+  #drop-zone:hover .drop-box, #drop-zone.dragging .drop-box {
+    border-color: var(--accent-cyan);
+    transform: scale(1.02);
+  }
+  .drop-icon-wrap {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    background: var(--accent-cyan-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-cyan);
+  }
+  .drop-icon-wrap svg { width: 28px; height: 28px; }
+  .drop-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .drop-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+  .drop-pills { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; justify-content: center; }
+  .drop-pill {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: var(--radius-full);
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  /* Flash overlay for note capture */
+  #capture-flash {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border: 3px solid var(--accent-cyan);
+    opacity: 0;
+    transition: opacity 0.1s;
+    z-index: 10;
+  }
+  #capture-flash.flash {
+    animation: flashAnim 0.35s ease-out forwards;
+  }
+  @keyframes flashAnim { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* ─── TIMELINE AREA ──────────────────────────────────────────────── */
+  #timeline-container {
+    flex-shrink: 0;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+  }
+
+  .timeline-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 16px;
+    background: var(--bg-input);
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+  }
+  .timeline-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .zoom-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  .zoom-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+  .zoom-val { min-width: 26px; text-align: center; }
+
+  #timeline-canvas-wrap {
+    height: var(--timeline-h);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--bg-surface);
+    transition: background-color 0.2s ease;
+  }
+  #timeline-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* ─── CONTROLS AREA ──────────────────────────────────────────────── */
+  #controls-area {
+    flex-shrink: 0;
+    background: var(--bg-surface);
+    padding: 12px 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .transport-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .play-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--play-btn-text);
+    transition: transform 0.15s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px var(--accent-cyan-glow);
+  }
+  .play-btn:hover {
+    transform: scale(1.06);
+    background: var(--accent-cyan-hover);
+    box-shadow: 0 4px 16px var(--accent-cyan-glow);
+  }
+  .play-btn svg { width: 17px; height: 17px; fill: currentColor; }
+
+  .time-readout {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    min-width: 160px;
+  }
+  .time-readout .dur { color: var(--text-muted); }
+
+  .speed-select {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  .speed-select:focus { border-color: var(--accent-cyan); }
+
+  .volume-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-bright);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 6px var(--accent-cyan-glow);
+    cursor: pointer;
+  }
+  #volume-range { width: 72px; }
+
+  /* Annotation Input Row */
+  .annotation-input-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 6px 10px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  }
+  .annotation-input-box:focus-within {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 0 2px var(--accent-cyan-dim);
+  }
+
+  .stamp-button {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    background: var(--accent-cyan-dim);
+    border: 1px solid rgba(6, 182, 212, 0.35);
+    padding: 5px 9px;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    user-select: none;
+  }
+  .stamp-button:hover {
+    background: rgba(6, 182, 212, 0.25);
+    border-color: var(--accent-cyan);
+  }
+
+  .tag-picker-wrap {
+    position: relative;
+  }
+  .tag-badge-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    user-select: none;
+    background: var(--bg-input);
+    color: var(--text-secondary);
+  }
+  .tag-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  #note-text-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    outline: none;
+    min-width: 140px;
+  }
+  #note-text-input::placeholder { color: var(--text-muted); }
+
+  .sub-controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .checkbox-label input { cursor: pointer; accent-color: var(--accent-cyan); }
+
+  .kbd-shortcuts-hint {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+  .kbd-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+  .kbd-pill kbd {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+  }
+
+  /* ─── NOTES SIDEBAR ──────────────────────────────────────────────── */
+  #notes-panel {
+    grid-area: notes;
+    background: var(--bg-surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .notes-panel-header {
+    padding: 12px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--bg-surface);
+    flex-shrink: 0;
+  }
+  .notes-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .notes-title-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .notes-count-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: var(--radius-full);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--accent-cyan);
+  }
+
+  .notes-actions-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  /* Search & Filter Bar */
+  .search-input-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .search-input-box svg {
+    position: absolute;
+    left: 8px;
+    width: 13px;
+    height: 13px;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+  #search-notes-input {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 5px 8px 5px 26px;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  }
+  #search-notes-input:focus { border-color: var(--accent-cyan); }
+  #search-notes-input::placeholder { color: var(--text-muted); }
+
+  .tag-filters-row {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .tag-chip {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    user-select: none;
+  }
+  .tag-chip:hover { border-color: var(--border-bright); color: var(--text-primary); }
+  .tag-chip.active {
+    background: var(--accent-cyan-dim);
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+  }
+
+  /* Notes List */
+  #notes-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .notes-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 12px;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+    padding: 40px 20px;
+    user-select: none;
+  }
+  .notes-empty-state svg { width: 36px; height: 36px; opacity: 0.35; }
+
+  /* Note Card */
+  .note-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    border-left: 3px solid var(--tag-note);
+  }
+  .note-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-bright);
+    transform: translateX(2px);
+  }
+  .note-card.active {
+    background: var(--note-card-active-bg);
+    border-color: var(--note-card-active-border);
+    box-shadow: var(--note-card-active-shadow);
+  }
+
+  .note-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .note-card-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .note-time-badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-cyan);
+    background: var(--accent-cyan-dim);
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+  }
+  .note-tag-badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    color: #fff;
+    opacity: 0.9;
+  }
+
+  .note-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .note-card:hover .note-card-actions { opacity: 1; }
+
+  .note-act-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 3px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s;
+  }
+  .note-act-btn:hover { color: var(--text-primary); }
+  .note-act-btn.del:hover { color: #f43f5e; }
+  .note-act-btn svg { width: 13px; height: 13px; }
+
+  .note-card-thumb {
+    width: 100%;
+    max-height: 120px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    margin-top: 4px;
+    cursor: zoom-in;
+  }
+
+  .note-card-body {
+    font-size: 12px;
+    color: var(--text-primary);
+    line-height: 1.5;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  /* Inline editing form */
+  .note-edit-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 0;
+  }
+  .note-edit-textarea {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--accent-cyan);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    padding: 6px 8px;
+    resize: vertical;
+    min-height: 60px;
+    outline: none;
+  }
+  .note-edit-btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  /* ─── MODALS ─────────────────────────────────────────────────────── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--modal-overlay-bg);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    transition: background-color 0.2s ease;
+    animation: fadeIn 0.15s ease-out;
+  }
+  .modal-overlay.open { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    width: 480px;
+    max-width: 92vw;
+    box-shadow: var(--modal-card-shadow);
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .modal-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+  .modal-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+  }
+  .modal-close-btn:hover { color: var(--text-primary); }
+
+  /* Export Format Cards */
+  .export-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .export-fmt-card {
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    background: var(--bg-surface);
+  }
+  .export-fmt-card:hover {
+    border-color: var(--border-bright);
+    background: var(--bg-card-hover);
+  }
+  .export-fmt-card.selected {
+    border-color: var(--accent-cyan);
+    background: var(--accent-cyan-dim);
+  }
+  .fmt-badge {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent-cyan);
+  }
+  .fmt-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* Shortcuts Table in modal */
+  .shortcuts-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 16px;
+    font-size: 12px;
+    max-height: 380px;
+    overflow-y: auto;
+    padding-right: 6px;
+  }
+  .shortcut-keys { font-family: var(--font-mono); color: var(--accent-cyan); text-align: right; }
+  .shortcut-desc { color: var(--text-secondary); }
+
+  /* ─── TOAST NOTIFICATION ─────────────────────────────────────────── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    box-shadow: var(--toast-shadow);
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    color: var(--text-primary);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
+  #toast .toast-btn {
+    background: var(--accent-cyan);
+    color: #041316;
+    border: none;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Tag Color Menu Dropdown (opens upwards from bottom controls bar) */
+  .tag-menu-dropdown {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-md);
+    padding: 6px;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    z-index: 50;
+    box-shadow: 0 -10px 25px rgba(0,0,0,0.5);
+    min-width: 130px;
+  }
+  .tag-menu-dropdown.open { display: flex; }
+  .tag-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    color: var(--text-primary);
+    cursor: pointer;
+    user-select: none;
+  }
+  .tag-menu-item:hover { background: var(--bg-card-hover); }
+
+  /* Stamp button locked indicator */
+  .stamp-button.locked {
+    background: rgba(245, 158, 11, 0.16);
+    border-color: #f59e0b;
+    color: #f59e0b;
+  }
+
+  /* Clickable timestamp chips inside note text */
+  .note-time-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: var(--accent-cyan-dim);
+    border: 1px solid rgba(6, 182, 212, 0.35);
+    color: var(--accent-cyan);
+    padding: 0 5px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  .note-time-chip:hover {
+    background: rgba(6, 182, 212, 0.28);
+    border-color: var(--accent-cyan);
+    transform: translateY(-1px);
+  }
+
+  /* Responsive styles */
+  @media (max-width: 820px) {
+    #app {
+      grid-template-columns: 1fr;
+      grid-template-rows: var(--header-h) 1fr 340px;
+      grid-template-areas:
+        "header"
+        "main"
+        "notes";
+    }
+    #notes-panel { border-left: none; border-top: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <header>
+    <a href="#" class="logo" onclick="event.preventDefault()">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="15" y2="12"/>
+          <line x1="3" y1="18" x2="18" y2="18"/>
+          <circle cx="19" cy="12" r="2" fill="currentColor"/>
+        </svg>
+      </div>
+      <span>Lined Notes</span>
+      <span class="logo-badge">Studio</span>
+    </a>
+
+    <div class="header-sep"></div>
+
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('file-picker').click()" title="Open Audio or Video File">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Open Media
+    </button>
+    <input type="file" id="file-picker" accept="audio/*,video/*" style="display:none" onchange="app.handleFileSelect(this.files[0])">
+
+    <div class="file-badge" id="file-badge" title="Current Loaded File">
+      <div class="dot"></div>
+      <div class="file-badge-text" id="file-name-text">No media loaded</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- Offline status badge -->
+    <div id="offline-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-family:var(--font-mono);color:#f59e0b;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.28);padding:3px 8px;border-radius:var(--radius-full);" title="Offline: All annotation and playback features working locally">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      <span>Offline</span>
+    </div>
+
+    <!-- PWA Install Button (shown when installable) -->
+    <button class="btn btn-primary btn-sm" id="pwa-install-btn" style="display:none;padding:4px 10px;font-size:11px;gap:5px;" onclick="app.promptPwaInstall()" title="Install Lined Notes as App">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      <span>Install App</span>
+    </button>
+
+    <!-- Auto-save status -->
+    <div id="autosave-status" style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:5px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+      <span>Auto-saved</span>
+    </div>
+
+    <!-- Theme toggle -->
+    <button class="btn-icon theme-toggle-btn" id="theme-toggle-btn" onclick="app.toggleTheme()" title="Toggle Theme (T)">
+      <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+
+    <button class="btn-icon" onclick="app.openShortcutsModal()" title="Keyboard Shortcuts (?)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </button>
+  </header>
+
+  <!-- MAIN COLUMN: Media Player + Timeline + Transport Controls -->
+  <div id="main-col">
+
+    <!-- PLAYER AREA -->
+    <div id="player-area">
+      <!-- Drag & Drop Overlay -->
+      <div id="drop-zone" ondrop="app.onDrop(event)" ondragover="app.onDragOver(event)" ondragleave="app.onDragLeave(event)" onclick="document.getElementById('file-picker').click()">
+        <div class="drop-box">
+          <div class="drop-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="4"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          </div>
+          <div class="drop-title">Drop your audio or video file here</div>
+          <div class="drop-desc">Works 100% locally in your browser. No files are ever uploaded to any server.</div>
+          <div class="drop-pills">
+            <span class="drop-pill">MP4</span>
+            <span class="drop-pill">MKV</span>
+            <span class="drop-pill">WebM</span>
+            <span class="drop-pill">MOV</span>
+            <span class="drop-pill">MP3</span>
+            <span class="drop-pill">WAV</span>
+            <span class="drop-pill">M4A</span>
+            <span class="drop-pill">OGG</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Video Element -->
+      <video id="video-el" playsinline></video>
+
+      <!-- Audio Visualizer Stage -->
+      <div id="audio-stage">
+        <div class="audio-disc-card">
+          <div class="disc-visualizer" id="disc-visualizer">
+            <div class="disc-inner">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            </div>
+          </div>
+          <div class="audio-info-title" id="audio-title">Audio File</div>
+          <div class="audio-info-sub" id="audio-meta">00:00:00</div>
+          <div class="audio-bars-preview" id="audio-bars"></div>
+        </div>
+      </div>
+
+      <div id="capture-flash"></div>
+    </div>
+
+    <!-- TIMELINE AREA -->
+    <div id="timeline-container">
+      <div class="timeline-toolbar">
+        <div class="timeline-status" id="timeline-status">
+          <span>Waveform: <strong id="waveform-status-text">Ready</strong></span>
+          <span id="range-status-text" style="display:none;color:var(--accent-cyan);">Range: <span id="range-val"></span></span>
+        </div>
+        <div class="zoom-controls">
+          <span>Zoom:</span>
+          <button class="zoom-btn" onclick="app.setZoom(app.zoom / 1.5)" title="Zoom Out">−</button>
+          <span class="zoom-val" id="zoom-val">1×</span>
+          <button class="zoom-btn" onclick="app.setZoom(app.zoom * 1.5)" title="Zoom In">+</button>
+          <button class="zoom-btn" onclick="app.resetZoom()" title="Reset Zoom" style="width:auto;padding:0 5px;">Reset</button>
+        </div>
+      </div>
+
+      <div id="timeline-canvas-wrap" onpointerdown="app.startScrub(event)" onpointermove="app.onTimelineHover(event)" onpointerleave="app.clearHover()" onwheel="app.onTimelineWheel(event)">
+        <canvas id="timeline-canvas"></canvas>
+      </div>
+    </div>
+
+    <!-- CONTROLS & NOTE INPUT -->
+    <div id="controls-area">
+      <!-- Transport Row -->
+      <div class="transport-row">
+        <button class="play-btn" id="play-btn" onclick="app.togglePlay()" title="Play / Pause (Space)">
+          <svg id="play-icon" viewBox="0 0 24 24"><polygon points="7 4 19 12 7 20 7 4"/></svg>
+        </button>
+
+        <button class="btn-icon" onclick="app.skip(-10)" title="Back 10s (J)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.96"/></svg>
+        </button>
+        <button class="btn-icon" onclick="app.skip(-5)" title="Back 5s (←)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+        </button>
+        <button class="btn-icon" onclick="app.stepFrame(-1)" title="Step 1 Frame Back (,)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="5" x2="6" y2="19"/><polygon points="18 5 9 12 18 19 18 5"/></svg>
+        </button>
+        <button class="btn-icon" onclick="app.stepFrame(1)" title="Step 1 Frame Forward (.)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="5" x2="18" y2="19"/><polygon points="6 5 15 12 6 19 6 5"/></svg>
+        </button>
+        <button class="btn-icon" onclick="app.skip(5)" title="Forward 5s (→)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+        </button>
+        <button class="btn-icon" onclick="app.skip(10)" title="Forward 10s (L)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3.96"/></svg>
+        </button>
+
+        <div class="time-readout" id="time-display">00:00:00.0 <span class="dur">/ 00:00:00.0</span></div>
+
+        <div class="spacer"></div>
+
+        <!-- In/Out Points for range notes -->
+        <button class="btn btn-ghost btn-sm" onclick="app.setInPoint()" title="Set In Point (I)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4v16"/><polyline points="15 6 9 12 15 18"/></svg>
+          In
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="app.setOutPoint()" title="Set Out Point (O)">
+          Out
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 4v16"/><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
+        <button class="btn-icon" id="loop-range-btn" onclick="app.toggleLoop()" title="Toggle A-B Range Loop (Shift+L)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        </button>
+        <button class="btn-icon" id="clear-range-btn" onclick="app.clearRange()" title="Clear Range Selection" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+
+        <div class="volume-group">
+          <button class="btn-icon" onclick="app.toggleMute()" id="mute-btn" title="Mute / Unmute (M)">
+            <svg id="volume-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          </button>
+          <input type="range" id="volume-range" min="0" max="1" step="0.02" value="1" oninput="app.setVolume(this.value)">
+        </div>
+
+        <select class="speed-select" id="speed-select" onchange="app.setSpeed(this.value)" title="Playback Speed">
+          <option value="0.25">0.25×</option>
+          <option value="0.5">0.5×</option>
+          <option value="0.75">0.75×</option>
+          <option value="1" selected>1.0×</option>
+          <option value="1.25">1.25×</option>
+          <option value="1.5">1.5×</option>
+          <option value="1.75">1.75×</option>
+          <option value="2">2.0×</option>
+        </select>
+
+        <!-- Video Extra buttons -->
+        <button class="btn-icon" id="pip-btn" onclick="app.togglePiP()" title="Picture in Picture (P)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="12" y="12" width="8" height="6" rx="1"/></svg>
+        </button>
+        <button class="btn-icon" onclick="app.toggleFullscreen()" title="Fullscreen (F)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+      </div>
+
+      <!-- Annotation Note Input Box -->
+      <div class="annotation-input-box">
+        <div class="stamp-button" id="stamp-badge" onclick="app.captureCurrentTime()" title="Click to update capture time">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span id="stamp-badge-val">00:00:00.0</span>
+        </div>
+
+        <!-- Tag Selection -->
+        <div class="tag-picker-wrap">
+          <div class="tag-badge-btn" id="current-tag-btn" onclick="app.toggleTagMenu(event)">
+            <span class="tag-dot" id="current-tag-dot" style="background:var(--tag-note)"></span>
+            <span id="current-tag-label">Note</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="tag-menu-dropdown" id="tag-menu-dropdown"></div>
+        </div>
+
+        <input type="text" id="note-text-input" placeholder="Type annotation note here… (Press Enter to save, N to capture timestamp)" maxlength="1000">
+
+        <!-- Snapshot Capture for Video -->
+        <button class="btn-icon" id="snap-btn" onclick="app.takeSnapshot()" title="Capture video frame thumbnail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </button>
+
+        <button class="btn btn-primary btn-sm" onclick="app.saveNote()">+ Add Note</button>
+      </div>
+
+      <!-- Sub-controls / preferences & hint -->
+      <div class="sub-controls-row">
+        <label class="checkbox-label" title="Automatically pause playback while typing a note">
+          <input type="checkbox" id="pause-on-type-check" onchange="app.togglePauseOnType(this.checked)">
+          <span>Pause while typing</span>
+        </label>
+
+        <div class="kbd-shortcuts-hint">
+          <span class="kbd-pill"><kbd>Space</kbd> Play/Pause</span>
+          <span class="kbd-pill"><kbd>N</kbd> Mark Time</span>
+          <span class="kbd-pill"><kbd>I</kbd>/<kbd>O</kbd> In/Out</span>
+          <span class="kbd-pill"><kbd>,</kbd>/<kbd>.</kbd> Frame</span>
+          <span class="kbd-pill"><kbd>[</kbd>/<kbd>]</kbd> Prev/Next Note</span>
+        </div>
+      </div>
+    </div><!-- /#controls-area -->
+
+  </div><!-- /#main-col -->
+
+  <!-- NOTES SIDEBAR -->
+  <div id="notes-panel">
+    <div class="notes-panel-header">
+      <div class="notes-title-row">
+        <div class="notes-title-label">
+          <span>Annotations</span>
+          <span class="notes-count-badge" id="notes-count-badge">0</span>
+        </div>
+        <div class="notes-actions-row">
+          <button class="btn btn-ghost btn-sm" onclick="app.openImportModal()" title="Import annotations from JSON, SRT, VTT, or CSV">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Import
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="app.openExportModal()" title="Export annotations in multiple formats">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Export
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="app.clearAllNotes()" title="Clear all annotations">Clear</button>
+        </div>
+      </div>
+
+      <!-- Search Box -->
+      <div class="search-input-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-notes-input" placeholder="Search annotations…" oninput="app.onSearchInput(this.value)">
+      </div>
+
+      <!-- Tag Filter Chips -->
+      <div class="tag-filters-row" id="tag-filters-row"></div>
+    </div>
+
+    <!-- Notes List -->
+    <div id="notes-list">
+      <div class="notes-empty-state" id="notes-empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <div>No notes yet for this media.</div>
+        <div style="font-size:11px;color:var(--text-dim);">Press <strong>N</strong> while playing to capture a mark.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /#app -->
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Export Annotations</div>
+      <button class="modal-close-btn" onclick="app.closeExportModal()">✕</button>
+    </div>
+
+    <div class="export-grid">
+      <div class="export-fmt-card selected" data-fmt="json" onclick="app.selectExportFmt(this)">
+        <div class="fmt-badge">JSON (Project)</div>
+        <div class="fmt-desc">Full fidelity project backup. Includes tags, ranges, and snapshots.</div>
+      </div>
+      <div class="export-fmt-card" data-fmt="md" onclick="app.selectExportFmt(this)">
+        <div class="fmt-badge">Markdown (.md)</div>
+        <div class="fmt-desc">Formatted for Obsidian, Notion, GitHub notes with timestamps.</div>
+      </div>
+      <div class="export-fmt-card" data-fmt="srt" onclick="app.selectExportFmt(this)">
+        <div class="fmt-badge">SubRip (.srt)</div>
+        <div class="fmt-desc">Standard subtitle cues. Import into Premiere, Resolve, VLC.</div>
+      </div>
+      <div class="export-fmt-card" data-fmt="vtt" onclick="app.selectExportFmt(this)">
+        <div class="fmt-badge">WebVTT (.vtt)</div>
+        <div class="fmt-desc">Web video subtitles and chapter cues with timestamps.</div>
+      </div>
+      <div class="export-fmt-card" data-fmt="csv" onclick="app.selectExportFmt(this)">
+        <div class="fmt-badge">CSV (.csv)</div>
+        <div class="fmt-desc">Spreadsheet ready. Opens in Excel, Google Sheets, or Pandas.</div>
+      </div>
+      <div class="export-fmt-card" data-fmt="html" onclick="app.selectExportFmt(this)">
+        <div class="fmt-badge">HTML Report</div>
+        <div class="fmt-desc">Standalone interactive dark-mode report page with timestamps.</div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="app.copyExportToClipboard()">Copy to Clipboard</button>
+      <button class="btn btn-primary" onclick="app.doExportDownload()">Download File</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Import Annotations</div>
+      <button class="modal-close-btn" onclick="app.closeImportModal()">✕</button>
+    </div>
+
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6;">
+      Select an existing annotations file to load into the timeline. Supported formats:
+      <strong style="color:var(--accent-cyan)">JSON</strong>, <strong style="color:var(--accent-cyan)">SRT</strong>, <strong style="color:var(--accent-cyan)">WebVTT</strong>, or <strong style="color:var(--accent-cyan)">CSV</strong>.
+    </div>
+
+    <input type="file" id="import-file-input" accept=".json,.srt,.vtt,.csv,text/*" style="display:none" onchange="app.handleImportFile(this.files[0])">
+    
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+      <button class="btn btn-ghost" style="padding:24px;border:2px dashed var(--border-bright);display:flex;flex-direction:column;gap:8px;" onclick="document.getElementById('import-file-input').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24" style="color:var(--accent-cyan)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span style="font-weight:600;color:var(--text-primary)">Click to select annotations file</span>
+      </button>
+
+      <div style="display:flex;align-items:center;gap:12px;font-size:12px;color:var(--text-muted);">
+        <span>Import Mode:</span>
+        <label style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><input type="radio" name="import-mode" value="replace" checked> Replace current</label>
+        <label style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;"><input type="radio" name="import-mode" value="merge"> Merge with current</label>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="app.closeImportModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- KEYBOARD SHORTCUTS MODAL -->
+<div class="modal-overlay" id="shortcuts-modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Keyboard Shortcuts</div>
+      <button class="modal-close-btn" onclick="app.closeShortcutsModal()">✕</button>
+    </div>
+
+    <div class="shortcuts-grid">
+      <div class="shortcut-keys"><kbd>Space</kbd> or <kbd>K</kbd></div>
+      <div class="shortcut-desc">Play / Pause playback</div>
+
+      <div class="shortcut-keys"><kbd>N</kbd></div>
+      <div class="shortcut-desc">Capture current timestamp and focus note input</div>
+
+      <div class="shortcut-keys"><kbd>←</kbd> / <kbd>→</kbd></div>
+      <div class="shortcut-desc">Skip backward / forward 5 seconds</div>
+
+      <div class="shortcut-keys"><kbd>J</kbd> / <kbd>L</kbd></div>
+      <div class="shortcut-desc">Skip backward / forward 10 seconds</div>
+
+      <div class="shortcut-keys"><kbd>,</kbd> / <kbd>.</kbd></div>
+      <div class="shortcut-desc">Step backward / forward 1 frame (0.04s)</div>
+
+      <div class="shortcut-keys"><kbd>I</kbd> / <kbd>O</kbd></div>
+      <div class="shortcut-desc">Set In Point / Out Point for range annotations</div>
+
+      <div class="shortcut-keys"><kbd>Shift</kbd> + <kbd>L</kbd></div>
+      <div class="shortcut-desc">Toggle A-B range loop playback</div>
+
+      <div class="shortcut-keys"><kbd>+</kbd> / <kbd>−</kbd></div>
+      <div class="shortcut-desc">Zoom timeline in / out (or Ctrl + Scroll)</div>
+
+      <div class="shortcut-keys"><kbd>[</kbd> / <kbd>]</kbd></div>
+      <div class="shortcut-desc">Jump to previous / next annotation note</div>
+
+      <div class="shortcut-keys"><kbd>M</kbd></div>
+      <div class="shortcut-desc">Mute / unmute audio</div>
+
+      <div class="shortcut-keys"><kbd>F</kbd></div>
+      <div class="shortcut-desc">Toggle fullscreen video mode</div>
+
+      <div class="shortcut-keys"><kbd>P</kbd></div>
+      <div class="shortcut-desc">Toggle Picture-in-Picture (video)</div>
+
+      <div class="shortcut-keys"><kbd>T</kbd></div>
+      <div class="shortcut-desc">Toggle Light / Dark mode</div>
+
+      <div class="shortcut-keys"><kbd>Esc</kbd></div>
+      <div class="shortcut-desc">Dismiss focus / close dialogs</div>
+    </div>
+
+    <div class="modal-footer" style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="app.closeShortcutsModal()">Got It</button>
+    </div>
+  </div>
+</div>
+
+<!-- SNAPSHOT LIGHTBOX -->
+<div class="modal-overlay" id="lightbox-modal" onclick="app.closeLightbox()">
+  <div style="position:relative;max-width:90vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;gap:12px;">
+    <img id="lightbox-img" style="max-width:100%;max-height:80vh;border-radius:var(--radius-md);border:1px solid var(--border-bright);box-shadow:0 20px 60px rgba(0,0,0,0.8);" src="" alt="Thumbnail Snapshot">
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();app.downloadLightboxImage()">Download Image</button>
+      <button class="btn btn-ghost btn-sm" onclick="app.closeLightbox()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">
+  <span id="toast-text"></span>
+  <button class="toast-btn" id="toast-action" style="display:none;" onclick="app.onToastAction()">Undo</button>
+</div>
+
+<!-- APPLICATION LOGIC -->
+<script>
+// ─── INDEXEDDB STORAGE ENGINE ─────────────────────────────────────────
+class LinedNotesDB {
+  constructor() {
+    this.dbName = 'LinedNotesDB';
+    this.storeName = 'sessions';
+    this.version = 1;
+    this.db = null;
+    this.initPromise = this.init();
+  }
+
+  async init() {
+    if (!window.indexedDB) {
+      return null;
+    }
+    return new Promise((resolve) => {
+      try {
+        const req = indexedDB.open(this.dbName, this.version);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(this.storeName)) {
+            db.createObjectStore(this.storeName, { keyPath: 'key' });
+          }
+        };
+        req.onsuccess = (e) => {
+          this.db = e.target.result;
+          resolve(this.db);
+        };
+        req.onerror = () => resolve(null);
+      } catch (err) {
+        resolve(null);
+      }
+    });
+  }
+
+  async get(key) {
+    await this.initPromise;
+    if (!this.db) {
+      const val = localStorage.getItem(key);
+      return val ? JSON.parse(val) : null;
+    }
+    return new Promise((resolve) => {
+      try {
+        const tx = this.db.transaction(this.storeName, 'readonly');
+        const store = tx.objectStore(this.storeName);
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result ? req.result.data : null);
+        req.onerror = () => {
+          const val = localStorage.getItem(key);
+          resolve(val ? JSON.parse(val) : null);
+        };
+      } catch (err) {
+        const val = localStorage.getItem(key);
+        resolve(val ? JSON.parse(val) : null);
+      }
+    });
+  }
+
+  async set(key, data) {
+    await this.initPromise;
+    if (!this.db) {
+      try { localStorage.setItem(key, JSON.stringify(data)); } catch (err) {}
+      return;
+    }
+    return new Promise((resolve) => {
+      try {
+        const tx = this.db.transaction(this.storeName, 'readwrite');
+        const store = tx.objectStore(this.storeName);
+        store.put({ key, data, updatedAt: new Date().toISOString() });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => {
+          try { localStorage.setItem(key, JSON.stringify(data)); } catch (err) {}
+          resolve();
+        };
+      } catch (err) {
+        try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
+        resolve();
+      }
+    });
+  }
+
+  async delete(key) {
+    await this.initPromise;
+    try { localStorage.removeItem(key); } catch (err) {}
+    if (!this.db) return;
+    return new Promise((resolve) => {
+      try {
+        const tx = this.db.transaction(this.storeName, 'readwrite');
+        const store = tx.objectStore(this.storeName);
+        store.delete(key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+      } catch (err) {
+        resolve();
+      }
+    });
+  }
+}
+
+class LinedNotesApp {
+  constructor() {
+    // IndexedDB storage instance
+    this.db = new LinedNotesDB();
+
+    // Media & Playback State
+    this.mediaFile = null;
+    this.mediaUrl = null;
+    this.isAudio = false;
+    this.currentTime = 0;
+    this.duration = 0;
+    this.isPlaying = false;
+    this.isScrubbing = false;
+    this.volume = 1;
+    this.isMuted = false;
+    this.playbackRate = 1;
+
+    // Timeline Zoom & Pan
+    this.zoom = 1;
+    this.scrollOffset = 0;
+    this.hoverTime = null;
+    this.hoverX = null;
+    this.waveformPeaks = null; // Float32Array or Array of peaks
+    this.isPanning = false;
+    this.panStartX = 0;
+    this.panStartOffset = 0;
+
+    // Range / In-Out & Loop State
+    this.inPoint = null;
+    this.outPoint = null;
+    this.isLooping = false;
+    this.stampTime = 0;
+    this.isTimeStamped = false;
+
+    // Notes Data
+    this.notes = []; // { id, start, end, text, tag, thumb, createdAt }
+    this.activeNoteId = null;
+    this.editingNoteId = null;
+    this.searchQuery = '';
+    this.filterTag = 'all';
+
+    // Tags configuration
+    this.tags = [
+      { id: 'note', label: 'Note', color: '#06b6d4' },
+      { id: 'action', label: 'Action', color: '#3b82f6' },
+      { id: 'highlight', label: 'Highlight', color: '#10b981' },
+      { id: 'issue', label: 'Issue', color: '#f43f5e' },
+      { id: 'quote', label: 'Quote', color: '#a855f7' }
+    ];
+    this.selectedTag = 'note';
+
+    // Preferences & Settings
+    this.theme = 'dark';
+    this.pauseOnType = localStorage.getItem('ln_pause_on_type') === 'true';
+    this.selectedExportFmt = 'json';
+    this.deletedHistory = []; // For Undo
+    this.toastTimer = null;
+    this.deferredInstallPrompt = null;
+
+    // DOM Elements
+    this.videoEl = document.getElementById('video-el');
+    this.audioStage = document.getElementById('audio-stage');
+    this.discVisualizer = document.getElementById('disc-visualizer');
+    this.canvas = document.getElementById('timeline-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.dropZone = document.getElementById('drop-zone');
+    this.noteInput = document.getElementById('note-text-input');
+    this.timeDisplay = document.getElementById('time-display');
+    this.playBtn = document.getElementById('play-btn');
+    this.playIcon = document.getElementById('play-icon');
+    this.stampBadge = document.getElementById('stamp-badge');
+    this.stampBadgeVal = document.getElementById('stamp-badge-val');
+    this.loopBtn = document.getElementById('loop-range-btn');
+    this.pauseOnTypeCheck = document.getElementById('pause-on-type-check');
+
+    this.init();
+  }
+
+  init() {
+    this.initTheme();
+    this.pauseOnTypeCheck.checked = this.pauseOnType;
+    this.setupMediaEvents();
+    this.setupWindowEvents();
+    this.renderTagMenu();
+    this.renderTagFilters();
+    this.renderNotes();
+    this.setupAudioBarsPreview();
+    this.setupResizeObserver();
+    this.initPwa();
+
+    // Start 60fps render loop
+    const renderLoop = () => {
+      if (this.isPlaying) {
+        this.updateTimeFromMedia();
+      }
+      this.drawTimeline();
+      requestAnimationFrame(renderLoop);
+    };
+    requestAnimationFrame(renderLoop);
+  }
+
+  // ─── THEME MANAGEMENT ────────────────────────────────────────────
+  initTheme() {
+    const saved = localStorage.getItem('ln_theme');
+    if (saved) {
+      this.theme = saved;
+    } else {
+      this.theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+    }
+    this.themeTransitionStart = 0;
+    this.applyTheme(this.theme, false);
+
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('ln_theme')) {
+          this.applyTheme(e.matches ? 'light' : 'dark', false);
+        }
+      });
+    }
+  }
+
+  interpolateColor(c1, c2, t) {
+    if (!c1 || !c2) return c2;
+    const parse = (hex) => {
+      if (typeof hex === 'string' && hex.startsWith('#')) {
+        const num = parseInt(hex.slice(1), 16);
+        return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+      }
+      return [128, 128, 128];
+    };
+    const [r1, g1, b1] = parse(c1);
+    const [r2, g2, b2] = parse(c2);
+    const r = Math.round(r1 + (r2 - r1) * t);
+    const g = Math.round(g1 + (g2 - g1) * t);
+    const b = Math.round(b1 + (b2 - b1) * t);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  applyTheme(theme, save = true) {
+    if (this.theme && this.theme !== theme) {
+      this.prevThemeColors = this.getThemeColors(true);
+      this.themeTransitionStart = performance.now();
+    }
+    this.theme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) {
+      metaTheme.setAttribute('content', theme === 'light' ? '#f4f6fa' : '#090a0f');
+    }
+    if (save) {
+      localStorage.setItem('ln_theme', theme);
+    }
+    this.updateThemeButton();
+    this.drawTimeline();
+  }
+
+  toggleTheme() {
+    const newTheme = this.theme === 'light' ? 'dark' : 'light';
+    this.applyTheme(newTheme, true);
+  }
+
+  updateThemeButton() {
+    const btn = document.getElementById('theme-toggle-btn');
+    if (!btn) return;
+    btn.title = this.theme === 'light' ? 'Switch to Dark Mode (T)' : 'Switch to Light Mode (T)';
+  }
+
+  getThemeColors(rawTarget = false) {
+    const isLight = this.theme === 'light';
+    const darkColors = {
+      isLight: false,
+      canvasBg: '#11131a',
+      trackBg: '#232838',
+      emptyText: '#475569',
+      waveUnplayed: '#2a3248',
+      wavePlayed: '#06b6d4',
+      tickMajor: '#475569',
+      tickMinor: '#232838',
+      tickText: '#64748b',
+      hoverLine: 'rgba(255, 255, 255, 0.2)',
+      tooltipBg: '#1e2230',
+      tooltipBorder: '#363e56',
+      tooltipText: '#f8fafc',
+      playhead: '#06b6d4',
+      rangeHighlight: 'rgba(6, 182, 212, 0.16)'
+    };
+    const lightColors = {
+      isLight: true,
+      canvasBg: '#ffffff',
+      trackBg: '#e2e8f0',
+      emptyText: '#64748b',
+      waveUnplayed: '#cbd5e1',
+      wavePlayed: '#0891b2',
+      tickMajor: '#94a3b8',
+      tickMinor: '#e2e8f0',
+      tickText: '#475569',
+      hoverLine: 'rgba(15, 23, 42, 0.25)',
+      tooltipBg: '#ffffff',
+      tooltipBorder: '#cbd5e1',
+      tooltipText: '#0f172a',
+      playhead: '#0891b2',
+      rangeHighlight: 'rgba(8, 145, 178, 0.16)'
+    };
+
+    const targetColors = isLight ? lightColors : darkColors;
+    if (rawTarget) return targetColors;
+
+    // Smoothly interpolate canvas colors during the 200ms theme transition
+    const elapsed = performance.now() - (this.themeTransitionStart || 0);
+    const duration = 200; // ms, exactly matching CSS 0.2s
+    if (elapsed < duration && this.prevThemeColors) {
+      const progress = Math.min(1, Math.max(0, elapsed / duration));
+      const ease = progress * progress * (3 - 2 * progress); // Smoothstep easing
+      return {
+        isLight,
+        canvasBg: targetColors.canvasBg,
+        trackBg: this.interpolateColor(this.prevThemeColors.trackBg, targetColors.trackBg, ease),
+        emptyText: this.interpolateColor(this.prevThemeColors.emptyText, targetColors.emptyText, ease),
+        waveUnplayed: this.interpolateColor(this.prevThemeColors.waveUnplayed, targetColors.waveUnplayed, ease),
+        wavePlayed: this.interpolateColor(this.prevThemeColors.wavePlayed, targetColors.wavePlayed, ease),
+        tickMajor: this.interpolateColor(this.prevThemeColors.tickMajor, targetColors.tickMajor, ease),
+        tickMinor: this.interpolateColor(this.prevThemeColors.tickMinor, targetColors.tickMinor, ease),
+        tickText: this.interpolateColor(this.prevThemeColors.tickText, targetColors.tickText, ease),
+        hoverLine: targetColors.hoverLine,
+        tooltipBg: this.interpolateColor(this.prevThemeColors.tooltipBg, targetColors.tooltipBg, ease),
+        tooltipBorder: this.interpolateColor(this.prevThemeColors.tooltipBorder, targetColors.tooltipBorder, ease),
+        tooltipText: this.interpolateColor(this.prevThemeColors.tooltipText, targetColors.tooltipText, ease),
+        playhead: this.interpolateColor(this.prevThemeColors.playhead, targetColors.playhead, ease),
+        rangeHighlight: targetColors.rangeHighlight
+      };
+    }
+
+    return targetColors;
+  }
+
+  // ─── MEDIA LOADING & ELEMENT MANAGEMENT ──────────────────────────
+  // ─── MEDIA LOADING & ELEMENT MANAGEMENT ──────────────────────────
+  setupMediaEvents() {
+    const v = this.videoEl;
+    v.addEventListener('loadedmetadata', async () => {
+      this.duration = v.duration || 0;
+      this.currentTime = v.currentTime || 0;
+      this.updateTimeDisplay();
+      await this.autoRestoreSession();
+      this.drawTimeline();
+    });
+    v.addEventListener('timeupdate', () => {
+      if (!this.isScrubbing) {
+        this.currentTime = v.currentTime;
+        this.duration = v.duration || 0;
+        this.updateTimeDisplay();
+        this.checkActiveNote();
+
+        // Handle A-B Range Looping
+        if (this.isLooping && this.inPoint !== null && this.outPoint !== null) {
+          if (this.currentTime >= this.outPoint || this.currentTime < this.inPoint) {
+            this.seekTo(this.inPoint);
+          }
+        }
+      }
+    });
+    v.addEventListener('play', () => {
+      this.isPlaying = true;
+      this.updatePlayStateUI();
+    });
+    v.addEventListener('pause', () => {
+      this.isPlaying = false;
+      this.updatePlayStateUI();
+    });
+    v.addEventListener('ended', () => {
+      this.isPlaying = false;
+      this.updatePlayStateUI();
+    });
+  }
+
+  async handleFileSelect(file) {
+    if (!file) return;
+
+    // Auto-save existing session before switching files
+    if (this.mediaFile && this.notes.length > 0) {
+      await this.saveSession();
+    }
+
+    this.mediaFile = file;
+    this.isAudio = file.type.startsWith('audio/');
+
+    // Clean state reset to prevent cross-file contamination
+    this.notes = [];
+    this.activeNoteId = null;
+    this.editingNoteId = null;
+    this.inPoint = null;
+    this.outPoint = null;
+    this.isLooping = false;
+    if (this.loopBtn) this.loopBtn.classList.remove('active');
+    this.isTimeStamped = false;
+    if (this.stampBadge) this.stampBadge.classList.remove('locked');
+    this.deletedHistory = [];
+    this.waveformPeaks = null;
+    this.zoom = 1;
+    this.scrollOffset = 0;
+    const zoomVal = document.getElementById('zoom-val');
+    if (zoomVal) zoomVal.textContent = '1.0×';
+    this.clearRange();
+    this.renderNotes();
+    this.renderTagFilters();
+
+    // Revoke previous object URL to avoid memory leak
+    if (this.mediaUrl) {
+      URL.revokeObjectURL(this.mediaUrl);
+    }
+    this.mediaUrl = URL.createObjectURL(file);
+
+    // Update Header Badge
+    const badge = document.getElementById('file-badge');
+    const nameText = document.getElementById('file-name-text');
+    badge.classList.add('active');
+    nameText.textContent = file.name;
+    nameText.title = `${file.name} (${this.formatBytes(file.size)})`;
+
+    // Reset media element
+    this.videoEl.src = this.mediaUrl;
+    this.videoEl.volume = this.volume;
+    this.videoEl.muted = this.isMuted;
+    this.videoEl.playbackRate = this.playbackRate;
+
+    if (this.isAudio) {
+      this.videoEl.classList.remove('active');
+      this.audioStage.classList.add('active');
+      document.getElementById('audio-title').textContent = file.name;
+      document.getElementById('snap-btn').style.display = 'none';
+      document.getElementById('pip-btn').style.display = 'none';
+    } else {
+      this.audioStage.classList.remove('active');
+      this.videoEl.classList.add('active');
+      document.getElementById('snap-btn').style.display = 'inline-flex';
+      document.getElementById('pip-btn').style.display = 'inline-flex';
+    }
+
+    this.dropZone.classList.add('hidden');
+    this.showToast(`Loaded ${file.name}`);
+
+    // Generate real audio waveform peaks in background
+    this.generateWaveformPeaks(file);
+  }
+
+  // ─── AUDIO DECODING & REAL WAVEFORM ──────────────────────────────
+  async generateWaveformPeaks(file) {
+    const statusText = document.getElementById('waveform-status-text');
+    // If file is very large (> 180MB), don't freeze memory reading full ArrayBuffer
+    if (file.size > 180 * 1024 * 1024) {
+      statusText.textContent = 'Synthetic';
+      this.waveformPeaks = null;
+      this.drawTimeline();
+      return;
+    }
+
+    statusText.textContent = 'Analyzing…';
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) throw new Error('Web Audio not supported');
+      const audioCtx = new AudioContextClass();
+
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      const rawData = audioBuffer.getChannelData(0);
+      const samples = 1200; // Number of peak points
+      const blockSize = Math.floor(rawData.length / samples);
+      const peaks = new Float32Array(samples);
+
+      for (let i = 0; i < samples; i++) {
+        let blockStart = blockSize * i;
+        let sum = 0;
+        for (let j = 0; j < blockSize; j++) {
+          sum += Math.abs(rawData[blockStart + j] || 0);
+        }
+        peaks[i] = sum / blockSize;
+      }
+
+      // Normalize peaks
+      let maxPeak = 0;
+      for (let i = 0; i < samples; i++) {
+        if (peaks[i] > maxPeak) maxPeak = peaks[i];
+      }
+      if (maxPeak > 0) {
+        for (let i = 0; i < samples; i++) {
+          peaks[i] = peaks[i] / maxPeak;
+        }
+      }
+
+      this.waveformPeaks = peaks;
+      statusText.textContent = 'Decoded (HD)';
+      audioCtx.close();
+      this.drawTimeline();
+    } catch (err) {
+      console.warn('Waveform decode fallback:', err);
+      statusText.textContent = 'Timeline Ready';
+      this.waveformPeaks = null;
+      this.drawTimeline();
+    }
+  }
+
+  setupAudioBarsPreview() {
+    const container = document.getElementById('audio-bars');
+    container.innerHTML = '';
+    const numBars = 32;
+    for (let i = 0; i < numBars; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'audio-bar-seg';
+      container.appendChild(bar);
+    }
+    // Animate audio preview bars
+    setInterval(() => {
+      if (this.isPlaying && this.isAudio) {
+        const bars = container.children;
+        for (let i = 0; i < bars.length; i++) {
+          const h = Math.floor(Math.random() * 24) + 4;
+          bars[i].style.height = `${h}px`;
+        }
+      } else {
+        const bars = container.children;
+        for (let i = 0; i < bars.length; i++) {
+          bars[i].style.height = '4px';
+        }
+      }
+    }, 100);
+  }
+
+  // ─── PLAYBACK CONTROLS ───────────────────────────────────────────
+  togglePlay() {
+    if (!this.mediaFile) return;
+    if (this.videoEl.paused) {
+      this.videoEl.play();
+    } else {
+      this.videoEl.pause();
+    }
+  }
+
+  toggleLoop() {
+    if (this.inPoint === null || this.outPoint === null) {
+      this.showToast('Set both In and Out points to loop');
+      return;
+    }
+    this.isLooping = !this.isLooping;
+    if (this.loopBtn) this.loopBtn.classList.toggle('active', this.isLooping);
+    this.showToast(this.isLooping ? 'A-B Range Loop enabled' : 'A-B Range Loop disabled');
+  }
+
+  updatePlayStateUI() {
+    if (this.isPlaying) {
+      this.playBtn.title = 'Pause (Space)';
+      this.playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+      this.discVisualizer.classList.add('playing');
+    } else {
+      this.playBtn.title = 'Play (Space)';
+      this.playIcon.innerHTML = '<polygon points="7 4 19 12 7 20 7 4"/>';
+      this.discVisualizer.classList.remove('playing');
+    }
+  }
+
+  skip(secs) {
+    if (!this.mediaFile) return;
+    this.seekTo(this.currentTime + secs);
+  }
+
+  stepFrame(dir) {
+    if (!this.mediaFile) return;
+    // ~1 frame at 25fps = 0.04s
+    const frameDuration = 0.04;
+    this.videoEl.pause();
+    this.seekTo(this.currentTime + dir * frameDuration);
+  }
+
+  seekTo(time) {
+    if (!this.mediaFile) return;
+    const target = Math.max(0, Math.min(this.duration, time));
+    this.currentTime = target;
+    this.videoEl.currentTime = target;
+    this.updateTimeDisplay();
+    this.checkActiveNote();
+    this.drawTimeline();
+  }
+
+  seekToTimeStr(str) {
+    const secs = this.parseSubtitleTime(str);
+    if (!isNaN(secs)) {
+      this.seekTo(secs);
+    }
+  }
+
+  setVolume(val) {
+    this.volume = parseFloat(val);
+    this.videoEl.volume = this.volume;
+    this.isMuted = this.volume === 0;
+    this.updateVolumeIcon();
+  }
+
+  toggleMute() {
+    this.isMuted = !this.isMuted;
+    this.videoEl.muted = this.isMuted;
+    document.getElementById('volume-range').value = this.isMuted ? 0 : this.volume;
+    this.updateVolumeIcon();
+  }
+
+  updateVolumeIcon() {
+    const icon = document.getElementById('volume-icon');
+    if (this.isMuted || this.volume === 0) {
+      icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+    } else if (this.volume < 0.5) {
+      icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';
+    } else {
+      icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';
+    }
+  }
+
+  setSpeed(rate) {
+    this.playbackRate = parseFloat(rate);
+    this.videoEl.playbackRate = this.playbackRate;
+  }
+
+  togglePiP() {
+    if (!document.pictureInPictureElement) {
+      if (this.videoEl.requestPictureInPicture) {
+        this.videoEl.requestPictureInPicture().catch(() => {});
+      }
+    } else {
+      document.exitPictureInPicture().catch(() => {});
+    }
+  }
+
+  toggleFullscreen() {
+    const target = this.isAudio ? document.getElementById('audio-stage') : this.videoEl;
+    if (!document.fullscreenElement) {
+      target.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  updateTimeFromMedia() {
+    this.currentTime = this.videoEl.currentTime || 0;
+    this.updateTimeDisplay();
+
+    // Auto-follow playhead if zoomed in
+    if (this.zoom > 1 && this.isPlaying) {
+      const visDur = this.getVisibleDuration();
+      const visEnd = this.scrollOffset + visDur;
+      const visStart = this.scrollOffset;
+      if (this.currentTime >= visEnd - visDur * 0.1 || this.currentTime < visStart) {
+        this.scrollOffset = this.currentTime - visDur * 0.2;
+        this.clampScrollOffset();
+      }
+    }
+  }
+
+  updateTimeDisplay() {
+    this.timeDisplay.innerHTML = `${this.formatTime(this.currentTime)} <span class="dur">/ ${this.formatTime(this.duration)}</span>`;
+    if (this.isAudio) {
+      document.getElementById('audio-meta').textContent = `${this.formatTime(this.currentTime)} / ${this.formatTime(this.duration)}`;
+    }
+    // Update stamp badge val to match playhead if user hasn't explicitly locked a mark
+    if (!this.isTimeStamped && this.stampBadgeVal) {
+      this.stampBadgeVal.textContent = this.formatTime(this.currentTime);
+    }
+  }
+
+  // ─── TIMELINE COORDINATE PROJECTION & ZOOM ───────────────────────
+  getVisibleDuration() {
+    if (!this.duration || this.duration <= 0) return 1;
+    return this.duration / this.zoom;
+  }
+
+  timeToX(time, width) {
+    if (!this.duration || this.duration <= 0) return 0;
+    const visDur = this.getVisibleDuration();
+    return ((time - this.scrollOffset) / visDur) * width;
+  }
+
+  xToTime(x, width) {
+    if (!this.duration || this.duration <= 0) return 0;
+    const visDur = this.getVisibleDuration();
+    return Math.max(0, Math.min(this.duration, this.scrollOffset + (x / width) * visDur));
+  }
+
+  clampScrollOffset() {
+    const visDur = this.getVisibleDuration();
+    const maxOffset = Math.max(0, this.duration - visDur);
+    this.scrollOffset = Math.max(0, Math.min(maxOffset, this.scrollOffset));
+  }
+
+  setZoom(val, centerTime = null) {
+    const oldZoom = this.zoom;
+    this.zoom = Math.max(1, Math.min(32, val));
+    document.getElementById('zoom-val').textContent = `${this.zoom.toFixed(1)}×`;
+    
+    if (this.zoom === 1) {
+      this.scrollOffset = 0;
+    } else {
+      const center = centerTime !== null ? centerTime : this.currentTime;
+      const visDur = this.getVisibleDuration();
+      this.scrollOffset = center - (visDur / 2);
+      this.clampScrollOffset();
+    }
+    this.drawTimeline();
+  }
+
+  resetZoom() {
+    this.setZoom(1);
+    this.scrollOffset = 0;
+    this.drawTimeline();
+  }
+
+  // ─── TIMELINE SCRUBBING & CANVAS RENDERING ───────────────────────
+  setupResizeObserver() {
+    const ro = new ResizeObserver(() => {
+      this.resizeCanvas();
+      this.drawTimeline();
+    });
+    ro.observe(document.getElementById('timeline-canvas-wrap'));
+  }
+
+  resizeCanvas() {
+    const wrap = document.getElementById('timeline-canvas-wrap');
+    const dpr = window.devicePixelRatio || 1;
+    const w = wrap.offsetWidth;
+    const h = wrap.offsetHeight;
+    if (this.canvas.width !== w * dpr || this.canvas.height !== h * dpr) {
+      this.canvas.width = w * dpr;
+      this.canvas.height = h * dpr;
+    }
+  }
+
+  startScrub(e) {
+    if (!this.mediaFile || this.duration === 0) return;
+    this.canvas.setPointerCapture(e.pointerId);
+
+    // Pan with Middle Click (button 1), Shift Key, or Alt Key when zoomed
+    if (e.button === 1 || e.shiftKey || (this.zoom > 1 && e.altKey)) {
+      this.isPanning = true;
+      this.panStartX = e.clientX;
+      this.panStartOffset = this.scrollOffset;
+    } else {
+      this.isScrubbing = true;
+      this.seekByPointer(e);
+    }
+
+    const onPointerMove = (moveEvent) => {
+      if (this.isPanning) {
+        const deltaX = moveEvent.clientX - this.panStartX;
+        const rect = this.canvas.getBoundingClientRect();
+        const visDur = this.getVisibleDuration();
+        const timeDelta = (deltaX / rect.width) * visDur;
+        this.scrollOffset = this.panStartOffset - timeDelta;
+        this.clampScrollOffset();
+        this.drawTimeline();
+      } else if (this.isScrubbing) {
+        this.seekByPointer(moveEvent);
+      }
+    };
+    const onPointerUp = () => {
+      this.isScrubbing = false;
+      this.isPanning = false;
+      this.canvas.removeEventListener('pointermove', onPointerMove);
+      this.canvas.removeEventListener('pointerup', onPointerUp);
+    };
+
+    this.canvas.addEventListener('pointermove', onPointerMove);
+    this.canvas.addEventListener('pointerup', onPointerUp);
+  }
+
+  seekByPointer(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const clientX = e.clientX - rect.left;
+    const targetTime = this.xToTime(clientX, rect.width);
+    this.seekTo(targetTime);
+  }
+
+  onTimelineHover(e) {
+    if (!this.mediaFile || this.duration === 0) return;
+    const rect = this.canvas.getBoundingClientRect();
+    this.hoverX = e.clientX - rect.left;
+    this.hoverTime = this.xToTime(this.hoverX, rect.width);
+    this.drawTimeline();
+  }
+
+  onTimelineWheel(e) {
+    if (!this.mediaFile || this.duration === 0) return;
+    e.preventDefault();
+    const rect = this.canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const hoverTime = this.xToTime(mouseX, rect.width);
+
+    if (e.ctrlKey || e.metaKey) {
+      // Zoom in/out centered at mouse pointer
+      const factor = e.deltaY < 0 ? 1.25 : 0.8;
+      this.setZoom(this.zoom * factor, hoverTime);
+    } else {
+      // Horizontal pan
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      const visDur = this.getVisibleDuration();
+      const timeDelta = (delta / rect.width) * visDur * 0.4;
+      this.scrollOffset += timeDelta;
+      this.clampScrollOffset();
+      this.drawTimeline();
+    }
+  }
+
+  clearHover() {
+    this.hoverX = null;
+    this.hoverTime = null;
+    this.drawTimeline();
+  }
+
+  drawTimeline() {
+    this.resizeCanvas();
+    const dpr = window.devicePixelRatio || 1;
+    const c = this.ctx;
+    const W = this.canvas.width / dpr;
+    const H = this.canvas.height / dpr;
+    const tc = this.getThemeColors();
+
+    c.save();
+    c.scale(dpr, dpr);
+
+    // Canvas Background - transparent so wrapping element's CSS background transitions seamlessly
+    c.clearRect(0, 0, W, H);
+
+    if (!this.mediaFile || this.duration === 0) {
+      c.fillStyle = tc.trackBg;
+      c.fillRect(0, H / 2 - 1, W, 2);
+      c.fillStyle = tc.emptyText;
+      c.font = '11px ' + getComputedStyle(document.body).getPropertyValue('--font-mono');
+      c.textAlign = 'center';
+      c.fillText('Open an audio or video file to populate timeline', W / 2, H / 2 + 18);
+      c.restore();
+      return;
+    }
+
+    const visDur = this.getVisibleDuration();
+    const visStart = this.scrollOffset;
+    const visEnd = this.scrollOffset + visDur;
+
+    // 1. In/Out Range Highlight if set
+    if (this.inPoint !== null) {
+      const inX = this.timeToX(this.inPoint, W);
+      const outX = this.timeToX(this.outPoint !== null ? this.outPoint : this.currentTime, W);
+      const leftX = Math.max(0, Math.min(inX, outX));
+      const rightX = Math.min(W, Math.max(inX, outX));
+
+      if (rightX > leftX) {
+        c.fillStyle = tc.rangeHighlight;
+        c.fillRect(leftX, 0, rightX - leftX, H);
+      }
+
+      // In line
+      if (inX >= 0 && inX <= W) {
+        c.fillStyle = tc.playhead;
+        c.fillRect(inX - 1, 0, 2, H);
+      }
+      if (this.outPoint !== null && outX >= 0 && outX <= W) {
+        c.fillStyle = tc.playhead;
+        c.fillRect(outX - 1, 0, 2, H);
+      }
+    }
+
+    // 2. Waveform Visualization
+    const midY = H / 2 + 6;
+    if (this.waveformPeaks && this.waveformPeaks.length > 0) {
+      const peaks = this.waveformPeaks;
+      const count = peaks.length;
+      const progressX = this.timeToX(this.currentTime, W);
+      const peakDuration = this.duration / count;
+      const barW = Math.max(1, (peakDuration / visDur) * W);
+
+      for (let i = 0; i < count; i++) {
+        const tPeak = i * peakDuration;
+        if (tPeak + peakDuration < visStart || tPeak > visEnd) continue;
+        const x = this.timeToX(tPeak, W);
+        const isPlayed = x <= progressX;
+        const amp = peaks[i] * (H * 0.38);
+
+        c.fillStyle = isPlayed ? tc.wavePlayed : tc.waveUnplayed;
+        c.fillRect(x, midY - amp, Math.max(1, barW - 0.5), amp * 2);
+      }
+    } else {
+      // Synthetic Waveform track
+      c.fillStyle = tc.trackBg;
+      c.fillRect(0, midY - 1, W, 2);
+      const playedX = this.timeToX(this.currentTime, W);
+      const startX = this.timeToX(0, W);
+      c.fillStyle = tc.wavePlayed;
+      const clampStart = Math.max(0, Math.min(W, startX));
+      const clampEnd = Math.max(0, Math.min(W, playedX));
+      if (clampEnd > clampStart) {
+        c.fillRect(clampStart, midY - 1, clampEnd - clampStart, 2);
+      }
+    }
+
+    // 3. Range annotations blocks
+    this.notes.forEach(note => {
+      if (note.end && note.end > note.start) {
+        const startX = this.timeToX(note.start, W);
+        const endX = this.timeToX(note.end, W);
+        const left = Math.max(0, Math.min(startX, endX));
+        const right = Math.min(W, Math.max(startX, endX));
+        if (right > left) {
+          const tagObj = this.tags.find(t => t.id === note.tag) || this.tags[0];
+          c.fillStyle = tagObj.color + '26'; // ~15% alpha
+          c.fillRect(left, 4, right - left, H - 8);
+        }
+      }
+    });
+
+    // 4. Tick marks & time scale (responsive to zoom)
+    const tickInterval = this.calculateTickInterval(visDur);
+    const firstTick = Math.floor(visStart / tickInterval) * tickInterval;
+    const lastTick = Math.ceil(visEnd / tickInterval) * tickInterval;
+
+    c.font = '9px ' + getComputedStyle(document.body).getPropertyValue('--font-mono');
+    c.textAlign = 'center';
+
+    for (let t = firstTick; t <= lastTick; t += tickInterval) {
+      if (t < 0 || t > this.duration + 0.001) continue;
+      const x = this.timeToX(t, W);
+      if (x < -10 || x > W + 10) continue;
+
+      const isMajor = Math.abs(Math.round(t / tickInterval) % 5) === 0 || tickInterval >= 15;
+      c.fillStyle = isMajor ? tc.tickMajor : tc.tickMinor;
+      c.fillRect(x, 0, 1, isMajor ? 10 : 5);
+
+      if (isMajor && x > 25 && x < W - 25) {
+        c.fillStyle = tc.tickText;
+        c.fillText(this.formatTime(t, false), x, 22);
+      }
+    }
+
+    // 5. Note markers
+    this.notes.forEach(note => {
+      const x = this.timeToX(note.start, W);
+      if (x < -10 || x > W + 10) return;
+      const isNear = Math.abs(note.start - this.currentTime) < (visDur * 0.015);
+      const tagObj = this.tags.find(t => t.id === note.tag) || this.tags[0];
+
+      // Marker stem
+      c.fillStyle = tagObj.color;
+      c.fillRect(x - 0.5, 0, 1, H);
+
+      // Marker diamond
+      c.save();
+      c.translate(x, midY);
+      c.rotate(Math.PI / 4);
+      const sz = isNear ? 9 : 6;
+      c.fillStyle = tagObj.color;
+      c.fillRect(-sz / 2, -sz / 2, sz, sz);
+      if (isNear) {
+        c.strokeStyle = tc.isLight ? '#0f172a' : '#fff';
+        c.lineWidth = 1.5;
+        c.strokeRect(-sz / 2, -sz / 2, sz, sz);
+      }
+      c.restore();
+    });
+
+    // 6. Hover guide
+    if (this.hoverX !== null && this.hoverTime !== null) {
+      const hx = this.hoverX;
+      if (hx >= 0 && hx <= W) {
+        c.strokeStyle = tc.hoverLine;
+        c.lineWidth = 1;
+        c.setLineDash([3, 3]);
+        c.beginPath();
+        c.moveTo(hx, 0);
+        c.lineTo(hx, H);
+        c.stroke();
+        c.setLineDash([]);
+
+        // Tooltip box
+        const tipText = this.formatTime(this.hoverTime);
+        c.font = '10px ' + getComputedStyle(document.body).getPropertyValue('--font-mono');
+        const textW = c.measureText(tipText).width;
+        const tipX = Math.max(4, Math.min(W - textW - 14, hx - textW / 2 - 7));
+        c.fillStyle = tc.tooltipBg;
+        c.fillRect(tipX, H - 24, textW + 14, 18);
+        c.strokeStyle = tc.tooltipBorder;
+        c.strokeRect(tipX, H - 24, textW + 14, 18);
+        c.fillStyle = tc.tooltipText;
+        c.textAlign = 'left';
+        c.fillText(tipText, tipX + 7, H - 11);
+      }
+    }
+
+    // 7. Playhead needle & header pin
+    const playX = this.timeToX(this.currentTime, W);
+    if (playX >= -10 && playX <= W + 10) {
+      // Playhead arrow
+      c.fillStyle = tc.playhead;
+      c.beginPath();
+      c.moveTo(playX - 6, 0);
+      c.lineTo(playX + 6, 0);
+      c.lineTo(playX, 8);
+      c.closePath();
+      c.fill();
+
+      // Playhead line
+      c.fillStyle = tc.playhead;
+      c.fillRect(playX - 1, 8, 2, H - 8);
+    }
+
+    // 8. Zoom Overview Minimap Strip if zoomed in
+    if (this.zoom > 1) {
+      c.fillStyle = tc.trackBg;
+      c.fillRect(0, 0, W, 3);
+      const winX = (this.scrollOffset / this.duration) * W;
+      const winW = (visDur / this.duration) * W;
+      c.fillStyle = tc.playhead;
+      c.fillRect(winX, 0, Math.max(6, winW), 3);
+    }
+
+    c.restore();
+  }
+
+  calculateTickInterval(dur) {
+    if (dur < 2) return 0.2;
+    if (dur < 5) return 0.5;
+    if (dur < 15) return 1;
+    if (dur < 45) return 2;
+    if (dur < 90) return 5;
+    if (dur < 300) return 10;
+    if (dur < 900) return 30;
+    if (dur < 3600) return 60;
+    return 120;
+  }
+
+  // ─── ANNOTATION & NOTE MANAGEMENT ────────────────────────────────
+  captureCurrentTime() {
+    this.stampTime = this.currentTime;
+    this.isTimeStamped = true;
+    this.stampBadgeVal.textContent = this.formatTime(this.stampTime);
+    if (this.stampBadge) this.stampBadge.classList.add('locked');
+    this.flashCapture();
+    this.noteInput.focus();
+    this.showToast(`Timestamp locked at ${this.formatTime(this.stampTime)}`);
+  }
+
+  flashCapture() {
+    const flash = document.getElementById('capture-flash');
+    flash.classList.remove('flash');
+    void flash.offsetWidth;
+    flash.classList.add('flash');
+  }
+
+  setInPoint() {
+    this.inPoint = this.currentTime;
+    if (this.outPoint !== null && this.outPoint <= this.inPoint) {
+      this.outPoint = null;
+    }
+    this.updateRangeStatusUI();
+    this.showToast(`In Point set at ${this.formatTime(this.inPoint)}`);
+    this.drawTimeline();
+  }
+
+  setOutPoint() {
+    if (this.inPoint === null) {
+      this.inPoint = Math.max(0, this.currentTime - 2);
+    }
+    this.outPoint = Math.max(this.inPoint + 0.1, this.currentTime);
+    this.updateRangeStatusUI();
+    this.showToast(`Out Point set at ${this.formatTime(this.outPoint)}`);
+    this.drawTimeline();
+  }
+
+  clearRange() {
+    this.inPoint = null;
+    this.outPoint = null;
+    this.isLooping = false;
+    if (this.loopBtn) this.loopBtn.classList.remove('active');
+    this.updateRangeStatusUI();
+    this.drawTimeline();
+  }
+
+  updateRangeStatusUI() {
+    const rangeText = document.getElementById('range-status-text');
+    const rangeVal = document.getElementById('range-val');
+    const clearBtn = document.getElementById('clear-range-btn');
+    if (this.inPoint !== null) {
+      rangeText.style.display = 'inline';
+      clearBtn.style.display = 'inline-flex';
+      const outStr = this.outPoint !== null ? this.formatTime(this.outPoint) : '…';
+      rangeVal.textContent = `${this.formatTime(this.inPoint)} → ${outStr}`;
+    } else {
+      rangeText.style.display = 'none';
+      clearBtn.style.display = 'none';
+    }
+  }
+
+  async takeSnapshot() {
+    if (this.isAudio || !this.mediaFile) {
+      this.showToast('Snapshots are available for video only');
+      return null;
+    }
+    try {
+      const v = this.videoEl;
+      // Downscale to max 480px width for efficient storage & crisp thumbnails
+      const maxW = 480;
+      const scale = Math.min(1, maxW / (v.videoWidth || 640));
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = Math.round((v.videoWidth || 640) * scale);
+      offCanvas.height = Math.round((v.videoHeight || 360) * scale);
+      const offCtx = offCanvas.getContext('2d');
+      offCtx.drawImage(v, 0, 0, offCanvas.width, offCanvas.height);
+      const dataUrl = offCanvas.toDataURL('image/jpeg', 0.72);
+      this.flashCapture();
+      return dataUrl;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }
+
+  async saveNote() {
+    const text = this.noteInput.value.trim();
+    if (!text) {
+      this.noteInput.focus();
+      return;
+    }
+    if (!this.mediaFile) {
+      this.showToast('Open a media file first');
+      return;
+    }
+
+    // Dynamic vs Locked Timestamp: if user explicitly marked time (N), use that; else current playhead
+    const noteStart = this.inPoint !== null
+      ? this.inPoint
+      : (this.isTimeStamped ? this.stampTime : this.currentTime);
+    const noteEnd = this.outPoint !== null ? this.outPoint : null;
+
+    let thumb = null;
+    if (!this.isAudio) {
+      thumb = await this.takeSnapshot();
+    }
+
+    const note = {
+      id: Date.now() + Math.random().toString(36).substring(2, 6),
+      start: noteStart,
+      end: noteEnd,
+      text: text,
+      tag: this.selectedTag,
+      thumb: thumb,
+      createdAt: new Date().toISOString()
+    };
+
+    this.notes.push(note);
+    this.notes.sort((a, b) => a.start - b.start);
+
+    // Reset input state and release lock
+    this.noteInput.value = '';
+    this.clearRange();
+    this.isTimeStamped = false;
+    if (this.stampBadge) this.stampBadge.classList.remove('locked');
+    this.stampTime = this.currentTime;
+    this.stampBadgeVal.textContent = this.formatTime(this.currentTime);
+
+    this.renderNotes();
+    this.renderTagFilters();
+    this.drawTimeline();
+    await this.saveSession();
+    this.showToast(`Note saved at ${this.formatTime(note.start)}`);
+  }
+
+  async deleteNote(id, e) {
+    if (e) e.stopPropagation();
+    const idx = this.notes.findIndex(n => n.id === id);
+    if (idx !== -1) {
+      const removed = this.notes.splice(idx, 1)[0];
+      this.deletedHistory.push(removed);
+      this.renderNotes();
+      this.renderTagFilters();
+      this.drawTimeline();
+      await this.saveSession();
+      this.showToast('Note deleted', true);
+    }
+  }
+
+  async onToastAction() {
+    if (this.deletedHistory.length > 0) {
+      const restored = this.deletedHistory.pop();
+      this.notes.push(restored);
+      this.notes.sort((a, b) => a.start - b.start);
+      this.renderNotes();
+      this.renderTagFilters();
+      this.drawTimeline();
+      await this.saveSession();
+      this.showToast('Note restored');
+    }
+  }
+
+  startEditNote(id, e) {
+    if (e) e.stopPropagation();
+    this.editingNoteId = id;
+    this.renderNotes();
+  }
+
+  async saveEditNote(id) {
+    const editArea = document.getElementById(`edit-text-${id}`);
+    if (!editArea) return;
+    const note = this.notes.find(n => n.id === id);
+    if (note) {
+      note.text = editArea.value.trim() || note.text;
+      note.updatedAt = new Date().toISOString();
+    }
+    this.editingNoteId = null;
+    this.renderNotes();
+    this.renderTagFilters();
+    await this.saveSession();
+    this.showToast('Note updated');
+  }
+
+  cancelEditNote(id) {
+    this.editingNoteId = null;
+    this.renderNotes();
+  }
+
+  jumpToNote(start) {
+    this.seekTo(start);
+  }
+
+  jumpPrevNote() {
+    if (this.notes.length === 0) return;
+    const past = this.notes.filter(n => n.start < this.currentTime - 0.5);
+    if (past.length > 0) {
+      this.jumpToNote(past[past.length - 1].start);
+    } else {
+      this.jumpToNote(this.notes[0].start);
+    }
+  }
+
+  jumpNextNote() {
+    if (this.notes.length === 0) return;
+    const future = this.notes.filter(n => n.start > this.currentTime + 0.5);
+    if (future.length > 0) {
+      this.jumpToNote(future[0].start);
+    } else {
+      this.jumpToNote(this.notes[this.notes.length - 1].start);
+    }
+  }
+
+  async clearAllNotes() {
+    if (this.notes.length === 0) return;
+    if (!confirm(`Delete all ${this.notes.length} annotations? This action cannot be undone.`)) return;
+    this.notes = [];
+    this.renderNotes();
+    this.renderTagFilters();
+    this.drawTimeline();
+    await this.saveSession();
+    this.showToast('All notes cleared');
+  }
+
+  checkActiveNote() {
+    const active = this.notes.find(n => {
+      if (n.end) {
+        return this.currentTime >= n.start && this.currentTime <= n.end;
+      }
+      return Math.abs(n.start - this.currentTime) < 1.2;
+    });
+    const newActiveId = active ? active.id : null;
+    if (newActiveId !== this.activeNoteId) {
+      this.activeNoteId = newActiveId;
+      document.querySelectorAll('.note-card').forEach(card => {
+        const isActive = card.dataset.id === this.activeNoteId;
+        card.classList.toggle('active', isActive);
+        if (isActive) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    }
+  }
+
+  // ─── NOTES LIST RENDERING & SEARCH ───────────────────────────────
+  onSearchInput(val) {
+    this.searchQuery = val.toLowerCase().trim();
+    this.renderNotes();
+  }
+
+  setFilterTag(tagId) {
+    this.filterTag = tagId;
+    this.renderTagFilters();
+    this.renderNotes();
+  }
+
+  renderTagFilters() {
+    const container = document.getElementById('tag-filters-row');
+    container.innerHTML = '';
+
+    const allChip = document.createElement('div');
+    allChip.className = `tag-chip ${this.filterTag === 'all' ? 'active' : ''}`;
+    allChip.textContent = `All (${this.notes.length})`;
+    allChip.onclick = () => this.setFilterTag('all');
+    container.appendChild(allChip);
+
+    this.tags.forEach(tag => {
+      const count = this.notes.filter(n => n.tag === tag.id).length;
+      if (count > 0 || this.filterTag === tag.id) {
+        const chip = document.createElement('div');
+        chip.className = `tag-chip ${this.filterTag === tag.id ? 'active' : ''}`;
+        chip.textContent = `${tag.label} (${count})`;
+        chip.onclick = () => this.setFilterTag(tag.id);
+        container.appendChild(chip);
+      }
+    });
+  }
+
+  formatNoteText(text) {
+    let esc = this.escapeHtml(text);
+    // Auto-detect timestamps e.g. 00:01:23.4, 01:23, 1:23 and make them clickable
+    esc = esc.replace(/\b(\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)\b/g, (match) => {
+      return `<span class="note-time-chip" onclick="event.stopPropagation();app.seekToTimeStr('${match}')" title="Jump to ${match}">⏱️ ${match}</span>`;
+    });
+    // Bold **text**
+    esc = esc.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // Italic *text*
+    esc = esc.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // Inline code `text`
+    esc = esc.replace(/`(.+?)`/g, '<code>$1</code>');
+    return esc;
+  }
+
+  renderNotes() {
+    const list = document.getElementById('notes-list');
+    const empty = document.getElementById('notes-empty-state');
+    const countBadge = document.getElementById('notes-count-badge');
+
+    countBadge.textContent = this.notes.length;
+
+    // Filter notes by search and tag
+    let filtered = this.notes;
+    if (this.filterTag !== 'all') {
+      filtered = filtered.filter(n => n.tag === this.filterTag);
+    }
+    if (this.searchQuery) {
+      filtered = filtered.filter(n => n.text.toLowerCase().includes(this.searchQuery));
+    }
+
+    if (filtered.length === 0) {
+      empty.style.display = 'flex';
+      document.querySelectorAll('.note-card').forEach(el => el.remove());
+      return;
+    }
+
+    empty.style.display = 'none';
+    document.querySelectorAll('.note-card').forEach(el => el.remove());
+
+    filtered.forEach(note => {
+      const card = document.createElement('div');
+      card.className = `note-card ${note.id === this.activeNoteId ? 'active' : ''}`;
+      card.dataset.id = note.id;
+      const tagObj = this.tags.find(t => t.id === note.tag) || this.tags[0];
+      card.style.borderLeftColor = tagObj.color;
+
+      if (this.editingNoteId === note.id) {
+        // Edit Mode
+        card.innerHTML = `
+          <div class="note-edit-box">
+            <textarea id="edit-text-${note.id}" class="note-edit-textarea">${this.escapeHtml(note.text)}</textarea>
+            <div class="note-edit-btns">
+              <button class="btn btn-ghost btn-sm" onclick="app.cancelEditNote('${note.id}')">Cancel</button>
+              <button class="btn btn-primary btn-sm" onclick="app.saveEditNote('${note.id}')">Save</button>
+            </div>
+          </div>
+        `;
+      } else {
+        // View Mode
+        const rangeText = note.end ? ` → ${this.formatTime(note.end)}` : '';
+        const thumbHtml = note.thumb ? `<img class="note-card-thumb" src="${note.thumb}" alt="Snapshot" onclick="event.stopPropagation();app.openLightbox('${note.thumb}')">` : '';
+
+        card.onclick = () => this.jumpToNote(note.start);
+        card.innerHTML = `
+          <div class="note-card-header">
+            <div class="note-card-badges">
+              <span class="note-time-badge">${this.formatTime(note.start)}${rangeText}</span>
+              <span class="note-tag-badge" style="background:${tagObj.color}">${tagObj.label}</span>
+            </div>
+            <div class="note-card-actions">
+              <button class="note-act-btn" onclick="app.startEditNote('${note.id}', event)" title="Edit Note">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              </button>
+              <button class="note-act-btn" onclick="app.copyNoteText('${note.id}', event)" title="Copy Note">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+              <button class="note-act-btn del" onclick="app.deleteNote('${note.id}', event)" title="Delete Note">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
+          </div>
+          ${thumbHtml}
+          <div class="note-card-body">${this.formatNoteText(note.text)}</div>
+        `;
+      }
+
+      list.appendChild(card);
+    });
+  }
+
+  copyNoteText(id, e) {
+    if (e) e.stopPropagation();
+    const note = this.notes.find(n => n.id === id);
+    if (!note) return;
+    const str = `[${this.formatTime(note.start)}] ${note.text}`;
+    navigator.clipboard.writeText(str).then(() => {
+      this.showToast('Note copied to clipboard');
+    });
+  }
+
+  // ─── TAG MENU ────────────────────────────────────────────────────
+  renderTagMenu() {
+    const menu = document.getElementById('tag-menu-dropdown');
+    menu.innerHTML = '';
+    this.tags.forEach(tag => {
+      const item = document.createElement('div');
+      item.className = 'tag-menu-item';
+      item.innerHTML = `<span class="tag-dot" style="background:${tag.color}"></span><span>${tag.label}</span>`;
+      item.onclick = (e) => {
+        e.stopPropagation();
+        this.selectTag(tag.id);
+      };
+      menu.appendChild(item);
+    });
+  }
+
+  toggleTagMenu(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('tag-menu-dropdown');
+    menu.classList.toggle('open');
+  }
+
+  selectTag(tagId) {
+    this.selectedTag = tagId;
+    const tag = this.tags.find(t => t.id === tagId);
+    if (tag) {
+      document.getElementById('current-tag-dot').style.background = tag.color;
+      document.getElementById('current-tag-label').textContent = tag.label;
+    }
+    document.getElementById('tag-menu-dropdown').classList.remove('open');
+  }
+
+  // ─── LOCAL STORAGE & INDEXEDDB PERSISTENCE ───────────────────────
+  getStorageKey() {
+    if (!this.mediaFile) return null;
+    return `ln_session_${this.mediaFile.name}_${this.mediaFile.size}`;
+  }
+
+  async saveSession() {
+    const key = this.getStorageKey();
+    if (!key) return;
+    const payload = {
+      fileName: this.mediaFile.name,
+      fileSize: this.mediaFile.size,
+      updatedAt: new Date().toISOString(),
+      notes: this.notes
+    };
+    try {
+      await this.db.set(key, payload);
+      const statusEl = document.getElementById('autosave-status');
+      if (statusEl) {
+        statusEl.style.color = '#10b981';
+        setTimeout(() => { statusEl.style.color = 'var(--text-muted)'; }, 1000);
+      }
+    } catch (e) {
+      console.warn('Persistence save error:', e);
+    }
+  }
+
+  async autoRestoreSession() {
+    const key = this.getStorageKey();
+    if (!key) return;
+    try {
+      const data = await this.db.get(key);
+      if (data && Array.isArray(data.notes) && data.notes.length > 0 && this.notes.length === 0) {
+        this.notes = data.notes;
+        this.renderNotes();
+        this.renderTagFilters();
+        this.drawTimeline();
+        this.showToast(`Restored ${this.notes.length} notes from previous session`);
+      }
+    } catch (e) {
+      console.warn('Persistence restore error:', e);
+    }
+  }
+
+  // ─── EXPORT SUITE ────────────────────────────────────────────────
+  openExportModal() {
+    if (this.notes.length === 0) {
+      this.showToast('No notes to export');
+      return;
+    }
+    document.getElementById('export-modal').classList.add('open');
+  }
+  closeExportModal() {
+    document.getElementById('export-modal').classList.remove('open');
+  }
+
+  selectExportFmt(el) {
+    document.querySelectorAll('.export-fmt-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    this.selectedExportFmt = el.dataset.fmt;
+  }
+
+  generateExportContent() {
+    const fileName = this.mediaFile ? this.mediaFile.name : 'Unknown File';
+    const baseName = fileName.replace(/\.[^.]+$/, '');
+    let content = '', ext = this.selectedExportFmt, mime = 'text/plain';
+
+    switch (this.selectedExportFmt) {
+      case 'json':
+        content = JSON.stringify({
+          app: 'Lined Notes Studio',
+          version: '1.0',
+          fileName: fileName,
+          duration: this.duration,
+          exportedAt: new Date().toISOString(),
+          tags: this.tags,
+          notes: this.notes
+        }, null, 2);
+        mime = 'application/json';
+        ext = 'json';
+        break;
+
+      case 'md':
+        content = `# Annotations: ${fileName}\n\n`;
+        content += `> Exported from **Lined Notes** on ${new Date().toLocaleString()}  \n`;
+        content += `> Duration: ${this.formatTime(this.duration)} | Total Annotations: ${this.notes.length}\n\n`;
+        content += `---\n\n`;
+        this.notes.forEach(n => {
+          const tagObj = this.tags.find(t => t.id === n.tag) || this.tags[0];
+          const rangeStr = n.end ? ` - \`${this.formatTime(n.end)}\`` : '';
+          content += `### \`${this.formatTime(n.start)}\`${rangeStr} [${tagObj.label}]\n\n`;
+          content += `${n.text}\n\n`;
+        });
+        mime = 'text/markdown';
+        ext = 'md';
+        break;
+
+      case 'srt':
+        this.notes.forEach((n, idx) => {
+          const cueStart = this.formatSRTTime(n.start);
+          let endTime;
+          if (n.end && n.end > n.start) {
+            endTime = n.end;
+          } else if (this.notes[idx + 1] && this.notes[idx + 1].start > n.start + 0.5) {
+            endTime = Math.min(n.start + 3.0, this.notes[idx + 1].start);
+          } else {
+            endTime = n.start + 2.5;
+          }
+          // Enforce minimum 1.0s cue duration to prevent invisible/0-second subtitle cues
+          endTime = Math.max(n.start + 1.0, endTime);
+          const cueEnd = this.formatSRTTime(endTime);
+          content += `${idx + 1}\n${cueStart} --> ${cueEnd}\n${n.text}\n\n`;
+        });
+        mime = 'text/srt';
+        ext = 'srt';
+        break;
+
+      case 'vtt':
+        content = 'WEBVTT\n\n';
+        this.notes.forEach((n, idx) => {
+          const cueStart = this.formatVTTTime(n.start);
+          let endTime;
+          if (n.end && n.end > n.start) {
+            endTime = n.end;
+          } else if (this.notes[idx + 1] && this.notes[idx + 1].start > n.start + 0.5) {
+            endTime = Math.min(n.start + 3.0, this.notes[idx + 1].start);
+          } else {
+            endTime = n.start + 2.5;
+          }
+          // Enforce minimum 1.0s cue duration
+          endTime = Math.max(n.start + 1.0, endTime);
+          const cueEnd = this.formatVTTTime(endTime);
+          content += `${idx + 1}\n${cueStart} --> ${cueEnd}\n${n.text}\n\n`;
+        });
+        mime = 'text/vtt';
+        ext = 'vtt';
+        break;
+
+      case 'csv':
+        content = 'Start Time,Start Seconds,End Time,End Seconds,Tag,Note\n';
+        this.notes.forEach(n => {
+          const tagObj = this.tags.find(t => t.id === n.tag) || this.tags[0];
+          const endStr = n.end ? this.formatTime(n.end) : '';
+          const endSec = n.end ? n.end.toFixed(3) : '';
+          const escapedText = n.text.replace(/"/g, '""');
+          content += `"${this.formatTime(n.start)}",${n.start.toFixed(3)},"${endStr}","${endSec}","${tagObj.label}","${escapedText}"\n`;
+        });
+        mime = 'text/csv';
+        ext = 'csv';
+        break;
+
+      case 'html':
+        content = this.generateHtmlReport(fileName);
+        mime = 'text/html';
+        ext = 'html';
+        break;
+    }
+
+    return { content, ext, mime, baseName };
+  }
+
+  generateHtmlReport(fileName) {
+    let rows = '';
+    this.notes.forEach(n => {
+      const tagObj = this.tags.find(t => t.id === n.tag) || this.tags[0];
+      const rangeStr = n.end ? ` → ${this.formatTime(n.end)}` : '';
+      rows += `
+        <tr>
+          <td style="font-family:monospace;color:#06b6d4;white-space:nowrap;">${this.formatTime(n.start)}${rangeStr}</td>
+          <td><span style="background:${tagObj.color};color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;">${tagObj.label}</span></td>
+          <td style="white-space:pre-wrap;">${this.escapeHtml(n.text)}</td>
+        </tr>`;
+    });
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Annotations — ${this.escapeHtml(fileName)}</title>
+<style>
+  body { background:#090a0f; color:#f8fafc; font-family:system-ui,-apple-system,sans-serif; padding:40px; margin:0; }
+  .card { max-width:900px; margin:0 auto; background:#11131a; border:1px solid #232838; border-radius:12px; padding:32px; box-shadow:0 12px 36px rgba(0,0,0,0.5); }
+  h1 { margin:0 0 8px; font-size:22px; color:#f8fafc; }
+  .meta { color:#94a3b8; font-size:13px; margin-bottom:24px; font-family:monospace; }
+  table { width:100%; border-collapse:collapse; margin-top:16px; }
+  th { text-align:left; padding:10px; border-bottom:2px solid #232838; color:#94a3b8; font-size:12px; text-transform:uppercase; }
+  td { padding:12px 10px; border-bottom:1px solid #1c202d; font-size:13px; vertical-align:top; }
+  tr:hover { background:#171a24; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>${this.escapeHtml(fileName)}</h1>
+  <div class="meta">Exported from Lined Notes Studio · ${new Date().toLocaleString()} · ${this.notes.length} Annotations</div>
+  <table>
+    <thead><tr><th>Timestamp</th><th>Tag</th><th>Note</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+</div>
+</body>
+</html>`;
+  }
+
+  doExportDownload() {
+    const { content, ext, mime, baseName } = this.generateExportContent();
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${baseName}_annotations.${ext}`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.closeExportModal();
+    this.showToast(`Exported as .${ext}`);
+  }
+
+  copyExportToClipboard() {
+    const { content, ext } = this.generateExportContent();
+    navigator.clipboard.writeText(content).then(() => {
+      this.closeExportModal();
+      this.showToast(`Copied ${ext.toUpperCase()} to clipboard`);
+    });
+  }
+
+  // ─── IMPORT SUITE ────────────────────────────────────────────────
+  openImportModal() {
+    document.getElementById('import-modal').classList.add('open');
+  }
+  closeImportModal() {
+    document.getElementById('import-modal').classList.remove('open');
+  }
+
+  handleImportFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.parseImportContent(e.target.result, file.name);
+    };
+    reader.readAsText(file);
+  }
+
+  parseImportContent(content, fileName) {
+    const mode = document.querySelector('input[name="import-mode"]:checked').value;
+    let importedNotes = [];
+
+    try {
+      // 1. Try JSON
+      if (fileName.endsWith('.json') || content.trim().startsWith('{')) {
+        const data = JSON.parse(content);
+        if (Array.isArray(data.notes)) {
+          importedNotes = data.notes.map(n => ({
+            id: n.id || (Date.now() + Math.random().toString(36).substr(2, 4)),
+            start: parseFloat(n.start !== undefined ? n.start : n.time),
+            end: n.end ? parseFloat(n.end) : null,
+            text: n.text || '',
+            tag: n.tag || 'note',
+            thumb: n.thumb || null,
+            createdAt: n.createdAt || new Date().toISOString()
+          }));
+        }
+      }
+      // 2. Try SRT / VTT
+      else if (fileName.endsWith('.srt') || fileName.endsWith('.vtt') || content.includes('-->')) {
+        importedNotes = this.parseSubtitleCues(content);
+      }
+      // 3. Try CSV
+      else if (fileName.endsWith('.csv') || content.includes(',')) {
+        importedNotes = this.parseCSVNotes(content);
+      }
+
+      if (importedNotes.length === 0) {
+        this.showToast('No valid annotations found in file');
+        return;
+      }
+
+      if (mode === 'replace') {
+        this.notes = importedNotes;
+      } else {
+        this.notes = [...this.notes, ...importedNotes];
+      }
+
+      this.notes.sort((a, b) => a.start - b.start);
+      this.closeImportModal();
+      this.renderNotes();
+      this.renderTagFilters();
+      this.drawTimeline();
+      this.saveSession();
+      this.showToast(`Imported ${importedNotes.length} annotations`);
+    } catch (err) {
+      console.error(err);
+      this.showToast('Failed to parse annotations file');
+    }
+  }
+
+  parseSubtitleCues(text) {
+    const list = [];
+    const blocks = text.replace(/\r\n/g, '\n').split(/\n\n+/);
+    blocks.forEach(block => {
+      const lines = block.trim().split('\n');
+      const timeLine = lines.find(l => l.includes('-->'));
+      if (timeLine) {
+        const parts = timeLine.split('-->').map(s => s.trim());
+        const start = this.parseSubtitleTime(parts[0]);
+        const end = this.parseSubtitleTime(parts[1]);
+        const textLines = lines.slice(lines.indexOf(timeLine) + 1).join('\n');
+        if (!isNaN(start) && textLines) {
+          list.push({
+            id: Date.now() + Math.random().toString(36).substr(2, 4),
+            start: start,
+            end: isNaN(end) ? null : end,
+            text: textLines.trim(),
+            tag: 'note',
+            createdAt: new Date().toISOString()
+          });
+        }
+      }
+    });
+    return list;
+  }
+
+  parseSubtitleTime(str) {
+    if (!str) return NaN;
+    // Format: 00:01:23,456 or 00:01:23.456
+    const clean = str.replace(',', '.');
+    const parts = clean.split(':');
+    if (parts.length === 3) {
+      return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
+    }
+    if (parts.length === 2) {
+      return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+    }
+    return parseFloat(clean);
+  }
+
+  parseCSVNotes(text) {
+    const lines = text.trim().split('\n');
+    const result = [];
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      // Simple CSV split handling quotes
+      const match = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+      if (match && match.length >= 2) {
+        const start = parseFloat(match[1].replace(/"/g, '')) || this.parseSubtitleTime(match[0].replace(/"/g, ''));
+        const noteText = match[match.length - 1].replace(/^"|"$/g, '').replace(/""/g, '"');
+        if (!isNaN(start)) {
+          result.push({
+            id: Date.now() + Math.random().toString(36).substr(2, 4),
+            start: start,
+            end: null,
+            text: noteText,
+            tag: 'note',
+            createdAt: new Date().toISOString()
+          });
+        }
+      }
+    }
+    return result;
+  }
+
+  // ─── LIGHTBOX MODAL ──────────────────────────────────────────────
+  openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox-modal').classList.add('open');
+  }
+  closeLightbox() {
+    document.getElementById('lightbox-modal').classList.remove('open');
+  }
+  downloadLightboxImage() {
+    const src = document.getElementById('lightbox-img').src;
+    if (!src) return;
+    const a = document.createElement('a');
+    a.href = src;
+    a.download = `snapshot_${this.formatTime(this.currentTime).replace(/[:.]/g, '-')}.jpg`;
+    a.click();
+  }
+
+  // ─── SHORTCUTS MODAL ─────────────────────────────────────────────
+  openShortcutsModal() {
+    document.getElementById('shortcuts-modal').classList.add('open');
+  }
+  closeShortcutsModal() {
+    document.getElementById('shortcuts-modal').classList.remove('open');
+  }
+
+  // ─── KEYBOARD & WINDOW EVENTS ────────────────────────────────────
+  setupWindowEvents() {
+    // Keyboard bindings
+    document.addEventListener('keydown', (e) => {
+      const tag = document.activeElement.tagName;
+      const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
+      // Enter in input adds note
+      if (e.key === 'Enter' && document.activeElement === this.noteInput) {
+        e.preventDefault();
+        this.saveNote();
+        return;
+      }
+
+      // If user is typing in an input, don't trigger playback hotkeys
+      if (isInput) {
+        if (e.key === 'Escape') {
+          document.activeElement.blur();
+        }
+        return;
+      }
+
+      switch (e.key) {
+        case ' ':
+          e.preventDefault();
+          this.togglePlay();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          this.skip(e.shiftKey ? -1 : -5);
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          this.skip(e.shiftKey ? 1 : 5);
+          break;
+        case 'j':
+        case 'J':
+          this.skip(-10);
+          break;
+        case 'k':
+        case 'K':
+          this.togglePlay();
+          break;
+        case 'l':
+        case 'L':
+          if (e.shiftKey) {
+            e.preventDefault();
+            this.toggleLoop();
+          } else {
+            this.skip(10);
+          }
+          break;
+        case '+':
+        case '=':
+          e.preventDefault();
+          this.setZoom(this.zoom * 1.5);
+          break;
+        case '-':
+        case '_':
+          e.preventDefault();
+          this.setZoom(this.zoom / 1.5);
+          break;
+        case ',':
+          this.stepFrame(-1);
+          break;
+        case '.':
+          this.stepFrame(1);
+          break;
+        case 'n':
+        case 'N':
+          e.preventDefault();
+          this.captureCurrentTime();
+          break;
+        case 'i':
+        case 'I':
+          this.setInPoint();
+          break;
+        case 'o':
+        case 'O':
+          this.setOutPoint();
+          break;
+        case '[':
+          this.jumpPrevNote();
+          break;
+        case ']':
+          this.jumpNextNote();
+          break;
+        case 'm':
+        case 'M':
+          this.toggleMute();
+          break;
+        case 'f':
+        case 'F':
+          this.toggleFullscreen();
+          break;
+        case 'p':
+        case 'P':
+          this.togglePiP();
+          break;
+        case 't':
+        case 'T':
+          this.toggleTheme();
+          break;
+        case '?':
+          this.openShortcutsModal();
+          break;
+        case 'Escape':
+          this.closeExportModal();
+          this.closeImportModal();
+          this.closeShortcutsModal();
+          this.closeLightbox();
+          document.getElementById('tag-menu-dropdown').classList.remove('open');
+          break;
+      }
+    });
+
+    // Auto-pause when user starts typing if enabled
+    this.noteInput.addEventListener('focus', () => {
+      if (this.pauseOnType && this.isPlaying) {
+        this.videoEl.pause();
+      }
+    });
+
+    // Close tag menu on outside click
+    document.addEventListener('click', () => {
+      document.getElementById('tag-menu-dropdown').classList.remove('open');
+    });
+
+    // Warn before closing tab if unsaved notes exist
+    window.addEventListener('beforeunload', (e) => {
+      if (this.notes.length > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  }
+
+  togglePauseOnType(enabled) {
+    this.pauseOnType = enabled;
+    localStorage.setItem('ln_pause_on_type', enabled ? 'true' : 'false');
+  }
+
+  // ─── DRAG & DROP ─────────────────────────────────────────────────
+  onDrop(e) {
+    e.preventDefault();
+    this.dropZone.classList.remove('dragging');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      this.handleFileSelect(files[0]);
+    }
+  }
+  onDragOver(e) {
+    e.preventDefault();
+    this.dropZone.classList.add('dragging');
+  }
+  onDragLeave() {
+    this.dropZone.classList.remove('dragging');
+  }
+
+  // ─── UTILITIES & FORMATTING ──────────────────────────────────────
+  formatTime(secs, includeDecimals = true) {
+    if (!isFinite(secs) || isNaN(secs)) secs = 0;
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = Math.floor(secs % 60);
+    const ms = Math.floor((secs % 1) * 10);
+    const base = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return includeDecimals ? `${base}.${ms}` : base;
+  }
+
+  formatSRTTime(secs) {
+    if (!isFinite(secs) || isNaN(secs)) secs = 0;
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = Math.floor(secs % 60);
+    const ms = Math.round((secs % 1) * 1000);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
+  }
+
+  formatVTTTime(secs) {
+    return this.formatSRTTime(secs).replace(',', '.');
+  }
+
+  formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  escapeHtml(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  showToast(msg, showUndo = false) {
+    const toast = document.getElementById('toast');
+    const text = document.getElementById('toast-text');
+    const undoBtn = document.getElementById('toast-action');
+
+    text.textContent = msg;
+    undoBtn.style.display = showUndo ? 'inline-block' : 'none';
+    toast.classList.add('show');
+
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => {
+      toast.classList.remove('show');
+    }, 2800);
+  }
+
+  // ─── PWA & SERVICE WORKER ────────────────────────────────────────
+  initPwa() {
+    // 1. Service Worker registration
+    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => {
+            console.log('[PWA] Service Worker registered with scope:', reg.scope);
+            reg.onupdatefound = () => {
+              const installing = reg.installing;
+              if (!installing) return;
+              installing.onstatechange = () => {
+                if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+                  this.showToast('App update available. Reload to refresh.');
+                }
+              };
+            };
+          })
+          .catch((err) => {
+            console.warn('[PWA] Service Worker registration failed:', err);
+          });
+      });
+    }
+
+    // 2. Install prompt listener (captures beforeinstallprompt)
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredInstallPrompt = e;
+      const installBtn = document.getElementById('pwa-install-btn');
+      if (installBtn) {
+        installBtn.style.display = 'inline-flex';
+      }
+    });
+
+    // 3. App installed listener
+    window.addEventListener('appinstalled', () => {
+      this.deferredInstallPrompt = null;
+      const installBtn = document.getElementById('pwa-install-btn');
+      if (installBtn) {
+        installBtn.style.display = 'none';
+      }
+      this.showToast('Lined Notes installed as an app!');
+    });
+
+    // 4. Online / Offline network listeners
+    const updateOnlineStatus = () => {
+      const offlineBadge = document.getElementById('offline-badge');
+      if (offlineBadge) {
+        offlineBadge.style.display = navigator.onLine ? 'none' : 'inline-flex';
+      }
+      if (!navigator.onLine) {
+        this.showToast('Offline mode active. All notes work locally.');
+      }
+    };
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
+    // 5. Chromium File Handling API for PWA launch
+    if ('launchQueue' in window && window.LaunchParams && 'files' in window.LaunchParams.prototype) {
+      try {
+        window.launchQueue.setConsumer(async (launchParams) => {
+          if (!launchParams.files || !launchParams.files.length) return;
+          const fileHandle = launchParams.files[0];
+          const file = await fileHandle.getFile();
+          if (file) this.handleFileSelect(file);
+        });
+      } catch (err) {
+        console.warn('[PWA] File Handling launchQueue error:', err);
+      }
+    }
+
+    // 6. Handle shortcut actions (e.g., ?action=open)
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('action') === 'open') {
+        setTimeout(() => {
+          const picker = document.getElementById('file-picker');
+          if (picker) picker.click();
+        }, 350);
+      }
+    } catch (e) {}
+  }
+
+  async promptPwaInstall() {
+    if (!this.deferredInstallPrompt) return;
+    this.deferredInstallPrompt.prompt();
+    const { outcome } = await this.deferredInstallPrompt.userChoice;
+    console.log(`[PWA] Install prompt outcome: ${outcome}`);
+    if (outcome === 'accepted') {
+      const installBtn = document.getElementById('pwa-install-btn');
+      if (installBtn) installBtn.style.display = 'none';
+    }
+    this.deferredInstallPrompt = null;
+  }
+}
+
+// Instantiate App
+const app = new LinedNotesApp();
+</script>
+</body>
+</html>

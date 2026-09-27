@@ -1,0 +1,87 @@
+{
+  "id": "lined-notes-app",
+  "name": "Lined Notes — Audio & Video Annotation Studio",
+  "short_name": "Lined Notes",
+  "description": "Professional timeline audio & video annotation studio. Add timestamped notes, transcribe, export, and review media locally.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#090a0f",
+  "theme_color": "#090a0f",
+  "orientation": "any",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities",
+    "multimedia",
+    "video",
+    "music"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Open Media File",
+      "short_name": "Open Media",
+      "description": "Load an audio or video file for annotation",
+      "url": "./index.html?action=open",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "./index.html",
+      "name": "Audio & Video Media",
+      "accept": {
+        "video/mp4": [".mp4", ".m4v"],
+        "video/webm": [".webm"],
+        "video/x-matroska": [".mkv"],
+        "video/quicktime": [".mov"],
+        "audio/mpeg": [".mp3"],
+        "audio/wav": [".wav"],
+        "audio/mp4": [".m4a"],
+        "audio/ogg": [".ogg"],
+        "audio/flac": [".flac"],
+        "audio/aac": [".aac"],
+        "audio/webm": [".weba"]
+      }
+    }
+  ]
+}
