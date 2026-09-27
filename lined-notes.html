@@ -1476,6 +1476,308 @@
       color: var(--text-secondary);
     }
 
+    /* ─── SAVED SESSIONS / PROJECTS MODAL & CARDS ─────────────────────── */
+    .btn-projects {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+    }
+
+    .projects-count-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: var(--radius-full);
+      background: var(--accent-cyan);
+      color: #041316;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      line-height: 1;
+    }
+
+    .modal-card-lg {
+      width: 680px;
+      max-width: 94vw;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .modal-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: normal;
+    }
+
+    .sessions-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .sessions-search-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 6px 12px;
+      color: var(--text-muted);
+      transition: border-color 0.2s;
+    }
+
+    .sessions-search-box:focus-within {
+      border-color: var(--accent-cyan);
+      color: var(--text-primary);
+    }
+
+    .sessions-search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 13px;
+      width: 100%;
+    }
+
+    .sessions-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 52vh;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 4px;
+    }
+
+    .session-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+    }
+
+    .session-card:hover {
+      border-color: var(--border-bright);
+      background: var(--bg-card-hover);
+    }
+
+    .session-card.active {
+      border-color: var(--accent-cyan);
+      background: var(--accent-cyan-dim);
+    }
+
+    .session-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .session-file-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .session-media-icon {
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .session-file-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .session-badge-current {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      text-transform: uppercase;
+      background: var(--accent-cyan);
+      color: #041316;
+      padding: 2px 6px;
+      border-radius: var(--radius-full);
+      flex-shrink: 0;
+    }
+
+    .session-time-ago {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .session-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      flex-wrap: wrap;
+    }
+
+    .session-tags-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .session-tag-pill {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--tag-color, var(--accent-cyan));
+      color: var(--tag-color, var(--accent-cyan));
+      background: rgba(6, 182, 212, 0.08);
+      font-family: var(--font-mono);
+    }
+
+    .session-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 10px;
+    }
+
+    .sessions-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sessions-empty-icon {
+      color: var(--border-bright);
+    }
+
+    .sessions-empty-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .sessions-empty-desc {
+      font-size: 12px;
+      max-width: 320px;
+      line-height: 1.5;
+    }
+
+    /* ─── DETACHED MEDIA REVIEW STAGE ─────────────────────────────────── */
+    #detached-stage {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-surface);
+      padding: 20px;
+    }
+
+    .detached-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px 24px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .detached-icon-wrap {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--accent-cyan-dim);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .detached-badge {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent-cyan);
+      background: var(--accent-cyan-dim);
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+    }
+
+    .detached-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      word-break: break-all;
+    }
+
+    .detached-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      max-width: 380px;
+    }
+
+    .detached-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+      .mobile-export-tip {
+        display: block !important;
+      }
+    }
+
     /* ─── TOAST NOTIFICATION ─────────────────────────────────────────── */
     #toast {
       position: fixed;
@@ -1663,12 +1965,14 @@
         display: none !important;
       }
 
-      /* Open Media button compact on mobile */
-      .btn-open-media {
+      /* Open Media & Projects buttons compact on mobile */
+      .btn-open-media,
+      .btn-projects {
         padding: 6px 8px;
       }
 
-      .btn-open-media .btn-text {
+      .btn-open-media .btn-text,
+      .btn-projects .btn-text {
         display: none;
       }
 
@@ -2207,6 +2511,14 @@
         </svg>
         <span class="btn-text">Open Media</span>
       </button>
+      <button class="btn btn-ghost btn-sm btn-projects" id="projects-btn" onclick="app.openSessionsModal()"
+        title="Saved Projects & Sessions">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span class="btn-text">Projects</span>
+        <span class="projects-count-badge" id="projects-count-badge" style="display:none;">0</span>
+      </button>
       <input type="file" id="file-picker" accept="audio/*,video/*" style="display:none"
         onchange="app.handleFileSelect(this.files[0])">
 
@@ -2310,6 +2622,12 @@
             </svg>
             <span>Install App</span>
           </div>
+          <div class="dropdown-item" onclick="app.openSessionsModal(); app.closeMobileMenu();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Saved Projects <span id="menu-projects-count" style="font-family:var(--font-mono);font-size:11px;color:var(--accent-cyan);"></span></span>
+          </div>
           <div class="dropdown-item" onclick="app.openExportModal(); app.closeMobileMenu();">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -2394,6 +2712,42 @@
             <div class="audio-info-title" id="audio-title">Audio File</div>
             <div class="audio-info-sub" id="audio-meta">00:00:00</div>
             <div class="audio-bars-preview" id="audio-bars"></div>
+          </div>
+        </div>
+
+        <!-- Detached Media Review Stage -->
+        <div id="detached-stage" style="display:none;">
+          <div class="detached-card">
+            <div class="detached-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="32" height="32">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+            <div class="detached-badge">Detached Review Mode</div>
+            <div class="detached-title" id="detached-file-name">filename.mp4</div>
+            <div class="detached-desc">Viewing saved annotations without media file attached. Full note editing, searching, timeline navigation, and export are active.</div>
+            <div class="detached-actions">
+              <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-picker').click()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Attach Media File
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="app.openExportModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Export Annotations
+              </button>
+            </div>
           </div>
         </div>
 
@@ -2721,6 +3075,10 @@
         </div>
       </div>
 
+      <div class="mobile-export-tip" style="display:none;font-size:11px;color:var(--text-muted);margin-bottom:12px;text-align:center;">
+        Tip: On Android/iOS, tap <strong>Share…</strong> to save directly to Google Drive, Files, or messaging apps.
+      </div>
+
       <div class="modal-footer">
         <button class="btn btn-ghost" id="share-export-btn" onclick="app.shareExport()" style="display:none;"
           title="Share annotations via system apps">
@@ -2845,6 +3203,52 @@
     </div>
   </div>
 
+  <!-- SESSIONS / PROJECTS MODAL -->
+  <div class="modal-overlay" id="sessions-modal">
+    <div class="modal-card modal-card-lg">
+      <div class="modal-drag-indicator"></div>
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-title">Saved Projects & Sessions</div>
+          <div class="modal-subtitle">Locally stored annotations across all your media files</div>
+        </div>
+        <button class="modal-close-btn" onclick="app.closeSessionsModal()">✕</button>
+      </div>
+
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;overflow:hidden;">
+        <!-- Search and Filter Bar -->
+        <div class="sessions-filter-bar">
+          <div class="sessions-search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="sessions-search-input" placeholder="Search sessions by filename or tag…"
+              oninput="app.filterSessionsList(this.value)">
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="app.refreshSessionsModal()" title="Refresh sessions list">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Sessions List Container -->
+        <div class="sessions-list" id="sessions-list">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <div class="modal-footer" style="justify-content:space-between;margin-top:14px;">
+        <div style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);" id="sessions-storage-info">
+          IndexedDB Storage
+        </div>
+        <button class="btn btn-ghost" onclick="app.closeSessionsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- SNAPSHOT LIGHTBOX -->
   <div class="modal-overlay" id="lightbox-modal" onclick="app.closeLightbox()">
     <div
@@ -2963,6 +3367,45 @@
           }
         });
       }
+
+      async getAllSessions() {
+        await this.initPromise;
+        const sessions = [];
+        if (!this.db) {
+          try {
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              if (k && k.startsWith('ln_session_')) {
+                const val = localStorage.getItem(k);
+                if (val) {
+                  const parsed = JSON.parse(val);
+                  sessions.push({
+                    key: k,
+                    data: parsed,
+                    updatedAt: parsed.updatedAt || new Date().toISOString()
+                  });
+                }
+              }
+            }
+          } catch (e) { }
+          return sessions;
+        }
+
+        return new Promise((resolve) => {
+          try {
+            const tx = this.db.transaction(this.storeName, 'readonly');
+            const store = tx.objectStore(this.storeName);
+            const req = store.getAll();
+            req.onsuccess = () => {
+              const records = (req.result || []).filter(r => r.key && r.key.startsWith('ln_session_'));
+              resolve(records);
+            };
+            req.onerror = () => resolve([]);
+          } catch (err) {
+            resolve([]);
+          }
+        });
+      }
     }
 
     class LinedNotesApp {
@@ -2981,6 +3424,13 @@
         this.volume = 1;
         this.isMuted = false;
         this.playbackRate = 1;
+
+        // Detached Review Mode State
+        this.detachedMode = false;
+        this.detachedSessionKey = null;
+        this.detachedSessionName = null;
+        this.detachedSessionSize = 0;
+        this.detachedStage = document.getElementById('detached-stage');
 
         // Timeline Zoom & Pan
         this.zoom = 1;
@@ -3054,6 +3504,7 @@
         this.setupAudioBarsPreview();
         this.setupResizeObserver();
         this.initPwa();
+        this.updateProjectsCountBadge();
 
         // Start 60fps render loop
         const renderLoop = () => {
@@ -3243,10 +3694,58 @@
       async handleFileSelect(file) {
         if (!file) return;
 
-        // Auto-save existing session before switching files
-        if (this.mediaFile && this.notes.length > 0) {
+        // If currently in detached review mode and user selects matching file, attach seamlessly
+        if (this.detachedMode && file.name === this.detachedSessionName) {
+          this.mediaFile = file;
+          this.detachedMode = false;
+          if (this.detachedStage) this.detachedStage.style.display = 'none';
+          this.isAudio = file.type.startsWith('audio/');
+
+          if (this.mediaUrl) {
+            URL.revokeObjectURL(this.mediaUrl);
+          }
+          this.mediaUrl = URL.createObjectURL(file);
+
+          const badge = document.getElementById('file-badge');
+          const nameText = document.getElementById('file-name-text');
+          badge.classList.add('active');
+          nameText.textContent = file.name;
+          nameText.title = `${file.name} (${this.formatBytes(file.size)})`;
+
+          this.videoEl.src = this.mediaUrl;
+          this.videoEl.volume = this.volume;
+          this.videoEl.muted = this.isMuted;
+          this.videoEl.playbackRate = this.playbackRate;
+
+          if (this.isAudio) {
+            this.videoEl.classList.remove('active');
+            this.audioStage.classList.add('active');
+            document.getElementById('audio-title').textContent = file.name;
+            document.getElementById('snap-btn').style.display = 'none';
+            document.getElementById('pip-btn').style.display = 'none';
+          } else {
+            this.audioStage.classList.remove('active');
+            this.videoEl.classList.add('active');
+            document.getElementById('snap-btn').style.display = 'inline-flex';
+            document.getElementById('pip-btn').style.display = 'inline-flex';
+          }
+
+          this.dropZone.classList.add('hidden');
+          this.showToast(`Attached ${file.name} to session`);
+          this.generateWaveformPeaks(file);
+          return;
+        }
+
+        // Auto-save existing session before switching files (attached or detached)
+        if (this.notes.length > 0) {
           await this.saveSession();
         }
+
+        this.detachedMode = false;
+        this.detachedSessionKey = null;
+        this.detachedSessionName = null;
+        this.detachedSessionSize = 0;
+        if (this.detachedStage) this.detachedStage.style.display = 'none';
 
         this.mediaFile = file;
         this.isAudio = file.type.startsWith('audio/');
@@ -3394,6 +3893,10 @@
 
       // ─── PLAYBACK CONTROLS ───────────────────────────────────────────
       togglePlay() {
+        if (this.detachedMode) {
+          this.showToast('Attach media file to play video/audio');
+          return;
+        }
         if (!this.mediaFile) return;
         if (this.videoEl.paused) {
           this.videoEl.play();
@@ -3425,23 +3928,25 @@
       }
 
       skip(secs) {
-        if (!this.mediaFile) return;
+        if (!this.mediaFile && !this.detachedMode) return;
         this.seekTo(this.currentTime + secs);
       }
 
       stepFrame(dir) {
-        if (!this.mediaFile) return;
+        if (!this.mediaFile && !this.detachedMode) return;
         // ~1 frame at 25fps = 0.04s
         const frameDuration = 0.04;
-        this.videoEl.pause();
+        if (this.videoEl && this.videoEl.src) this.videoEl.pause();
         this.seekTo(this.currentTime + dir * frameDuration);
       }
 
       seekTo(time) {
-        if (!this.mediaFile) return;
+        if (!this.mediaFile && !this.detachedMode) return;
         const target = Math.max(0, Math.min(this.duration, time));
         this.currentTime = target;
-        this.videoEl.currentTime = target;
+        if (this.videoEl && !this.detachedMode && this.videoEl.src) {
+          this.videoEl.currentTime = target;
+        }
         this.updateTimeDisplay();
         this.checkActiveNote();
         this.drawTimeline();
@@ -4385,16 +4890,28 @@
 
       // ─── LOCAL STORAGE & INDEXEDDB PERSISTENCE ───────────────────────
       getStorageKey() {
-        if (!this.mediaFile) return null;
-        return `ln_session_${this.mediaFile.name}_${this.mediaFile.size}`;
+        if (this.mediaFile) {
+          return `ln_session_${this.mediaFile.name}_${this.mediaFile.size}`;
+        }
+        if (this.detachedSessionKey) {
+          return this.detachedSessionKey;
+        }
+        return null;
       }
 
       async saveSession() {
         const key = this.getStorageKey();
         if (!key) return;
+        const usedTags = Array.from(new Set(this.notes.map(n => n.tag).filter(Boolean)));
+        const fileName = this.mediaFile ? this.mediaFile.name : (this.detachedSessionName || 'Untitled Media');
+        const fileSize = this.mediaFile ? this.mediaFile.size : (this.detachedSessionSize || 0);
+
         const payload = {
-          fileName: this.mediaFile.name,
-          fileSize: this.mediaFile.size,
+          fileName: fileName,
+          fileSize: fileSize,
+          duration: this.duration || 0,
+          isAudio: this.isAudio,
+          tags: usedTags,
           updatedAt: new Date().toISOString(),
           notes: this.notes
         };
@@ -4405,6 +4922,7 @@
             statusEl.style.color = '#10b981';
             setTimeout(() => { statusEl.style.color = 'var(--text-muted)'; }, 1000);
           }
+          this.updateProjectsCountBadge();
         } catch (e) {
           console.warn('Persistence save error:', e);
         }
@@ -4435,7 +4953,7 @@
         }
         const shareBtn = document.getElementById('share-export-btn');
         if (shareBtn) {
-          shareBtn.style.display = navigator.share ? 'inline-flex' : 'none';
+          shareBtn.style.display = (typeof navigator.share === 'function') ? 'inline-flex' : 'none';
         }
         document.getElementById('export-modal').classList.add('open');
       }
@@ -4450,7 +4968,7 @@
       }
 
       generateExportContent() {
-        const fileName = this.mediaFile ? this.mediaFile.name : 'Unknown File';
+        const fileName = this.mediaFile ? this.mediaFile.name : (this.detachedSessionName || 'Annotations');
         const baseName = fileName.replace(/\.[^.]+$/, '');
         let content = '', ext = this.selectedExportFmt, mime = 'text/plain';
 
@@ -4593,13 +5111,44 @@
 
       doExportDownload() {
         const { content, ext, mime, baseName } = this.generateExportContent();
-        const blob = new Blob([content], { type: mime });
+        
+        // Android / mobile Chrome safe handling
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        
+        // On Android, DownloadManager often fails or drops non-standard MIME types (e.g. text/srt, text/vtt).
+        // Fallback to application/octet-stream or text/plain ensures proper handling without native rejection.
+        let exportMime = mime;
+        if (isAndroid) {
+          exportMime = (ext === 'html' || ext === 'json' || ext === 'csv') ? mime : 'application/octet-stream';
+        }
+
+        const blob = new Blob([content], { type: exportMime });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
+        a.style.display = 'none';
         a.href = url;
         a.download = `${baseName}_annotations.${ext}`;
-        a.click();
-        URL.revokeObjectURL(url);
+        
+        // Mandatory for mobile Android Chrome: element must be appended to DOM tree
+        document.body.appendChild(a);
+        
+        try {
+          a.click();
+        } catch (err) {
+          window.open(url, '_blank');
+        }
+
+        // Delay revokeObjectURL: Android DownloadManager delegates asynchronously to system service.
+        // Immediate revocation aborts the download before DownloadManager can stream the blob!
+        setTimeout(() => {
+          try {
+            if (a.parentNode) {
+              a.parentNode.removeChild(a);
+            }
+            URL.revokeObjectURL(url);
+          } catch (e) { }
+        }, 4000);
+
         this.closeExportModal();
         this.showToast(`Exported as .${ext}`);
       }
@@ -4618,32 +5167,353 @@
           return;
         }
         const { content, ext, baseName } = this.generateExportContent();
+        const fileName = `${baseName}_annotations.${ext}`;
         const title = `Lined Notes — ${baseName}`;
+
         if (navigator.share) {
           try {
-            const file = new File([content], `${baseName}_annotations.${ext}`, { type: 'text/plain' });
+            const file = new File([content], fileName, { type: 'text/plain;charset=utf-8' });
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
               await navigator.share({
                 title: title,
                 text: `Annotations for ${baseName}`,
                 files: [file]
               });
+              this.closeExportModal();
+              this.showToast('Shared successfully!');
+              return;
             } else {
               await navigator.share({
                 title: title,
                 text: content
               });
+              this.closeExportModal();
+              this.showToast('Shared successfully!');
+              return;
             }
-            this.closeExportModal();
-            this.showToast('Shared successfully!');
           } catch (err) {
-            if (err.name !== 'AbortError') {
-              this.copyExportToClipboard();
+            if (err.name === 'AbortError') {
+              // User dismissed the native share sheet
+              return;
+            }
+            console.warn('Native share error, falling back:', err);
+          }
+        }
+        this.copyExportToClipboard();
+      }
+
+      // ─── SAVED SESSIONS / PROJECTS MANAGEMENT ────────────────────────
+      async updateProjectsCountBadge() {
+        try {
+          const sessions = await this.db.getAllSessions();
+          const count = sessions.length;
+          const badge = document.getElementById('projects-count-badge');
+          if (badge) {
+            if (count > 0) {
+              badge.textContent = count;
+              badge.style.display = 'inline-flex';
+            } else {
+              badge.style.display = 'none';
             }
           }
-        } else {
-          this.copyExportToClipboard();
+          const menuCount = document.getElementById('menu-projects-count');
+          if (menuCount) {
+            menuCount.textContent = count > 0 ? `(${count})` : '';
+          }
+        } catch (e) {
+          console.warn('Error updating projects count:', e);
         }
+      }
+
+      async openSessionsModal() {
+        const modal = document.getElementById('sessions-modal');
+        if (!modal) return;
+        modal.classList.add('open');
+        const searchInput = document.getElementById('sessions-search-input');
+        if (searchInput) searchInput.value = '';
+        await this.renderSessionsList();
+      }
+
+      closeSessionsModal() {
+        const modal = document.getElementById('sessions-modal');
+        if (modal) modal.classList.remove('open');
+      }
+
+      async refreshSessionsModal() {
+        const searchInput = document.getElementById('sessions-search-input');
+        const query = searchInput ? searchInput.value : '';
+        await this.renderSessionsList(query);
+        this.showToast('Projects refreshed');
+      }
+
+      async filterSessionsList(query) {
+        await this.renderSessionsList(query);
+      }
+
+      timeAgo(dateStr) {
+        if (!dateStr) return 'recently';
+        const now = new Date();
+        const date = new Date(dateStr);
+        const secs = Math.floor((now - date) / 1000);
+        if (secs < 60) return 'just now';
+        const mins = Math.floor(secs / 60);
+        if (mins < 60) return `${mins}m ago`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `${hrs}h ago`;
+        const days = Math.floor(hrs / 24);
+        if (days < 30) return `${days}d ago`;
+        return date.toLocaleDateString();
+      }
+
+      async renderSessionsList(filterQuery = '') {
+        const listEl = document.getElementById('sessions-list');
+        if (!listEl) return;
+
+        listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-family:var(--font-mono);font-size:12px;">Loading saved sessions…</div>';
+
+        const rawSessions = await this.db.getAllSessions();
+        // Sort most recently updated first
+        rawSessions.sort((a, b) => {
+          const tA = new Date(a.updatedAt || a.data?.updatedAt || 0).getTime();
+          const tB = new Date(b.updatedAt || b.data?.updatedAt || 0).getTime();
+          return tB - tA;
+        });
+
+        const currentKey = this.getStorageKey();
+        const q = filterQuery.trim().toLowerCase();
+
+        const filtered = rawSessions.filter(item => {
+          if (!q) return true;
+          const fileName = (item.data?.fileName || item.fileName || '').toLowerCase();
+          if (fileName.includes(q)) return true;
+          const notes = item.data?.notes || [];
+          return notes.some(n => (n.text || '').toLowerCase().includes(q) || (n.tag || '').toLowerCase().includes(q));
+        });
+
+        const storageInfo = document.getElementById('sessions-storage-info');
+        if (storageInfo) {
+          storageInfo.textContent = `${rawSessions.length} total saved project${rawSessions.length === 1 ? '' : 's'}`;
+        }
+
+        if (filtered.length === 0) {
+          if (rawSessions.length === 0) {
+            listEl.innerHTML = `
+              <div class="sessions-empty">
+                <div class="sessions-empty-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                </div>
+                <div class="sessions-empty-title">No Saved Projects Yet</div>
+                <div class="sessions-empty-desc">Open an audio or video file and start creating notes. Your annotations will automatically save here so you can revisit them anytime.</div>
+                <button class="btn btn-primary btn-sm" onclick="app.closeSessionsModal(); document.getElementById('file-picker').click();">
+                  Open Media File
+                </button>
+              </div>`;
+          } else {
+            listEl.innerHTML = `
+              <div class="sessions-empty">
+                <div class="sessions-empty-title">No Matching Projects</div>
+                <div class="sessions-empty-desc">No saved sessions match "${this.escapeHtml(q)}". Try a different search term.</div>
+              </div>`;
+          }
+          return;
+        }
+
+        let html = '';
+        filtered.forEach(item => {
+          const key = item.key;
+          const isCurrent = (currentKey === key);
+          const fileName = item.data?.fileName || item.fileName || 'Untitled Media';
+          const fileSize = item.data?.fileSize || item.fileSize || 0;
+          const duration = item.data?.duration || 0;
+          const isAudio = !!item.data?.isAudio;
+          const notes = item.data?.notes || [];
+          const noteCount = notes.length;
+          const updatedAt = item.updatedAt || item.data?.updatedAt;
+          const timeAgoText = this.timeAgo(updatedAt);
+
+          // Get unique tags
+          const sessionTags = Array.from(new Set(notes.map(n => n.tag).filter(Boolean)));
+          const tagPills = sessionTags.map(tagId => {
+            const tagDef = this.tags.find(t => t.id === tagId);
+            const label = tagDef ? tagDef.label : tagId;
+            const color = tagDef ? tagDef.color : 'var(--accent-cyan)';
+            return `<span class="session-tag-pill" style="--tag-color:${color}">${this.escapeHtml(label)}</span>`;
+          }).join('');
+
+          const mediaIconSvg = isAudio
+            ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`
+            : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="2" y="2" width="20" height="20" rx="4"/><polygon points="10 8 16 12 10 16 10 8"/></svg>`;
+
+          html += `
+            <div class="session-card ${isCurrent ? 'active' : ''}">
+              <div class="session-card-header">
+                <div class="session-file-info">
+                  <span class="session-media-icon">${mediaIconSvg}</span>
+                  <span class="session-file-name" title="${this.escapeHtml(fileName)}">${this.escapeHtml(fileName)}</span>
+                  ${isCurrent ? '<span class="session-badge-current">Active</span>' : ''}
+                </div>
+                <div class="session-time-ago">${timeAgoText}</div>
+              </div>
+
+              <div class="session-card-meta">
+                <span><strong>${noteCount}</strong> note${noteCount === 1 ? '' : 's'}</span>
+                ${duration > 0 ? `<span>•</span><span>${this.formatTime(duration)}</span>` : ''}
+                ${fileSize > 0 ? `<span>•</span><span>${this.formatBytes(fileSize)}</span>` : ''}
+              </div>
+
+              ${tagPills ? `<div class="session-tags-row">${tagPills}</div>` : ''}
+
+              <div class="session-card-actions">
+                <button class="btn btn-sm ${isCurrent ? 'btn-ghost' : 'btn-primary'}" onclick="app.openSessionByKey('${this.escapeHtml(key)}')">
+                  ${isCurrent ? 'Current Session' : 'Open / Review'}
+                </button>
+                <button class="btn btn-ghost btn-sm" onclick="app.exportSessionByKey('${this.escapeHtml(key)}')" title="Export this session's annotations">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  Export
+                </button>
+                <button class="btn btn-ghost btn-sm text-danger" style="margin-left:auto;" onclick="app.deleteSessionByKey('${this.escapeHtml(key)}', event)" title="Delete session">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                  Delete
+                </button>
+              </div>
+            </div>`;
+        });
+
+        listEl.innerHTML = html;
+      }
+
+      async openSessionByKey(key) {
+        if (this.getStorageKey() === key && !this.detachedMode) {
+          this.closeSessionsModal();
+          this.showToast('Session already active');
+          return;
+        }
+
+        // Auto-save currently active notes before switching
+        if (this.notes.length > 0) {
+          await this.saveSession();
+        }
+
+        const data = await this.db.get(key);
+        if (!data) {
+          this.showToast('Could not load session data');
+          return;
+        }
+
+        const fileName = data.fileName || 'Untitled Media';
+        const fileSize = data.fileSize || 0;
+
+        // Check if currently loaded media file matches this session
+        if (this.mediaFile && this.mediaFile.name === fileName && this.mediaFile.size === fileSize) {
+          this.detachedMode = false;
+          if (this.detachedStage) this.detachedStage.style.display = 'none';
+          this.notes = data.notes || [];
+          this.renderNotes();
+          this.renderTagFilters();
+          this.drawTimeline();
+          this.closeSessionsModal();
+          this.showToast(`Restored ${this.notes.length} notes for ${fileName}`);
+          return;
+        }
+
+        // Enter Detached Review Mode
+        this.detachedMode = true;
+        this.detachedSessionKey = key;
+        this.detachedSessionName = fileName;
+        this.detachedSessionSize = fileSize;
+        this.mediaFile = null;
+        if (this.mediaUrl) {
+          URL.revokeObjectURL(this.mediaUrl);
+          this.mediaUrl = null;
+        }
+        if (this.videoEl) {
+          this.videoEl.pause();
+          this.videoEl.removeAttribute('src');
+          this.videoEl.load();
+          this.videoEl.classList.remove('active');
+        }
+        if (this.audioStage) {
+          this.audioStage.classList.remove('active');
+        }
+        this.isPlaying = false;
+        this.updatePlayStateUI();
+
+        // Show Detached Stage
+        if (!this.detachedStage) {
+          this.detachedStage = document.getElementById('detached-stage');
+        }
+        if (this.detachedStage) {
+          this.detachedStage.style.display = 'flex';
+        }
+        if (this.dropZone) {
+          this.dropZone.classList.add('hidden');
+        }
+        const detachedFileNameEl = document.getElementById('detached-file-name');
+        if (detachedFileNameEl) detachedFileNameEl.textContent = fileName;
+
+        // Header and metadata
+        const badge = document.getElementById('file-badge');
+        const nameText = document.getElementById('file-name-text');
+        if (badge) badge.classList.add('active');
+        if (nameText) {
+          nameText.textContent = `${fileName} (Detached)`;
+          nameText.title = `${fileName} (Detached Review Mode — media file not attached)`;
+        }
+
+        // Timeline state
+        this.notes = data.notes || [];
+        this.duration = data.duration || (this.notes.length > 0 ? Math.max(...this.notes.map(n => n.end || n.start || 0)) + 5 : 60);
+        this.currentTime = 0;
+        this.isAudio = !!data.isAudio;
+        this.activeNoteId = null;
+        this.editingNoteId = null;
+        this.waveformPeaks = null;
+
+        this.updateTimeDisplay();
+        this.renderNotes();
+        this.renderTagFilters();
+        this.drawTimeline();
+
+        this.closeSessionsModal();
+        this.showToast(`Loaded ${fileName} (${this.notes.length} notes in review mode)`);
+      }
+
+      async exportSessionByKey(key) {
+        await this.openSessionByKey(key);
+        this.openExportModal();
+      }
+
+      async deleteSessionByKey(key, event) {
+        if (event) event.stopPropagation();
+        if (!confirm('Are you sure you want to delete this saved project? This will permanently remove all stored annotations for this file.')) {
+          return;
+        }
+
+        await this.db.delete(key);
+
+        // If the deleted session was the currently loaded one, clear
+        if (this.getStorageKey() === key) {
+          this.notes = [];
+          this.detachedSessionKey = null;
+          this.renderNotes();
+          this.renderTagFilters();
+          this.drawTimeline();
+        }
+
+        await this.updateProjectsCountBadge();
+        const searchInput = document.getElementById('sessions-search-input');
+        const query = searchInput ? searchInput.value : '';
+        await this.renderSessionsList(query);
+        this.showToast('Saved project deleted');
       }
 
       // ─── IMPORT SUITE ────────────────────────────────────────────────
@@ -4794,9 +5664,20 @@
         const src = document.getElementById('lightbox-img').src;
         if (!src) return;
         const a = document.createElement('a');
+        a.style.display = 'none';
         a.href = src;
         a.download = `snapshot_${this.formatTime(this.currentTime).replace(/[:.]/g, '-')}.jpg`;
-        a.click();
+        document.body.appendChild(a);
+        try {
+          a.click();
+        } catch (e) {
+          window.open(src, '_blank');
+        }
+        setTimeout(() => {
+          try {
+            if (a.parentNode) a.parentNode.removeChild(a);
+          } catch (e) { }
+        }, 3000);
       }
 
       // ─── SHORTCUTS MODAL ─────────────────────────────────────────────
@@ -4917,6 +5798,8 @@
               this.closeExportModal();
               this.closeImportModal();
               this.closeShortcutsModal();
+              this.closeSessionsModal();
+              this.closeMobileMenu();
               this.closeLightbox();
               document.getElementById('tag-menu-dropdown').classList.remove('open');
               break;
