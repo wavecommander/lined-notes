@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <meta name="theme-color" content="#090a0f">
 <meta name="description" content="Lined Notes — Professional Audio & Video Timeline Annotation Studio">
 <title>Lined Notes — Audio & Video Annotation Studio</title>
@@ -1297,17 +1297,472 @@
     transform: translateY(-1px);
   }
 
-  /* Responsive styles */
-  @media (max-width: 820px) {
+  /* ─── NEW RESPONSIVE UI CONTROLS (DESKTOP DEFAULT) ─────────────────── */
+  .mobile-tabs { display: none; }
+  .mobile-menu-wrap { display: none; }
+  .mobile-speed-btn { display: none; }
+  .mobile-tools-toggle { display: none; }
+  .playback-controls-group { display: contents; }
+  .secondary-tools-group { display: flex; align-items: center; gap: 10px; }
+  .modal-drag-indicator { display: none; }
+
+  /* ─── MOBILE RESPONSIVE OPTIMIZATION (<= 768px) ─────────────────────── */
+  @media (max-width: 768px) {
     #app {
-      grid-template-columns: 1fr;
-      grid-template-rows: var(--header-h) 1fr 340px;
-      grid-template-areas:
-        "header"
-        "main"
-        "notes";
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      width: 100vw;
+      overflow: hidden;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
     }
-    #notes-panel { border-left: none; border-top: 1px solid var(--border); }
+
+    /* Header Compact Styling */
+    header {
+      height: 50px;
+      padding: 0 10px;
+      gap: 8px;
+      flex-shrink: 0;
+      justify-content: space-between;
+    }
+    .logo {
+      gap: 6px;
+    }
+    .logo-icon {
+      width: 26px;
+      height: 26px;
+    }
+    .logo-title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .logo-badge,
+    .header-sep,
+    .file-badge,
+    #autosave-status,
+    #pwa-install-btn,
+    .theme-toggle-btn,
+    header .btn-icon[title*="Shortcuts"] {
+      display: none !important;
+    }
+
+    /* Open Media button compact on mobile */
+    .btn-open-media {
+      padding: 6px 8px;
+    }
+    .btn-open-media .btn-text {
+      display: none;
+    }
+
+    /* Segmented View Tabs */
+    .mobile-tabs {
+      display: flex;
+      align-items: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 2px;
+      gap: 2px;
+    }
+    .mobile-tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .mobile-tab-btn.active {
+      background: var(--accent-cyan);
+      color: var(--btn-primary-text);
+      box-shadow: 0 1px 8px var(--accent-cyan-glow);
+    }
+    .mobile-tab-badge {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      padding: 1px 5px;
+      border-radius: var(--radius-full);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+    .mobile-tab-btn.active .mobile-tab-badge {
+      background: rgba(0, 0, 0, 0.28);
+      color: #ffffff;
+    }
+
+    /* Mobile Overflow Menu */
+    .mobile-menu-wrap {
+      display: block;
+      position: relative;
+    }
+    .mobile-menu-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mobile-dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--modal-card-shadow);
+      padding: 6px;
+      min-width: 195px;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+    }
+    .mobile-dropdown-menu.open {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      animation: menuFadeIn 0.15s ease-out;
+    }
+    @keyframes menuFadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .dropdown-item:hover, .dropdown-item:active {
+      background: var(--bg-card-hover);
+      color: var(--accent-cyan);
+    }
+    .dropdown-item.text-danger {
+      color: #f43f5e;
+    }
+    .dropdown-item.text-danger:hover {
+      background: rgba(244, 63, 94, 0.12);
+    }
+    .dropdown-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    /* Responsive Viewport View Toggling */
+    #app:not([data-mobile-view="notes"]) #notes-panel {
+      display: none !important;
+    }
+    #app:not([data-mobile-view="notes"]) #main-col {
+      display: flex !important;
+      flex: 1;
+      min-height: 0;
+    }
+    #app[data-mobile-view="notes"] #main-col {
+      display: none !important;
+    }
+    #app[data-mobile-view="notes"] #notes-panel {
+      display: flex !important;
+      flex: 1;
+      width: 100% !important;
+      min-height: 0;
+      border-left: none;
+      border-top: none;
+    }
+
+    /* Player Area Responsiveness */
+    #player-area {
+      flex: 1;
+      min-height: 150px;
+    }
+    #video-el {
+      max-height: 42vh;
+    }
+    .drop-box {
+      padding: 22px 14px;
+      max-width: 90%;
+      gap: 10px;
+    }
+    .drop-title {
+      font-size: 14px;
+    }
+    .drop-desc {
+      display: none;
+    }
+    .drop-pills {
+      margin-top: 4px;
+    }
+
+    /* Audio visualizer card */
+    .audio-disc-card {
+      padding: 18px 14px;
+      width: 90%;
+      max-width: 300px;
+      gap: 10px;
+    }
+    .disc-visualizer {
+      width: 72px;
+      height: 72px;
+    }
+    .disc-inner {
+      width: 32px;
+      height: 32px;
+    }
+    .audio-info-title {
+      font-size: 13px;
+    }
+    .audio-info-sub {
+      font-size: 10px;
+    }
+
+    /* Timeline & Touch Scrubber */
+    #timeline-container {
+      flex-shrink: 0;
+    }
+    .timeline-toolbar {
+      padding: 3px 10px;
+      font-size: 10px;
+    }
+    #timeline-canvas-wrap {
+      height: 52px;
+      touch-action: none;
+    }
+
+    /* Controls Area */
+    #controls-area {
+      padding: 8px 10px 10px;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* Transport Row */
+    .transport-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+      width: 100%;
+    }
+    .time-readout {
+      font-size: 13px;
+      text-align: center;
+      width: 100%;
+    }
+    .playback-controls-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+    }
+    .play-btn {
+      width: 48px;
+      height: 48px;
+    }
+    .play-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+    .skip-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+    .desktop-transport-btn {
+      display: none !important;
+    }
+
+    .mobile-speed-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-full);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+    .mobile-speed-btn:active {
+      transform: scale(0.95);
+      background: var(--bg-card-hover);
+    }
+
+    .mobile-tools-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-full);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .mobile-tools-toggle.active {
+      background: var(--accent-cyan-dim);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    /* Secondary Tools Drawer */
+    .secondary-tools-group {
+      display: none;
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      animation: drawerSlide 0.2s ease-out;
+    }
+    .secondary-tools-group.open {
+      display: flex;
+    }
+    @keyframes drawerSlide {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Annotation Input Box Grid */
+    .annotation-input-box {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      grid-template-areas:
+        "stamp tag snap"
+        "input input save";
+      gap: 6px;
+      padding: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+    .stamp-button {
+      grid-area: stamp;
+      font-size: 11px;
+      padding: 5px 8px;
+      min-height: 36px;
+    }
+    .tag-picker-wrap {
+      grid-area: tag;
+    }
+    .tag-badge-btn {
+      min-height: 36px;
+      padding: 4px 8px;
+      font-size: 11px;
+      width: 100%;
+      justify-content: space-between;
+    }
+    #snap-btn {
+      grid-area: snap;
+      min-width: 36px;
+      min-height: 36px;
+    }
+    #note-text-input {
+      grid-area: input;
+      font-size: 16px; /* Prevents iOS auto-zoom on focus */
+      min-height: 38px;
+      padding: 6px 10px;
+    }
+    .annotation-input-box .btn-primary {
+      grid-area: save;
+      min-height: 38px;
+      padding: 6px 12px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    /* Sub controls */
+    .sub-controls-row {
+      justify-content: center;
+      font-size: 11px;
+    }
+    .kbd-shortcuts-hint {
+      display: none;
+    }
+
+    /* Notes List View */
+    .notes-panel-header {
+      padding: 10px 12px;
+      gap: 8px;
+    }
+    .tag-filters-row {
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .tag-filters-row::-webkit-scrollbar {
+      display: none;
+    }
+    .note-card {
+      margin: 6px 10px;
+      padding: 12px;
+      border-radius: var(--radius-md);
+    }
+    .note-time-chip {
+      font-size: 12px;
+      padding: 4px 10px;
+      min-height: 30px;
+    }
+    .note-card-actions .btn-icon {
+      width: 34px;
+      height: 34px;
+    }
+
+    /* Bottom Sheet Modals */
+    .modal-overlay {
+      align-items: flex-end;
+      padding: 0;
+    }
+    .modal-card {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 18px 18px 0 0;
+      max-height: 85vh;
+      border-bottom: none;
+      animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-drag-indicator {
+      display: block;
+      width: 36px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border-bright);
+      margin: 8px auto 4px;
+    }
+    @keyframes slideUpModal {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
   }
 </style>
 </head>
@@ -1326,15 +1781,28 @@
           <circle cx="19" cy="12" r="2" fill="currentColor"/>
         </svg>
       </div>
-      <span>Lined Notes</span>
+      <span class="logo-title">Lined Notes</span>
       <span class="logo-badge">Studio</span>
     </a>
 
+    <!-- Mobile View Switcher Tabs (<= 768px) -->
+    <div class="mobile-tabs" id="mobile-tabs" role="tablist">
+      <button class="mobile-tab-btn active" id="tab-btn-media" onclick="app.setMobileTab('media')" role="tab" aria-selected="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span>Media</span>
+      </button>
+      <button class="mobile-tab-btn" id="tab-btn-notes" onclick="app.setMobileTab('notes')" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Notes</span>
+        <span class="mobile-tab-badge" id="mobile-tab-count">0</span>
+      </button>
+    </div>
+
     <div class="header-sep"></div>
 
-    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('file-picker').click()" title="Open Audio or Video File">
+    <button class="btn btn-ghost btn-sm btn-open-media" onclick="document.getElementById('file-picker').click()" title="Open Audio or Video File">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Open Media
+      <span class="btn-text">Open Media</span>
     </button>
     <input type="file" id="file-picker" accept="audio/*,video/*" style="display:none" onchange="app.handleFileSelect(this.files[0])">
 
@@ -1376,6 +1844,40 @@
     <button class="btn-icon" onclick="app.openShortcutsModal()" title="Keyboard Shortcuts (?)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     </button>
+
+    <!-- Mobile Overflow Menu (<= 768px) -->
+    <div class="mobile-menu-wrap" id="mobile-menu-wrap">
+      <button class="btn-icon mobile-menu-btn" id="mobile-menu-btn" onclick="app.toggleMobileMenu(event)" title="Options menu" aria-label="Options menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+      </button>
+      <div class="mobile-dropdown-menu" id="mobile-dropdown-menu">
+        <div class="dropdown-item" onclick="app.toggleTheme(); app.closeMobileMenu();">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <span>Toggle Theme</span>
+        </div>
+        <div class="dropdown-item" id="menu-item-install" onclick="app.promptPwaInstall(); app.closeMobileMenu();" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Install App</span>
+        </div>
+        <div class="dropdown-item" onclick="app.openExportModal(); app.closeMobileMenu();">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>Export Annotations…</span>
+        </div>
+        <div class="dropdown-item" onclick="app.openImportModal(); app.closeMobileMenu();">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Import Annotations…</span>
+        </div>
+        <div class="dropdown-item" onclick="app.openShortcutsModal(); app.closeMobileMenu();">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Keyboard Shortcuts</span>
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item text-danger" onclick="app.clearAllNotes(); app.closeMobileMenu();">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span>Clear All Notes</span>
+        </div>
+      </div>
+    </div>
   </header>
 
   <!-- MAIN COLUMN: Media Player + Timeline + Transport Controls -->
@@ -1449,74 +1951,85 @@
     <div id="controls-area">
       <!-- Transport Row -->
       <div class="transport-row">
-        <button class="play-btn" id="play-btn" onclick="app.togglePlay()" title="Play / Pause (Space)">
-          <svg id="play-icon" viewBox="0 0 24 24"><polygon points="7 4 19 12 7 20 7 4"/></svg>
-        </button>
-
-        <button class="btn-icon" onclick="app.skip(-10)" title="Back 10s (J)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.96"/></svg>
-        </button>
-        <button class="btn-icon" onclick="app.skip(-5)" title="Back 5s (←)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
-        </button>
-        <button class="btn-icon" onclick="app.stepFrame(-1)" title="Step 1 Frame Back (,)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="5" x2="6" y2="19"/><polygon points="18 5 9 12 18 19 18 5"/></svg>
-        </button>
-        <button class="btn-icon" onclick="app.stepFrame(1)" title="Step 1 Frame Forward (.)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="5" x2="18" y2="19"/><polygon points="6 5 15 12 6 19 6 5"/></svg>
-        </button>
-        <button class="btn-icon" onclick="app.skip(5)" title="Forward 5s (→)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
-        </button>
-        <button class="btn-icon" onclick="app.skip(10)" title="Forward 10s (L)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3.96"/></svg>
-        </button>
-
         <div class="time-readout" id="time-display">00:00:00.0 <span class="dur">/ 00:00:00.0</span></div>
+
+        <!-- Primary Playback Controls -->
+        <div class="playback-controls-group">
+          <button class="btn-icon skip-btn" onclick="app.skip(-10)" title="Back 10s (J)" aria-label="Skip back 10s">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.96"/></svg>
+          </button>
+          <button class="btn-icon desktop-transport-btn" onclick="app.skip(-5)" title="Back 5s (←)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+          </button>
+          <button class="play-btn" id="play-btn" onclick="app.togglePlay()" title="Play / Pause (Space)" aria-label="Play or Pause">
+            <svg id="play-icon" viewBox="0 0 24 24"><polygon points="7 4 19 12 7 20 7 4"/></svg>
+          </button>
+          <button class="btn-icon desktop-transport-btn" onclick="app.skip(5)" title="Forward 5s (→)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+          </button>
+          <button class="btn-icon skip-btn" onclick="app.skip(10)" title="Forward 10s (L)" aria-label="Skip forward 10s">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3.96"/></svg>
+          </button>
+          <button class="mobile-speed-btn" id="mobile-speed-btn" onclick="app.cycleSpeed()" title="Cycle Playback Speed" aria-label="Cycle speed">1×</button>
+          <button class="mobile-tools-toggle" id="mobile-tools-toggle" onclick="app.toggleMobileTools()" title="Additional Playback Tools" aria-label="Toggle tools">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
 
         <div class="spacer"></div>
 
-        <!-- In/Out Points for range notes -->
-        <button class="btn btn-ghost btn-sm" onclick="app.setInPoint()" title="Set In Point (I)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4v16"/><polyline points="15 6 9 12 15 18"/></svg>
-          In
-        </button>
-        <button class="btn btn-ghost btn-sm" onclick="app.setOutPoint()" title="Set Out Point (O)">
-          Out
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 4v16"/><polyline points="9 6 15 12 9 18"/></svg>
-        </button>
-        <button class="btn-icon" id="loop-range-btn" onclick="app.toggleLoop()" title="Toggle A-B Range Loop (Shift+L)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-        </button>
-        <button class="btn-icon" id="clear-range-btn" onclick="app.clearRange()" title="Clear Range Selection" style="display:none;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-
-        <div class="volume-group">
-          <button class="btn-icon" onclick="app.toggleMute()" id="mute-btn" title="Mute / Unmute (M)">
-            <svg id="volume-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        <!-- Secondary / Expandable Tools Group -->
+        <div class="secondary-tools-group" id="secondary-tools-group">
+          <!-- Step Frame -->
+          <button class="btn-icon" onclick="app.stepFrame(-1)" title="Step 1 Frame Back (,)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="5" x2="6" y2="19"/><polygon points="18 5 9 12 18 19 18 5"/></svg>
           </button>
-          <input type="range" id="volume-range" min="0" max="1" step="0.02" value="1" oninput="app.setVolume(this.value)">
+          <button class="btn-icon" onclick="app.stepFrame(1)" title="Step 1 Frame Forward (.)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="5" x2="18" y2="19"/><polygon points="6 5 15 12 6 19 6 5"/></svg>
+          </button>
+
+          <!-- In/Out Points for range notes -->
+          <button class="btn btn-ghost btn-sm" onclick="app.setInPoint()" title="Set In Point (I)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4v16"/><polyline points="15 6 9 12 15 18"/></svg>
+            In
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="app.setOutPoint()" title="Set Out Point (O)">
+            Out
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 4v16"/><polyline points="9 6 15 12 9 18"/></svg>
+          </button>
+          <button class="btn-icon" id="loop-range-btn" onclick="app.toggleLoop()" title="Toggle A-B Range Loop (Shift+L)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          </button>
+          <button class="btn-icon" id="clear-range-btn" onclick="app.clearRange()" title="Clear Range Selection" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+
+          <div class="volume-group">
+            <button class="btn-icon" onclick="app.toggleMute()" id="mute-btn" title="Mute / Unmute (M)">
+              <svg id="volume-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            </button>
+            <input type="range" id="volume-range" min="0" max="1" step="0.02" value="1" oninput="app.setVolume(this.value)">
+          </div>
+
+          <select class="speed-select" id="speed-select" onchange="app.setSpeed(this.value)" title="Playback Speed">
+            <option value="0.25">0.25×</option>
+            <option value="0.5">0.5×</option>
+            <option value="0.75">0.75×</option>
+            <option value="1" selected>1.0×</option>
+            <option value="1.25">1.25×</option>
+            <option value="1.5">1.5×</option>
+            <option value="1.75">1.75×</option>
+            <option value="2">2.0×</option>
+          </select>
+
+          <!-- Video Extra buttons -->
+          <button class="btn-icon" id="pip-btn" onclick="app.togglePiP()" title="Picture in Picture (P)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="12" y="12" width="8" height="6" rx="1"/></svg>
+          </button>
+          <button class="btn-icon" onclick="app.toggleFullscreen()" title="Fullscreen (F)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </button>
         </div>
-
-        <select class="speed-select" id="speed-select" onchange="app.setSpeed(this.value)" title="Playback Speed">
-          <option value="0.25">0.25×</option>
-          <option value="0.5">0.5×</option>
-          <option value="0.75">0.75×</option>
-          <option value="1" selected>1.0×</option>
-          <option value="1.25">1.25×</option>
-          <option value="1.5">1.5×</option>
-          <option value="1.75">1.75×</option>
-          <option value="2">2.0×</option>
-        </select>
-
-        <!-- Video Extra buttons -->
-        <button class="btn-icon" id="pip-btn" onclick="app.togglePiP()" title="Picture in Picture (P)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><rect x="12" y="12" width="8" height="6" rx="1"/></svg>
-        </button>
-        <button class="btn-icon" onclick="app.toggleFullscreen()" title="Fullscreen (F)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-        </button>
       </div>
 
       <!-- Annotation Note Input Box -->
@@ -1611,6 +2124,7 @@
 <!-- EXPORT MODAL -->
 <div class="modal-overlay" id="export-modal">
   <div class="modal-card">
+    <div class="modal-drag-indicator"></div>
     <div class="modal-header">
       <div class="modal-title">Export Annotations</div>
       <button class="modal-close-btn" onclick="app.closeExportModal()">✕</button>
@@ -1644,6 +2158,10 @@
     </div>
 
     <div class="modal-footer">
+      <button class="btn btn-ghost" id="share-export-btn" onclick="app.shareExport()" style="display:none;" title="Share annotations via system apps">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Share…
+      </button>
       <button class="btn btn-ghost" onclick="app.copyExportToClipboard()">Copy to Clipboard</button>
       <button class="btn btn-primary" onclick="app.doExportDownload()">Download File</button>
     </div>
@@ -1653,6 +2171,7 @@
 <!-- IMPORT MODAL -->
 <div class="modal-overlay" id="import-modal">
   <div class="modal-card">
+    <div class="modal-drag-indicator"></div>
     <div class="modal-header">
       <div class="modal-title">Import Annotations</div>
       <button class="modal-close-btn" onclick="app.closeImportModal()">✕</button>
@@ -1687,6 +2206,7 @@
 <!-- KEYBOARD SHORTCUTS MODAL -->
 <div class="modal-overlay" id="shortcuts-modal">
   <div class="modal-card">
+    <div class="modal-drag-indicator"></div>
     <div class="modal-header">
       <div class="modal-title">Keyboard Shortcuts</div>
       <button class="modal-close-btn" onclick="app.closeShortcutsModal()">✕</button>
@@ -2375,6 +2895,77 @@ class LinedNotesApp {
   setSpeed(rate) {
     this.playbackRate = parseFloat(rate);
     this.videoEl.playbackRate = this.playbackRate;
+    const mobileSpeedBtn = document.getElementById('mobile-speed-btn');
+    if (mobileSpeedBtn) mobileSpeedBtn.textContent = `${this.playbackRate}×`;
+    const speedSelect = document.getElementById('speed-select');
+    if (speedSelect && speedSelect.value !== String(rate)) speedSelect.value = String(rate);
+  }
+
+  cycleSpeed() {
+    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+    const current = this.playbackRate || 1;
+    let nextIdx = speeds.findIndex(s => Math.abs(s - current) < 0.05);
+    nextIdx = (nextIdx + 1) % speeds.length;
+    const nextSpeed = speeds[nextIdx];
+    this.setSpeed(nextSpeed);
+    this.showToast(`Speed: ${nextSpeed}×`);
+  }
+
+  toggleMobileTools() {
+    const drawer = document.getElementById('secondary-tools-group');
+    const btn = document.getElementById('mobile-tools-toggle');
+    if (drawer) {
+      const isOpen = drawer.classList.toggle('open');
+      if (btn) btn.classList.toggle('active', isOpen);
+    }
+  }
+
+  setMobileTab(tab) {
+    this.mobileTab = tab;
+    const appEl = document.getElementById('app');
+    if (appEl) {
+      appEl.setAttribute('data-mobile-view', tab);
+    }
+    const tabMedia = document.getElementById('tab-btn-media');
+    const tabNotes = document.getElementById('tab-btn-notes');
+    if (tabMedia && tabNotes) {
+      if (tab === 'notes') {
+        tabMedia.classList.remove('active');
+        tabMedia.setAttribute('aria-selected', 'false');
+        tabNotes.classList.add('active');
+        tabNotes.setAttribute('aria-selected', 'true');
+      } else {
+        tabNotes.classList.remove('active');
+        tabNotes.setAttribute('aria-selected', 'false');
+        tabMedia.classList.add('active');
+        tabMedia.setAttribute('aria-selected', 'true');
+      }
+    }
+    if (tab === 'media') {
+      setTimeout(() => this.resizeCanvas(), 50);
+    }
+  }
+
+  toggleMobileMenu(e) {
+    if (e) e.stopPropagation();
+    const menu = document.getElementById('mobile-dropdown-menu');
+    if (menu) {
+      const isOpen = menu.classList.toggle('open');
+      if (isOpen) {
+        const onOutsideClick = (evt) => {
+          if (!menu.contains(evt.target)) {
+            menu.classList.remove('open');
+            document.removeEventListener('click', onOutsideClick);
+          }
+        };
+        setTimeout(() => document.addEventListener('click', onOutsideClick), 0);
+      }
+    }
+  }
+
+  closeMobileMenu() {
+    const menu = document.getElementById('mobile-dropdown-menu');
+    if (menu) menu.classList.remove('open');
   }
 
   togglePiP() {
@@ -2980,6 +3571,9 @@ class LinedNotesApp {
 
   jumpToNote(start) {
     this.seekTo(start);
+    if (window.innerWidth <= 768) {
+      this.setMobileTab('media');
+    }
   }
 
   jumpPrevNote() {
@@ -3088,6 +3682,8 @@ class LinedNotesApp {
     const countBadge = document.getElementById('notes-count-badge');
 
     countBadge.textContent = this.notes.length;
+    const mobileTabCount = document.getElementById('mobile-tab-count');
+    if (mobileTabCount) mobileTabCount.textContent = this.notes.length;
 
     // Filter notes by search and tag
     let filtered = this.notes;
@@ -3250,6 +3846,10 @@ class LinedNotesApp {
       this.showToast('No notes to export');
       return;
     }
+    const shareBtn = document.getElementById('share-export-btn');
+    if (shareBtn) {
+      shareBtn.style.display = navigator.share ? 'inline-flex' : 'none';
+    }
     document.getElementById('export-modal').classList.add('open');
   }
   closeExportModal() {
@@ -3401,6 +4001,7 @@ class LinedNotesApp {
 </div>
 </body>
 </html>`;
+    return { content, ext, mime, baseName };
   }
 
   doExportDownload() {
@@ -3422,6 +4023,40 @@ class LinedNotesApp {
       this.closeExportModal();
       this.showToast(`Copied ${ext.toUpperCase()} to clipboard`);
     });
+  }
+
+  async shareExport() {
+    if (this.notes.length === 0) {
+      this.showToast('No notes to share');
+      return;
+    }
+    const { content, ext, baseName } = this.generateExportContent();
+    const title = `Lined Notes — ${baseName}`;
+    if (navigator.share) {
+      try {
+        const file = new File([content], `${baseName}_annotations.${ext}`, { type: 'text/plain' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: title,
+            text: `Annotations for ${baseName}`,
+            files: [file]
+          });
+        } else {
+          await navigator.share({
+            title: title,
+            text: content
+          });
+        }
+        this.closeExportModal();
+        this.showToast('Shared successfully!');
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          this.copyExportToClipboard();
+        }
+      }
+    } else {
+      this.copyExportToClipboard();
+    }
   }
 
   // ─── IMPORT SUITE ────────────────────────────────────────────────
@@ -3827,6 +4462,10 @@ class LinedNotesApp {
       if (installBtn) {
         installBtn.style.display = 'inline-flex';
       }
+      const menuItemInstall = document.getElementById('menu-item-install');
+      if (menuItemInstall) {
+        menuItemInstall.style.display = 'flex';
+      }
     });
 
     // 3. App installed listener
@@ -3835,6 +4474,10 @@ class LinedNotesApp {
       const installBtn = document.getElementById('pwa-install-btn');
       if (installBtn) {
         installBtn.style.display = 'none';
+      }
+      const menuItemInstall = document.getElementById('menu-item-install');
+      if (menuItemInstall) {
+        menuItemInstall.style.display = 'none';
       }
       this.showToast('Lined Notes installed as an app!');
     });
