@@ -1,0 +1,79 @@
+/* ==========================================================================
+   Timeline Container, Scrubber & Canvas Styles
+   ========================================================================== */
+
+#timeline-container {
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+.timeline-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 16px;
+  background: var(--bg-input);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.timeline-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.zoom-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.zoom-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.zoom-val {
+  min-width: 26px;
+  text-align: center;
+}
+
+#timeline-canvas-wrap {
+  height: var(--timeline-h);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--bg-surface);
+  transition: background-color 0.2s ease;
+}
+
+#timeline-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}

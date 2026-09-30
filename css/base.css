@@ -1,0 +1,216 @@
+/* ==========================================================================
+   Base Styles, Resets & Global Utility Classes
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-bright);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ==========================================================================
+   Coordinated Zero-Flicker Theme Transition
+   Enforces identical duration and cubic-bezier easing across all elements
+   ========================================================================== */
+
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: background-color var(--dur-theme, 0.3s) var(--ease-theme, cubic-bezier(0.4, 0, 0.2, 1)),
+              border-color var(--dur-theme, 0.3s) var(--ease-theme, cubic-bezier(0.4, 0, 0.2, 1)),
+              color var(--dur-theme, 0.3s) var(--ease-theme, cubic-bezier(0.4, 0, 0.2, 1)),
+              fill var(--dur-theme, 0.3s) var(--ease-theme, cubic-bezier(0.4, 0, 0.2, 1)),
+              stroke var(--dur-theme, 0.3s) var(--ease-theme, cubic-bezier(0.4, 0, 0.2, 1)),
+              box-shadow var(--dur-theme, 0.3s) var(--ease-theme, cubic-bezier(0.4, 0, 0.2, 1)),
+              outline-color var(--dur-theme, 0.3s) var(--ease-theme, cubic-bezier(0.4, 0, 0.2, 1)) !important;
+  transition-delay: 0s !important;
+}
+
+html.theme-transitioning #audio-stage::after {
+  transition: opacity var(--dur-theme, 0.3s) var(--ease-theme, cubic-bezier(0.4, 0, 0.2, 1)) !important;
+}
+
+/* Theme Toggle Button Icons */
+.theme-toggle-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle-btn svg {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 14px;
+  transition: transform var(--dur-theme, 0.3s) var(--ease-theme, cubic-bezier(0.4, 0, 0.2, 1)),
+              opacity var(--dur-theme, 0.3s) var(--ease-theme, cubic-bezier(0.4, 0, 0.2, 1)),
+              color var(--dur-theme, 0.3s) var(--ease-theme, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+html[data-theme="light"] .theme-icon-sun {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.5);
+  pointer-events: none;
+}
+
+html[data-theme="light"] .theme-icon-moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+  pointer-events: auto;
+}
+
+html[data-theme="dark"] .theme-icon-sun {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+  pointer-events: auto;
+}
+
+html[data-theme="dark"] .theme-icon-moon {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.5);
+  pointer-events: none;
+}
+
+/* Main App Grid Layout */
+#app {
+  display: grid;
+  grid-template-rows: var(--header-h) 1fr;
+  grid-template-columns: 1fr var(--sidebar-w);
+  grid-template-areas:
+    "header  header"
+    "main    notes";
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* ─── BUTTONS ─────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--border-bright);
+}
+
+.btn-primary {
+  background: var(--accent-primary);
+  color: var(--btn-primary-text);
+  font-weight: 600;
+  border-color: transparent;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 2px 12px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: transparent;
+  color: #c85a54;
+  border-color: rgba(200, 90, 84, 0.35);
+}
+
+.btn-danger:hover {
+  background: rgba(200, 90, 84, 0.12);
+  border-color: #c85a54;
+}
+
+.btn-sm {
+  padding: 4px 9px;
+  font-size: 11px;
+  border-radius: var(--radius-sm);
+}
+
+.btn-icon {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-icon:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--border-bright);
+}
+
+.btn-icon:active,
+.btn:active {
+  transform: scale(0.97);
+}
+
+.spacer {
+  flex: 1;
+}

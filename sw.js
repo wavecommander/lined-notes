@@ -3,7 +3,7 @@
    Offline support, asset caching & PWA installation foundation
    ========================================================================== */
 
-const CACHE_VERSION = 'lined-notes-v1';
+const CACHE_VERSION = 'lined-notes-v5';
 const CACHE_NAME = `lined-notes-cache-${CACHE_VERSION}`;
 
 // Core assets required for 100% offline functionality
@@ -21,7 +21,30 @@ const PRECACHE_ASSETS = [
   './icons/icon-maskable-512.png',
   './icons/apple-touch-icon.png',
   './icons/favicon-32x32.png',
-  './icons/favicon-16x16.png'
+  './icons/favicon-16x16.png',
+  // Modular CSS
+  './css/main.css',
+  './css/tokens.css',
+  './css/base.css',
+  './css/header.css',
+  './css/player.css',
+  './css/timeline.css',
+  './css/controls.css',
+  './css/notes.css',
+  './css/modals.css',
+  './css/mobile.css',
+  // Modular JS
+  './js/app.js',
+  './js/config.js',
+  './js/state.js',
+  './js/utils.js',
+  './js/db.js',
+  './js/player.js',
+  './js/timeline.js',
+  './js/notes.js',
+  './js/sessions.js',
+  './js/export.js',
+  './js/import.js'
 ];
 
 // Install: pre-cache static assets

@@ -1,0 +1,356 @@
+/* ==========================================================================
+   Player Area, Audio Visualizer & Detached Mode Styles
+   ========================================================================== */
+
+#main-col {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  background: var(--bg-base);
+}
+
+#player-area {
+  flex: 1;
+  min-height: 0;
+  background: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+#video-el {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: none;
+  outline: none;
+}
+
+#video-el.active {
+  display: block;
+}
+
+/* Audio Visualizer Stage */
+#audio-stage {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, #231f1b 0%, #141210 75%);
+  position: relative;
+  user-select: none;
+  z-index: 1;
+}
+
+#audio-stage.active {
+  display: flex;
+}
+
+#audio-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, #faf7f2 0%, #eae4da 75%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+html[data-theme="light"] #audio-stage::after {
+  opacity: 1;
+}
+
+.audio-disc-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px;
+  background: var(--disc-card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--disc-card-shadow);
+  backdrop-filter: blur(12px);
+  width: 380px;
+  max-width: 90%;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.disc-visualizer {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--accent-primary), #c85a54, #b07dac, var(--accent-primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px var(--accent-glow);
+  animation: spin 8s linear infinite;
+  animation-play-state: paused;
+}
+
+.disc-visualizer.playing {
+  animation-play-state: running;
+}
+
+.disc-inner {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--disc-inner-bg);
+  border: 3px solid var(--disc-inner-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.audio-info-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  word-break: break-all;
+  max-width: 100%;
+}
+
+.audio-info-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.audio-bars-preview {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 28px;
+  width: 100%;
+  justify-content: center;
+}
+
+.audio-bar-seg {
+  width: 3px;
+  background: var(--accent-primary);
+  border-radius: 2px;
+  min-height: 4px;
+  transition: height 0.05s ease-out;
+  opacity: 0.88;
+}
+
+/* Drop Zone */
+#drop-zone {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  cursor: pointer;
+  background: var(--drop-zone-bg);
+  backdrop-filter: blur(8px);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  z-index: 5;
+}
+
+#drop-zone.dragging {
+  background: var(--accent-dim);
+  border: 2px dashed var(--accent-primary);
+}
+
+#drop-zone:hover {
+  background: rgba(27, 24, 21, 0.95);
+}
+
+html[data-theme="light"] #drop-zone:hover {
+  background: rgba(242, 238, 230, 0.95);
+}
+
+#drop-zone.hidden {
+  display: none;
+}
+
+.drop-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 40px;
+  border: 2px dashed var(--border-bright);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  transition: border-color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+  max-width: 440px;
+  text-align: center;
+}
+
+#drop-zone:hover .drop-box,
+#drop-zone.dragging .drop-box {
+  border-color: var(--accent-primary);
+  transform: scale(1.02);
+}
+
+.drop-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  background: var(--accent-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+}
+
+.drop-icon-wrap svg {
+  width: 28px;
+  height: 28px;
+}
+
+.drop-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.drop-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.drop-pills {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.drop-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+/* Detached Media Review Stage */
+#detached-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  padding: 20px;
+}
+
+.detached-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.detached-icon-wrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 1px solid rgba(217, 119, 66, 0.3);
+  color: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detached-badge {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-primary);
+  background: var(--accent-dim);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(217, 119, 66, 0.25);
+}
+
+.detached-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.detached-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 380px;
+}
+
+.detached-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Flash overlay for note capture */
+#capture-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 3px solid var(--accent-primary);
+  opacity: 0;
+  transition: opacity 0.1s;
+  z-index: 10;
+}
+
+#capture-flash.flash {
+  animation: flashAnim 0.35s ease-out forwards;
+}
+
+@keyframes flashAnim {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

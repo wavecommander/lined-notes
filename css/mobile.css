@@ -1,0 +1,552 @@
+/* ==========================================================================
+   Mobile Responsive Optimization (<= 768px)
+   Aligning with TSOFT-26 (Mobile Performance & Ergonomics)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    width: 100vw;
+    overflow: hidden;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  /* Header Compact Styling */
+  header {
+    height: 50px;
+    padding: 0 10px;
+    gap: 8px;
+    flex-shrink: 0;
+    justify-content: space-between;
+  }
+
+  .logo {
+    gap: 6px;
+  }
+
+  .logo-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .logo-title {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .logo-badge,
+  .header-sep,
+  .file-badge,
+  #autosave-status,
+  #pwa-install-btn,
+  .theme-toggle-btn,
+  header .btn-icon[title*="Shortcuts"] {
+    display: none !important;
+  }
+
+  /* Compact button styling on tablets & large phones */
+  .btn-open-media,
+  .btn-projects {
+    padding: 6px 8px;
+  }
+
+  .btn-open-media .btn-text,
+  .btn-projects .btn-text {
+    display: none;
+  }
+
+  /* On narrow phones (< 480px), move Open Media and Projects to overflow menu to prevent overcrowding (ISSUE-06) */
+  @media (max-width: 480px) {
+    .btn-open-media,
+    .btn-projects {
+      display: none !important;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .logo-title {
+      display: none;
+    }
+  }
+
+  /* Segmented View Tabs */
+  .mobile-tabs {
+    display: flex;
+    align-items: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    padding: 2px;
+    gap: 2px;
+  }
+
+  .mobile-tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .mobile-tab-btn.active {
+    background: var(--accent-primary);
+    color: var(--btn-primary-text);
+    box-shadow: 0 1px 8px var(--accent-glow);
+  }
+
+  .mobile-tab-badge {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    padding: 1px 5px;
+    border-radius: var(--radius-full);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+  }
+
+  .mobile-tab-btn.active .mobile-tab-badge {
+    background: rgba(0, 0, 0, 0.28);
+    color: #ffffff;
+  }
+
+  /* Mobile Overflow Menu */
+  .mobile-menu-wrap {
+    display: block;
+    position: relative;
+  }
+
+  .mobile-menu-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--modal-card-shadow);
+    padding: 6px;
+    min-width: 195px;
+    z-index: 100;
+    backdrop-filter: blur(16px);
+  }
+
+  .mobile-dropdown-menu.open {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    animation: menuFadeIn 0.15s ease-out;
+  }
+
+  @keyframes menuFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .dropdown-item:hover,
+  .dropdown-item:active {
+    background: var(--bg-card-hover);
+    color: var(--accent-primary);
+  }
+
+  .dropdown-item.text-danger {
+    color: #c85a54;
+  }
+
+  .dropdown-item.text-danger:hover {
+    background: rgba(200, 90, 84, 0.12);
+  }
+
+  .dropdown-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  /* Responsive Viewport View Toggling */
+  #app:not([data-mobile-view="notes"]) #notes-panel {
+    display: none !important;
+  }
+
+  #app:not([data-mobile-view="notes"]) #main-col {
+    display: flex !important;
+    flex: 1;
+    min-height: 0;
+  }
+
+  #app[data-mobile-view="notes"] #main-col {
+    display: none !important;
+  }
+
+  #app[data-mobile-view="notes"] #notes-panel {
+    display: flex !important;
+    flex: 1;
+    width: 100% !important;
+    min-height: 0;
+    border-left: none;
+    border-top: none;
+  }
+
+  /* Player Area Responsiveness */
+  #player-area {
+    flex: 1;
+    min-height: 150px;
+  }
+
+  #video-el {
+    max-height: 42vh;
+  }
+
+  .drop-box {
+    padding: 22px 14px;
+    max-width: 90%;
+    gap: 10px;
+  }
+
+  .drop-title {
+    font-size: 14px;
+  }
+
+  .drop-desc {
+    display: none;
+  }
+
+  .drop-pills {
+    margin-top: 4px;
+  }
+
+  .audio-disc-card {
+    padding: 18px 14px;
+    width: 90%;
+    max-width: 300px;
+    gap: 10px;
+  }
+
+  .disc-visualizer {
+    width: 72px;
+    height: 72px;
+  }
+
+  .disc-inner {
+    width: 32px;
+    height: 32px;
+  }
+
+  .audio-info-title {
+    font-size: 13px;
+  }
+
+  .audio-info-sub {
+    font-size: 10px;
+  }
+
+  /* Timeline & Touch Scrubber */
+  #timeline-container {
+    flex-shrink: 0;
+  }
+
+  .timeline-toolbar {
+    padding: 3px 10px;
+    font-size: 10px;
+  }
+
+  #timeline-canvas-wrap {
+    height: 52px;
+    touch-action: none;
+  }
+
+  /* Controls Area */
+  #controls-area {
+    padding: 8px 10px 10px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .transport-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    width: 100%;
+  }
+
+  .time-readout {
+    font-size: 13px;
+    text-align: center;
+    width: 100%;
+  }
+
+  .playback-controls-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .play-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .play-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .skip-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+
+  .desktop-transport-btn {
+    display: none !important;
+  }
+
+  .mobile-speed-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-full);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+
+  .mobile-speed-btn:active {
+    transform: scale(0.95);
+    background: var(--bg-card-hover);
+  }
+
+  .mobile-tools-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-full);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+  }
+
+  .mobile-tools-toggle.active {
+    background: var(--accent-dim);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+
+  .secondary-tools-group {
+    display: none;
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    animation: drawerSlide 0.2s ease-out;
+  }
+
+  .secondary-tools-group.open {
+    display: flex;
+  }
+
+  @keyframes drawerSlide {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Annotation Input Box Grid */
+  .annotation-input-box {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "stamp tag snap"
+      "input input save";
+    gap: 6px;
+    padding: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
+
+  .stamp-button {
+    grid-area: stamp;
+    font-size: 11px;
+    padding: 5px 8px;
+    min-height: 36px;
+  }
+
+  .tag-picker-wrap {
+    grid-area: tag;
+  }
+
+  .tag-badge-btn {
+    min-height: 36px;
+    padding: 4px 8px;
+    font-size: 11px;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  #snap-btn {
+    grid-area: snap;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  #note-text-input {
+    grid-area: input;
+    font-size: 16px; /* Prevents iOS auto-zoom on focus */
+    min-height: 38px;
+    padding: 6px 10px;
+  }
+
+  .annotation-input-box .btn-primary {
+    grid-area: save;
+    min-height: 38px;
+    padding: 6px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .sub-controls-row {
+    justify-content: center;
+    font-size: 11px;
+  }
+
+  .kbd-shortcuts-hint {
+    display: none;
+  }
+
+  /* Notes List View */
+  .notes-panel-header {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .tag-filters-row {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .tag-filters-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .note-card {
+    margin: 6px 10px;
+    padding: 12px;
+    border-radius: var(--radius-md);
+  }
+
+  .note-time-chip {
+    font-size: 12px;
+    padding: 4px 10px;
+    min-height: 30px;
+  }
+
+  .note-card-actions .btn-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* Bottom Sheet Modals on Mobile */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-card {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 18px 18px 0 0;
+    max-height: 85vh;
+    border-bottom: none;
+    animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .modal-drag-indicator {
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-bright);
+    margin: 8px auto 4px;
+  }
+
+  .mobile-export-tip {
+    display: block !important;
+  }
+
+  @keyframes slideUpModal {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+}

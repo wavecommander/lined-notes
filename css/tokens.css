@@ -1,0 +1,132 @@
+/* ==========================================================================
+   Design Tokens & Color Themes
+   Tactile Software: Deep Warm Earthy Tones & Warm Cream Light Mode (TSOFT-27)
+   ========================================================================== */
+
+:root,
+html[data-theme="dark"] {
+  /* Surfaces & Backgrounds */
+  --bg-base: #141210;
+  --bg-surface: #1b1815;
+  --bg-card: #231f1b;
+  --bg-card-hover: #2c2722;
+  --bg-input: #171412;
+
+  /* Borders */
+  --border: #38312b;
+  --border-subtle: #2b2520;
+  --border-bright: #4d443c;
+  --border-focus: #d97742;
+
+  /* Primary Accent: Warm Terracotta / Clay */
+  --accent-primary: #d97742;
+  --accent-hover: #e28a52;
+  --accent-dim: rgba(217, 119, 66, 0.14);
+  --accent-glow: rgba(217, 119, 66, 0.28);
+
+  /* Backwards-compatibility aliases */
+  --accent-cyan: var(--accent-primary);
+  --accent-cyan-hover: var(--accent-hover);
+  --accent-cyan-dim: var(--accent-dim);
+  --accent-cyan-glow: var(--accent-glow);
+
+  /* Note Tags: Warm Earthy Palette */
+  --tag-note: #d97742;       /* Terracotta */
+  --tag-action: #4a90e2;     /* Slate Blue */
+  --tag-highlight: #709775;  /* Sage Green */
+  --tag-issue: #c85a54;      /* Rust Red */
+  --tag-quote: #b07dac;      /* Dusty Mauve */
+
+  /* Typography Colors */
+  --text-primary: #f5f2eb;
+  --text-secondary: #a89f91;
+  --text-muted: #6e6459;
+  --text-dim: #4d453d;
+
+  /* Composite Component Variables */
+  --disc-card-bg: rgba(35, 31, 27, 0.75);
+  --disc-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --disc-inner-bg: #1b1815;
+  --disc-inner-border: #000000;
+  --drop-zone-bg: rgba(20, 18, 16, 0.88);
+  --modal-overlay-bg: rgba(10, 8, 7, 0.78);
+  --modal-card-shadow: 0 20px 60px rgba(0, 0, 0, 0.75);
+  --toast-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --play-btn-text: #ffffff;
+  --btn-primary-text: #ffffff;
+  --note-card-active-bg: rgba(217, 119, 66, 0.09);
+  --note-card-active-border: rgba(217, 119, 66, 0.45);
+  --note-card-active-shadow: 0 0 16px rgba(217, 119, 66, 0.12);
+
+  /* Typography & Sizing */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  --timeline-h: 76px;
+  --sidebar-w: 390px;
+  --header-h: 52px;
+
+  /* Unified Theme Transition Animation Curve */
+  --ease-theme: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-theme: 0.3s;
+}
+
+html[data-theme="light"] {
+  /* Surfaces & Backgrounds: Warm Cream / Linen */
+  --bg-base: #f7f4ee;
+  --bg-surface: #ffffff;
+  --bg-card: #f2eee6;
+  --bg-card-hover: #e9e3d8;
+  --bg-input: #ffffff;
+
+  /* Borders */
+  --border: #dfd8cd;
+  --border-subtle: #eae4da;
+  --border-bright: #b8ad9e;
+  --border-focus: #c25e2a;
+
+  /* Primary Accent: Deep Terracotta */
+  --accent-primary: #c25e2a;
+  --accent-hover: #d97742;
+  --accent-dim: rgba(194, 94, 42, 0.12);
+  --accent-glow: rgba(194, 94, 42, 0.22);
+
+  /* Backwards-compatibility aliases */
+  --accent-cyan: var(--accent-primary);
+  --accent-cyan-hover: var(--accent-hover);
+  --accent-cyan-dim: var(--accent-dim);
+  --accent-cyan-glow: var(--accent-glow);
+
+  /* Note Tags */
+  --tag-note: #c25e2a;
+  --tag-action: #2e6cb5;
+  --tag-highlight: #4d7a53;
+  --tag-issue: #b8433d;
+  --tag-quote: #8e588a;
+
+  /* Typography Colors */
+  --text-primary: #2b241e;
+  --text-secondary: #6e6357;
+  --text-muted: #94887b;
+  --text-dim: #b8ad9e;
+
+  /* Composite Component Variables */
+  --disc-card-bg: rgba(255, 255, 255, 0.92);
+  --disc-card-shadow: 0 16px 40px rgba(43, 36, 30, 0.08);
+  --disc-inner-bg: #ffffff;
+  --disc-inner-border: #dfd8cd;
+  --drop-zone-bg: rgba(247, 244, 238, 0.92);
+  --modal-overlay-bg: rgba(43, 36, 30, 0.45);
+  --modal-card-shadow: 0 20px 50px rgba(43, 36, 30, 0.15);
+  --toast-shadow: 0 8px 24px rgba(43, 36, 30, 0.12);
+  --play-btn-text: #ffffff;
+  --btn-primary-text: #ffffff;
+  --note-card-active-bg: rgba(194, 94, 42, 0.08);
+  --note-card-active-border: rgba(194, 94, 42, 0.4);
+  --note-card-active-shadow: 0 0 16px rgba(194, 94, 42, 0.12);
+}

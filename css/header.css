@@ -1,0 +1,144 @@
+/* ==========================================================================
+   Header Component Styles
+   ========================================================================== */
+
+header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  gap: 14px;
+  position: relative;
+  z-index: 20;
+  user-select: none;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--accent-primary), #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+.logo-badge {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--accent-primary);
+  background: var(--accent-dim);
+  border: 1px solid rgba(217, 119, 66, 0.3);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+}
+
+.header-sep {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+}
+
+.file-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  color: var(--text-secondary);
+  max-width: 320px;
+}
+
+.file-badge .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.file-badge.active .dot {
+  background: var(--accent-primary);
+  box-shadow: 0 0 8px var(--accent-primary);
+}
+
+.file-badge-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.btn-projects {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.projects-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--accent-primary);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+/* Offline badge */
+#offline-badge {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: #d97742;
+  background: rgba(217, 119, 66, 0.12);
+  border: 1px solid rgba(217, 119, 66, 0.28);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
+
+/* Auto-save status */
+#autosave-status {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Mobile-only elements hidden on desktop */
+.mobile-tabs,
+.mobile-menu-wrap {
+  display: none;
+}
