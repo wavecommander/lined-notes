@@ -25,7 +25,7 @@ export class LinedNotesApp {
     this.import = new ImportManager();
 
     this.shortcutsModal = document.getElementById('shortcuts-modal');
-    this.pauseOnTypeCheck = document.getElementById('pause-on-type-check');
+    this.pauseToggleBtn = document.getElementById('pause-toggle-btn');
     this.dropZone = document.getElementById('drop-zone');
     this.deferredInstallPrompt = null;
 
@@ -101,17 +101,29 @@ export class LinedNotesApp {
     try {
       const savedPause = localStorage.getItem(APP_CONFIG.pauseOnTypeKey);
       state.pauseOnType = savedPause === 'true';
-      if (this.pauseOnTypeCheck) {
-        this.pauseOnTypeCheck.checked = state.pauseOnType;
-      }
+      this.updatePauseToggleUI();
     } catch (e) {}
   }
 
   togglePauseOnType(enabled) {
-    state.pauseOnType = enabled;
+    if (typeof enabled === 'boolean') {
+      state.pauseOnType = enabled;
+    } else {
+      state.pauseOnType = !state.pauseOnType;
+    }
     try {
-      localStorage.setItem(APP_CONFIG.pauseOnTypeKey, enabled ? 'true' : 'false');
+      localStorage.setItem(APP_CONFIG.pauseOnTypeKey, state.pauseOnType ? 'true' : 'false');
     } catch (e) {}
+    this.updatePauseToggleUI();
+  }
+
+  updatePauseToggleUI() {
+    const btn = this.pauseToggleBtn || document.getElementById('pause-toggle-btn');
+    if (btn) {
+      btn.classList.toggle('active', !!state.pauseOnType);
+      btn.setAttribute('aria-pressed', state.pauseOnType ? 'true' : 'false');
+      btn.setAttribute('title', state.pauseOnType ? 'Pause while typing is ON (Click to disable)' : 'Pause while typing is OFF (Click to enable)');
+    }
   }
 
   setupWindowEvents() {

@@ -527,6 +527,17 @@
           <input type="text" id="note-text-input"
             placeholder="Type annotation note here… (Press Enter to save, N to capture timestamp)" maxlength="1000">
 
+          <!-- Pause While Typing Toggle Pill -->
+          <button type="button" class="pause-toggle-btn active" id="pause-toggle-btn"
+            onclick="app.togglePauseOnType()" title="Pause while typing is ON (Click to disable)" aria-pressed="true">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" width="10" height="10">
+              <rect x="5" y="4" width="4.5" height="16" rx="1.5" />
+              <rect x="14.5" y="4" width="4.5" height="16" rx="1.5" />
+            </svg>
+            <span class="pause-toggle-label">Pause on type</span>
+            <span class="pause-toggle-track"><span class="pause-toggle-thumb"></span></span>
+          </button>
+
           <!-- Snapshot Capture for Video -->
           <button class="btn-icon" id="snap-btn" onclick="app.takeSnapshot()" title="Capture video frame thumbnail">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -540,10 +551,6 @@
 
         <!-- Sub-controls / preferences & hint -->
         <div class="sub-controls-row">
-          <label class="checkbox-label" title="Automatically pause playback while typing a note">
-            <input type="checkbox" id="pause-on-type-check" onchange="app.togglePauseOnType(this.checked)">
-            <span>Pause while typing</span>
-          </label>
 
           <div class="kbd-shortcuts-hint">
             <span class="kbd-pill"><kbd>Space</kbd> Play/Pause</span>
