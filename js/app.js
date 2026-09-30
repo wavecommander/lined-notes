@@ -421,7 +421,10 @@ export class LinedNotesApp {
   }
 
   handleFileSelect(file) {
+    if (!file) return;
     this.player.loadFile(file);
+    const picker = document.getElementById('file-picker');
+    if (picker) picker.value = '';
   }
 
   onDrop(e) {

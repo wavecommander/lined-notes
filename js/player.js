@@ -96,6 +96,56 @@ export class PlayerController {
       this.startAudioBarsAnimation(); // Smooth decay to baseline
       state.emit('playstatechange', false);
     });
+
+    v.addEventListener('emptied', () => {
+      state.isPlaying = false;
+      this.updatePlayStateUI();
+      this.resetAudioBars();
+      state.emit('playstatechange', false);
+    });
+  }
+
+  resetPlaybackState() {
+    if (this.videoEl) {
+      try {
+        this.videoEl.pause();
+      } catch (e) { }
+      try {
+        this.videoEl.currentTime = 0;
+      } catch (e) { }
+    }
+
+    if (document.pictureInPictureElement) {
+      try {
+        document.exitPictureInPicture().catch(() => { });
+      } catch (e) { }
+    }
+
+    state.isPlaying = false;
+    state.currentTime = 0;
+    state.isScrubbing = false;
+    state.isPanning = false;
+
+    this.updatePlayStateUI();
+    this.resetAudioBars();
+    this.updateTimeDisplay();
+
+    state.emit('playstatechange', false);
+  }
+
+  resetAudioBars() {
+    if (this.audioBarsRafId) {
+      cancelAnimationFrame(this.audioBarsRafId);
+      this.audioBarsRafId = null;
+    }
+    this.audioBarHeights.fill(4);
+    if (this.audioBarElements && this.audioBarElements.length > 0) {
+      for (let i = 0; i < this.audioBarsCount; i++) {
+        if (this.audioBarElements[i]) {
+          this.audioBarElements[i].style.height = '4px';
+        }
+      }
+    }
   }
 
   async loadFile(file) {
@@ -103,6 +153,7 @@ export class PlayerController {
 
     // Check if attaching to an existing detached review session
     if (state.detachedMode && file.name === state.detachedSessionName) {
+      this.resetPlaybackState();
       state.mediaFile = file;
       state.detachedMode = false;
       const detachedStage = document.getElementById('detached-stage');
@@ -115,6 +166,9 @@ export class PlayerController {
       this.updateMediaUI(file);
       showToast(`Attached ${file.name} to session`);
       this.generateWaveformPeaks(file);
+
+      state.emit('filereset');
+      state.emit('filerestet');
       return;
     }
 
@@ -122,6 +176,9 @@ export class PlayerController {
     if (state.notes.length > 0) {
       state.emit('requestsave');
     }
+
+    // Immediately stop and reset playback before changing source
+    this.resetPlaybackState();
 
     state.detachedMode = false;
     state.detachedSessionKey = null;
@@ -140,6 +197,8 @@ export class PlayerController {
     state.isLooping = false;
     state.isTimeStamped = false;
     state.waveformPeaks = null;
+    state.duration = 0;
+    state.currentTime = 0;
     state.zoom = 1;
     state.scrollOffset = 0;
 
@@ -153,6 +212,7 @@ export class PlayerController {
     showToast(`Loaded ${file.name}`);
     this.generateWaveformPeaks(file);
 
+    state.emit('filereset');
     state.emit('filerestet');
   }
 
@@ -169,6 +229,9 @@ export class PlayerController {
     this.videoEl.volume = state.volume;
     this.videoEl.muted = state.isMuted;
     this.videoEl.playbackRate = state.playbackRate;
+    this.updateVolumeIcon();
+    if (this.speedSelect) this.speedSelect.value = state.playbackRate.toString();
+    if (this.mobileSpeedBtn) this.mobileSpeedBtn.textContent = `${state.playbackRate}×`;
 
     const snapBtn = document.getElementById('snap-btn');
     const pipBtn = document.getElementById('pip-btn');

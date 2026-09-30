@@ -36,6 +36,26 @@ export class NotesManager {
       this.renderNotes();
       this.renderTagFilters();
     });
+    state.on('filereset', () => this.resetRangeAndInputState());
+    state.on('filerestet', () => this.resetRangeAndInputState());
+  }
+
+  resetRangeAndInputState() {
+    this.clearRange();
+    state.isTimeStamped = false;
+    state.stampTime = 0;
+    if (this.stampBadge) this.stampBadge.classList.remove('locked');
+    if (this.stampBadgeVal) this.stampBadgeVal.textContent = '00:00';
+    if (this.noteInput) this.noteInput.value = '';
+    state.editingNoteId = null;
+    state.activeNoteId = null;
+    state.deletedHistory = [];
+    state.searchQuery = '';
+    state.filterTag = 'all';
+    const searchInput = document.getElementById('search-notes-input') || document.getElementById('search-input');
+    if (searchInput) searchInput.value = '';
+    this.renderTagFilters();
+    this.renderNotes();
   }
 
   setupEvents() {
@@ -302,6 +322,7 @@ export class NotesManager {
     if (state.notes.length === 0) return;
     if (!confirm(`Delete all ${state.notes.length} annotations? This action cannot be undone.`)) return;
     state.notes = [];
+    this.resetRangeAndInputState();
     state.emit('noteschange');
     state.emit('requestsave');
     showToast('All notes cleared');

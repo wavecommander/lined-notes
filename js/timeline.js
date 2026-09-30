@@ -58,7 +58,21 @@ export class TimelineEngine {
 
     state.on('timelinechanged', () => this.drawTimeline());
     state.on('noteschange', () => this.drawTimeline());
-    state.on('filerestet', () => this.drawTimeline());
+    state.on('filereset', () => this.resetTimelineState());
+    state.on('filerestet', () => this.resetTimelineState());
+  }
+
+  resetTimelineState() {
+    this.resetZoom();
+    state.hoverTime = null;
+    state.hoverX = null;
+    state.isPanning = false;
+    state.isScrubbing = false;
+    if (this.animFrame) {
+      cancelAnimationFrame(this.animFrame);
+      this.animFrame = null;
+    }
+    this.drawTimeline();
   }
 
   setupResizeObserver() {

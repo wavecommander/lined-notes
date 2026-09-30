@@ -264,11 +264,21 @@ export class SessionsManager {
     const fileName = data.fileName || 'Untitled Media';
     const fileSize = data.fileSize || 0;
 
+    // Reset playback & all transport / input / range / timeline states
+    this.player.resetPlaybackState();
+    state.emit('filereset');
+    state.emit('filerestet');
+
     // Check if active media file matches
     if (state.mediaFile && state.mediaFile.name === fileName && state.mediaFile.size === fileSize) {
       state.detachedMode = false;
       if (this.detachedStage) this.detachedStage.style.display = 'none';
       state.notes = data.notes || [];
+      state.currentTime = 0;
+      if (this.player.videoEl) {
+        try { this.player.videoEl.currentTime = 0; } catch (e) {}
+      }
+      this.player.updateTimeDisplay();
       state.emit('noteschange');
       state.emit('timelinechanged');
       this.closeSessionsModal();
@@ -326,6 +336,9 @@ export class SessionsManager {
     state.editingNoteId = null;
     state.waveformPeaks = null;
 
+    const statusText = document.getElementById('waveform-status-text');
+    if (statusText) statusText.textContent = 'Synthetic';
+
     this.player.updateTimeDisplay();
     state.emit('noteschange');
     state.emit('timelinechanged');
@@ -347,9 +360,26 @@ export class SessionsManager {
 
     await this.db.delete(key);
 
-    if (state.getStorageKey() === key) {
+    if (state.getStorageKey() === key || state.detachedSessionKey === key) {
+      this.player.resetPlaybackState();
       state.notes = [];
+      state.detachedMode = false;
       state.detachedSessionKey = null;
+      state.detachedSessionName = null;
+      state.detachedSessionSize = 0;
+      if (this.detachedStage) this.detachedStage.style.display = 'none';
+
+      if (!state.mediaFile) {
+        const badge = document.getElementById('file-badge');
+        const nameText = document.getElementById('file-name-text');
+        if (badge) badge.classList.remove('active');
+        if (nameText) nameText.textContent = 'No media loaded';
+        const dropZone = document.getElementById('drop-zone');
+        if (dropZone) dropZone.classList.remove('hidden');
+      }
+
+      state.emit('filereset');
+      state.emit('filerestet');
       state.emit('noteschange');
       state.emit('timelinechanged');
     }
