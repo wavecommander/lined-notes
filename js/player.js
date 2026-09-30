@@ -21,6 +21,10 @@ export class PlayerController {
     this.volumeRange = document.getElementById('volume-range');
     this.muteBtn = document.getElementById('mute-btn');
     this.volumeIcon = document.getElementById('volume-icon');
+    this.playerArea = document.getElementById('player-area');
+    this.fullscreenExitBtn = document.getElementById('fullscreen-exit-btn');
+    this.fsHideTimer = null;
+    this.isFsButtonHovered = false;
 
     // Live Web Audio & Frequency Visualizer state
     this.audioBarsCount = 32;
@@ -34,6 +38,7 @@ export class PlayerController {
 
     this.initEvents();
     this.setupAudioBars();
+    this.setupFullscreenListeners();
   }
 
   initEvents() {
@@ -343,22 +348,96 @@ export class PlayerController {
   togglePiP() {
     if (!document.pictureInPictureElement) {
       if (this.videoEl && this.videoEl.requestPictureInPicture) {
-        this.videoEl.requestPictureInPicture().catch(() => {});
+        this.videoEl.requestPictureInPicture().catch(() => { });
       }
     } else {
-      document.exitPictureInPicture().catch(() => {});
+      document.exitPictureInPicture().catch(() => { });
     }
   }
 
   toggleFullscreen() {
-    const target = state.isAudio ? this.audioStage : this.videoEl;
+    const target = this.playerArea || (state.isAudio ? this.audioStage : this.videoEl);
     if (!document.fullscreenElement) {
       if (target && target.requestFullscreen) {
-        target.requestFullscreen().catch(() => {});
+        target.requestFullscreen().catch(() => { });
       }
     } else {
-      document.exitFullscreen().catch(() => {});
+      document.exitFullscreen().catch(() => { });
     }
+  }
+
+  setupFullscreenListeners() {
+    if (!this.playerArea) return;
+
+    const onActivity = () => {
+      if (!document.fullscreenElement) return;
+      this.showFullscreenExitButton();
+      this.scheduleFullscreenExitHide();
+    };
+
+    this.playerArea.addEventListener('mousemove', onActivity);
+    this.playerArea.addEventListener('touchstart', onActivity, { passive: true });
+    this.playerArea.addEventListener('touchmove', onActivity, { passive: true });
+
+    if (this.fullscreenExitBtn) {
+      this.fullscreenExitBtn.addEventListener('mouseenter', () => {
+        this.isFsButtonHovered = true;
+        clearTimeout(this.fsHideTimer);
+        this.showFullscreenExitButton();
+      });
+      this.fullscreenExitBtn.addEventListener('mouseleave', () => {
+        this.isFsButtonHovered = false;
+        this.scheduleFullscreenExitHide();
+      });
+    }
+
+    const onFsChange = () => this.handleFullscreenChange();
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+  }
+
+  handleFullscreenChange() {
+    const isFs = !!document.fullscreenElement;
+    if (this.playerArea) {
+      this.playerArea.classList.toggle('is-fullscreen', isFs);
+      if (!isFs) {
+        this.playerArea.classList.remove('cursor-idle');
+      }
+    }
+
+    if (isFs) {
+      this.showFullscreenExitButton();
+      this.scheduleFullscreenExitHide();
+    } else {
+      this.hideFullscreenExitButton();
+    }
+  }
+
+  showFullscreenExitButton() {
+    if (!this.fullscreenExitBtn) return;
+    this.fullscreenExitBtn.classList.add('visible');
+    if (this.playerArea) {
+      this.playerArea.classList.remove('cursor-idle');
+    }
+  }
+
+  hideFullscreenExitButton() {
+    clearTimeout(this.fsHideTimer);
+    if (!this.fullscreenExitBtn) return;
+    this.fullscreenExitBtn.classList.remove('visible');
+    if (this.playerArea && document.fullscreenElement) {
+      this.playerArea.classList.add('cursor-idle');
+    }
+  }
+
+  scheduleFullscreenExitHide() {
+    clearTimeout(this.fsHideTimer);
+    if (!document.fullscreenElement || this.isFsButtonHovered) return;
+    this.fsHideTimer = setTimeout(() => {
+      if (!this.isFsButtonHovered && document.fullscreenElement) {
+        this.hideFullscreenExitButton();
+      }
+    }, 2500);
   }
 
   updateTimeDisplay() {

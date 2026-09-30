@@ -310,34 +310,40 @@
     width: 100%;
   }
 
+  .timeline-separator {
+    display: none;
+  }
+
   .time-readout {
     font-size: 13px;
     text-align: center;
     width: 100%;
+    margin-right: 0;
   }
 
   .playback-controls-group {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
   }
 
   .play-btn {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
   }
 
   .play-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
 
   .skip-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
   }
 
   .desktop-transport-btn {
@@ -348,36 +354,42 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: var(--radius-full);
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
     font-family: var(--font-mono);
     font-size: 11px;
     font-weight: 600;
     color: var(--accent-primary);
     cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
+    transition: all 0.15s ease;
   }
 
+  .mobile-speed-btn:hover,
   .mobile-speed-btn:active {
-    transform: scale(0.95);
     background: var(--bg-card-hover);
+    border-color: var(--border-bright);
   }
 
   .mobile-tools-toggle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: var(--radius-full);
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    transition: all 0.15s ease;
+  }
+
+  .mobile-tools-toggle:hover {
+    color: var(--text-primary);
+    background: var(--bg-card-hover);
   }
 
   .mobile-tools-toggle.active {
@@ -389,7 +401,7 @@
   .secondary-tools-group {
     display: none;
     width: 100%;
-    background: var(--bg-card);
+    background: var(--bg-surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 8px;
@@ -398,6 +410,15 @@
     justify-content: center;
     gap: 8px;
     animation: drawerSlide 0.2s ease-out;
+  }
+
+  .secondary-tools-group.open {
+    display: flex;
+  }
+
+  .secondary-tools-group .timeline-separator {
+    display: block;
+    height: 18px;
   }
 
   .secondary-tools-group.open {

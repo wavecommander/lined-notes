@@ -126,6 +126,10 @@ export class NotesManager {
     state.isLooping = false;
     const loopBtn = document.getElementById('loop-range-btn');
     if (loopBtn) loopBtn.classList.remove('active');
+    const inBtn = document.getElementById('in-point-btn');
+    const outBtn = document.getElementById('out-point-btn');
+    if (inBtn) inBtn.classList.remove('active');
+    if (outBtn) outBtn.classList.remove('active');
     this.updateRangeStatusUI();
     state.emit('timelinechanged');
   }
@@ -134,6 +138,12 @@ export class NotesManager {
     const rangeText = document.getElementById('range-status-text');
     const rangeVal = document.getElementById('range-val');
     const clearBtn = document.getElementById('clear-range-btn');
+    const inBtn = document.getElementById('in-point-btn');
+    const outBtn = document.getElementById('out-point-btn');
+
+    if (inBtn) inBtn.classList.toggle('active', state.inPoint !== null);
+    if (outBtn) outBtn.classList.toggle('active', state.outPoint !== null);
+
     if (state.inPoint !== null) {
       if (rangeText) rangeText.style.display = 'inline';
       if (clearBtn) clearBtn.style.display = 'inline-flex';

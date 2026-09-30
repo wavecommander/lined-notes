@@ -12,79 +12,203 @@
   border-top: 1px solid var(--border-subtle);
 }
 
+/* ==========================================================================
+   Playback Controls — Option 2: Modern Minimalist (Squircles & Monolithic Bar)
+   ========================================================================== */
+
 .transport-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-
-.playback-controls-group {
-  display: contents;
-}
-
-.secondary-tools-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.play-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--accent-primary);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--play-btn-text);
-  transition: transform 0.15s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px var(--accent-glow);
-}
-
-.play-btn:hover {
-  transform: scale(1.06);
-  background: var(--accent-hover);
-  box-shadow: 0 4px 16px var(--accent-glow);
-}
-
-.play-btn svg {
-  width: 17px;
-  height: 17px;
-  fill: currentColor;
+  gap: 8px;
 }
 
 .time-readout {
   font-family: var(--font-mono);
   font-size: 13px;
+  font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
-  min-width: 160px;
+  letter-spacing: 0.02em;
+  min-width: 155px;
+  margin-right: 4px;
 }
 
 .time-readout .dur {
   color: var(--text-muted);
 }
 
-.speed-select {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+.playback-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.secondary-tools-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.timeline-separator {
+  width: 1px;
+  height: 18px;
+  background: var(--border-subtle);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* Unified 32x32 Squircle Buttons across the entire transport bar */
+.transport-row .btn-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.transport-row .btn-icon:hover {
+  background: rgba(255, 255, 255, 0.07);
   color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.transport-row .btn-icon:active {
+  transform: scale(0.96);
+}
+
+.transport-row .btn-icon.active {
+  background: var(--accent-dim);
+  border-color: rgba(217, 119, 66, 0.45);
+  color: var(--accent-primary);
+}
+
+.transport-row .btn-icon svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.75;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+/* Hero Play Button (Modern Squircle) */
+.play-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent-primary);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
+  box-shadow: 0 3px 12px var(--accent-glow);
+  margin: 0 2px;
+}
+
+.play-btn:hover {
+  transform: scale(1.05);
+  background: var(--accent-hover);
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+.play-btn:active {
+  transform: scale(0.96);
+}
+
+.play-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+/* Bracket In/Out Buttons */
+.bracket-btn {
+  height: 32px;
+  padding: 0 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: 11px;
-  padding: 4px 6px;
-  border-radius: var(--radius-sm);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.bracket-btn .bracket-char {
+  color: var(--text-muted);
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.bracket-btn:hover {
+  border-color: var(--border-bright);
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
+.bracket-btn:hover .bracket-char {
+  color: var(--text-secondary);
+}
+
+.bracket-btn:active {
+  transform: scale(0.97);
+}
+
+.bracket-btn.active {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: var(--accent-dim);
+}
+
+.bracket-btn.active .bracket-char {
+  color: var(--accent-primary);
+}
+
+/* Refined Speed Selector matching 32px height */
+.speed-select {
+  height: 32px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 0 8px;
+  border-radius: 8px;
   cursor: pointer;
   outline: none;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: all 0.15s ease;
+}
+
+.speed-select:hover {
+  border-color: var(--border-bright);
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
 }
 
 .speed-select:focus {
   border-color: var(--accent-primary);
+  color: var(--text-primary);
 }
 
+/* Volume Group */
 .volume-group {
   display: flex;
   align-items: center;
@@ -112,7 +236,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 #volume-range {
-  width: 72px;
+  width: 68px;
 }
 
 /* Annotation Input Box */
