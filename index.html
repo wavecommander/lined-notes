@@ -27,7 +27,9 @@
   <!-- Fonts & Modular Styles -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
 
   <script>
@@ -42,6 +44,7 @@
     })();
   </script>
 </head>
+
 <body>
 
   <div id="app">
@@ -209,7 +212,8 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
             </svg>
-            <span>Saved Projects <span id="menu-projects-count" style="font-family:var(--font-mono);font-size:11px;color:var(--accent-cyan);"></span></span>
+            <span>Saved Projects <span id="menu-projects-count"
+                style="font-family:var(--font-mono);font-size:11px;color:var(--accent-cyan);"></span></span>
           </div>
           <div class="dropdown-item" onclick="app.openExportModal(); app.closeMobileMenu();">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
@@ -262,7 +266,7 @@
                 <polygon points="10 8 16 12 10 16 10 8" />
               </svg>
             </div>
-            <div class="drop-title">Drop your audio or video file here</div>
+            <div class="drop-title">Select your audio or video file</div>
             <div class="drop-desc">Works 100% locally in your browser. No files are ever uploaded to any server.</div>
             <div class="drop-pills">
               <span class="drop-pill">MP4</span>
@@ -302,7 +306,7 @@
         <button id="fullscreen-exit-btn" class="fullscreen-exit-btn" onclick="app.toggleFullscreen()"
           title="Exit Fullscreen (Esc)" aria-label="Exit fullscreen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-            <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+            <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
           </svg>
           <span class="fullscreen-exit-text">Exit Fullscreen</span>
           <kbd class="fullscreen-exit-kbd">Esc</kbd>
@@ -322,7 +326,8 @@
             </div>
             <div class="detached-badge">Detached Review Mode</div>
             <div class="detached-title" id="detached-file-name">filename.mp4</div>
-            <div class="detached-desc">Viewing saved annotations without media file attached. Full note editing, searching, timeline navigation, and export are active.</div>
+            <div class="detached-desc">Viewing saved annotations without media file attached. Full note editing,
+              searching, timeline navigation, and export are active.</div>
             <div class="detached-actions">
               <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-picker').click()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
@@ -534,22 +539,14 @@
             placeholder="Type annotation note here… (Press Enter to save, N to capture timestamp)" maxlength="1000">
 
           <!-- Pause While Typing Toggle Pill -->
-          <button type="button" class="pause-toggle-btn active" id="pause-toggle-btn"
-            onclick="app.togglePauseOnType()" title="Pause while typing is ON (Click to disable)" aria-pressed="true">
+          <button type="button" class="pause-toggle-btn active" id="pause-toggle-btn" onclick="app.togglePauseOnType()"
+            title="Pause while typing is ON (Click to disable)" aria-pressed="true">
             <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" width="10" height="10">
               <rect x="5" y="4" width="4.5" height="16" rx="1.5" />
               <rect x="14.5" y="4" width="4.5" height="16" rx="1.5" />
             </svg>
             <span class="pause-toggle-label">Pause on type</span>
             <span class="pause-toggle-track"><span class="pause-toggle-thumb"></span></span>
-          </button>
-
-          <!-- Snapshot Capture for Video -->
-          <button class="btn-icon" id="snap-btn" onclick="app.takeSnapshot()" title="Capture video frame thumbnail">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-              <circle cx="12" cy="13" r="4" />
-            </svg>
           </button>
 
           <button class="btn btn-primary btn-sm" onclick="app.saveNote()">+ Add Note</button>
@@ -671,7 +668,8 @@
         </div>
       </div>
 
-      <div class="mobile-export-tip" style="display:none;font-size:11px;color:var(--text-muted);margin-bottom:12px;text-align:center;">
+      <div class="mobile-export-tip"
+        style="display:none;font-size:11px;color:var(--text-muted);margin-bottom:12px;text-align:center;">
         Tip: On Android/iOS, tap <strong>Share…</strong> to save directly to Google Drive, Files, or messaging apps.
       </div>
 
@@ -847,15 +845,17 @@
 
   <!-- SNAPSHOT LIGHTBOX -->
   <div class="modal-overlay" id="lightbox-modal" onclick="app.closeLightbox()">
-    <div
-      style="position:relative;max-width:90vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;gap:12px;">
-      <img id="lightbox-img"
-        style="max-width:100%;max-height:80vh;border-radius:var(--radius-md);border:1px solid var(--border-bright);box-shadow:0 20px 60px rgba(0,0,0,0.8);"
-        src="" alt="Thumbnail Snapshot">
-      <div style="display:flex;gap:10px;">
-        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();app.downloadLightboxImage()">Download
-          Image</button>
-        <button class="btn btn-ghost btn-sm" onclick="app.closeLightbox()">Close</button>
+    <div class="lightbox-content" onclick="event.stopPropagation()">
+      <img id="lightbox-img" src="" alt="Thumbnail Snapshot">
+      <div class="lightbox-actions">
+        <button class="btn btn-primary btn-sm" id="lightbox-download-btn" onclick="app.downloadLightboxImage()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Download Image
+        </button>
       </div>
     </div>
   </div>

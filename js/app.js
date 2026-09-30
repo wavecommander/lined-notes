@@ -529,10 +529,6 @@ export class LinedNotesApp {
     this.notes.toggleTagMenu(e);
   }
 
-  takeSnapshot() {
-    return this.notes.takeSnapshot();
-  }
-
   saveNote() {
     this.notes.saveNote();
   }
@@ -549,8 +545,8 @@ export class LinedNotesApp {
     this.notes.downloadLightboxImage();
   }
 
-  openLightbox(src) {
-    this.notes.openLightbox(src);
+  openLightbox(src, timecode = null) {
+    this.notes.openLightbox(src, timecode);
   }
 
   closeLightbox() {

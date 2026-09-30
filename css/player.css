@@ -232,6 +232,10 @@ html[data-theme="light"] #drop-zone:hover {
   color: var(--text-primary);
 }
 
+.drop-text-mobile {
+  display: none;
+}
+
 .drop-desc {
   font-size: 12px;
   color: var(--text-secondary);

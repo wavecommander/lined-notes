@@ -21,6 +21,7 @@ export class NotesManager {
     this.tagMenuDropdown = document.getElementById('tag-menu-dropdown');
     this.currentTagDot = document.getElementById('current-tag-dot');
     this.currentTagLabel = document.getElementById('current-tag-label');
+    this.currentLightboxTimecode = null;
 
     this.init();
   }
@@ -73,7 +74,8 @@ export class NotesManager {
         const thumbImg = e.target.closest('.note-card-thumb');
         if (thumbImg) {
           e.stopPropagation();
-          this.openLightbox(thumbImg.src);
+          const time = thumbImg.dataset.time !== undefined ? parseFloat(thumbImg.dataset.time) : null;
+          this.openLightbox(thumbImg.src, time);
           return;
         }
 
@@ -461,7 +463,7 @@ export class NotesManager {
       } else {
         // View Mode
         const rangeText = note.end ? ` → ${formatTime(note.end)}` : '';
-        const thumbHtml = note.thumb ? `<img class="note-card-thumb" src="${note.thumb}" alt="Snapshot">` : '';
+        const thumbHtml = note.thumb ? `<img class="note-card-thumb" src="${note.thumb}" data-time="${note.start}" alt="Snapshot">` : '';
 
         card.innerHTML = `
           <div class="note-card-header">
@@ -518,11 +520,12 @@ export class NotesManager {
     if (this.tagMenuDropdown) this.tagMenuDropdown.classList.toggle('open');
   }
 
-  openLightbox(src) {
+  openLightbox(src, timecode = null) {
     const modal = document.getElementById('lightbox-modal');
     const img = document.getElementById('lightbox-img');
     if (modal && img) {
       img.src = src;
+      this.currentLightboxTimecode = (timecode !== null && isFinite(timecode)) ? timecode : null;
       modal.classList.add('open');
     }
   }
@@ -530,23 +533,180 @@ export class NotesManager {
   closeLightbox() {
     const modal = document.getElementById('lightbox-modal');
     if (modal) modal.classList.remove('open');
+    this.currentLightboxTimecode = null;
   }
 
-  downloadLightboxImage() {
+  async captureFullResFrame(timecode) {
+    if (!state.mediaUrl || state.isAudio) return null;
+
+    // 1. Try offscreen video element to avoid disrupting playback
+    try {
+      const offscreenResult = await new Promise((resolve) => {
+        const offVideo = document.createElement('video');
+        offVideo.muted = true;
+        offVideo.playsInline = true;
+        offVideo.preload = 'auto';
+        offVideo.src = state.mediaUrl;
+
+        let resolved = false;
+        const cleanup = () => {
+          if (resolved) return;
+          resolved = true;
+          offVideo.removeAttribute('src');
+          offVideo.load();
+        };
+
+        const timer = setTimeout(() => {
+          cleanup();
+          resolve(null);
+        }, 3000);
+
+        const onSeeked = () => {
+          clearTimeout(timer);
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = offVideo.videoWidth || 640;
+            canvas.height = offVideo.videoHeight || 360;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(offVideo, 0, 0, canvas.width, canvas.height);
+            cleanup();
+            canvas.toBlob((blob) => {
+              resolve(blob ? URL.createObjectURL(blob) : null);
+            }, 'image/png');
+          } catch (err) {
+            cleanup();
+            resolve(null);
+          }
+        };
+
+        offVideo.addEventListener('loadedmetadata', () => {
+          const targetTime = Math.max(0, Math.min(timecode, offVideo.duration || timecode));
+          if (Math.abs(offVideo.currentTime - targetTime) < 0.05) {
+            onSeeked();
+          } else {
+            offVideo.currentTime = targetTime;
+          }
+        }, { once: true });
+
+        offVideo.addEventListener('seeked', onSeeked, { once: true });
+        offVideo.addEventListener('error', () => {
+          clearTimeout(timer);
+          cleanup();
+          resolve(null);
+        }, { once: true });
+      });
+
+      if (offscreenResult) return offscreenResult;
+    } catch (e) {
+      console.warn('Offscreen full-res capture failed, trying primary video element:', e);
+    }
+
+    // 2. Fallback to primary video element
+    const v = this.player?.videoEl;
+    if (v && v.videoWidth > 0) {
+      const prevTime = v.currentTime;
+      const wasPaused = v.paused;
+      if (!wasPaused) v.pause();
+
+      try {
+        const targetTime = Math.max(0, Math.min(timecode, v.duration || timecode));
+        if (Math.abs(v.currentTime - targetTime) >= 0.05) {
+          await new Promise((resolve) => {
+            const timer = setTimeout(resolve, 2000);
+            v.addEventListener('seeked', () => {
+              clearTimeout(timer);
+              resolve();
+            }, { once: true });
+            v.currentTime = targetTime;
+          });
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = v.videoWidth;
+        canvas.height = v.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+
+        // Restore playback position
+        if (Math.abs(v.currentTime - prevTime) >= 0.05) {
+          v.currentTime = prevTime;
+          if (!wasPaused) v.play().catch(() => { });
+        }
+
+        return new Promise((resolve) => {
+          canvas.toBlob((blob) => {
+            resolve(blob ? URL.createObjectURL(blob) : null);
+          }, 'image/png');
+        });
+      } catch (err) {
+        console.warn('Primary video full-res capture failed:', err);
+        if (!wasPaused && v.paused) v.play().catch(() => { });
+      }
+    }
+
+    return null;
+  }
+
+  async downloadLightboxImage() {
     const img = document.getElementById('lightbox-img');
-    if (!img || !img.src) return;
+    if (!img) return;
+
+    const downloadBtn = document.getElementById('lightbox-download-btn');
+    const originalText = downloadBtn ? downloadBtn.innerHTML : '';
+    if (downloadBtn) {
+      downloadBtn.disabled = true;
+      downloadBtn.innerHTML = `
+        <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+          <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"/>
+        </svg>
+        Capturing…
+      `;
+    }
+
+    const timecode = this.currentLightboxTimecode;
+    let fullResUrl = null;
+
+    if (timecode !== null && isFinite(timecode)) {
+      fullResUrl = await this.captureFullResFrame(timecode);
+    }
+
+    const finalUrl = fullResUrl || img.src;
+    if (!finalUrl) {
+      if (downloadBtn) {
+        downloadBtn.disabled = false;
+        downloadBtn.innerHTML = originalText;
+      }
+      return;
+    }
+
+    const baseName = (state.mediaFile?.name || 'snapshot').replace(/\.[^/.]+$/, '');
+    const timeStr = timecode !== null ? formatTime(timecode).replace(/[:.]/g, '-') : 'frame';
+    const isPng = Boolean(fullResUrl);
+    const filename = `${baseName}_${timeStr}.png`;
+
     const a = document.createElement('a');
     a.style.display = 'none';
-    a.href = img.src;
-    a.download = `snapshot_${formatTime(state.currentTime).replace(/[:.]/g, '-')}.jpg`;
+    a.href = finalUrl;
+    a.download = filename;
     document.body.appendChild(a);
     try {
       a.click();
     } catch (e) {
-      window.open(img.src, '_blank');
+      window.open(finalUrl, '_blank');
     }
+
+    showToast('Downloaded snapshot');
+
     setTimeout(() => {
       if (a.parentNode) a.parentNode.removeChild(a);
-    }, 2000);
+      if (fullResUrl && fullResUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(fullResUrl);
+      }
+    }, 4000);
+
+    if (downloadBtn) {
+      downloadBtn.disabled = false;
+      downloadBtn.innerHTML = originalText;
+    }
   }
 }

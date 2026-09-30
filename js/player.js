@@ -233,7 +233,6 @@ export class PlayerController {
     if (this.speedSelect) this.speedSelect.value = state.playbackRate.toString();
     if (this.mobileSpeedBtn) this.mobileSpeedBtn.textContent = `${state.playbackRate}×`;
 
-    const snapBtn = document.getElementById('snap-btn');
     const pipBtn = document.getElementById('pip-btn');
 
     if (state.isAudio) {
@@ -241,12 +240,10 @@ export class PlayerController {
       this.audioStage.classList.add('active');
       const audioTitle = document.getElementById('audio-title');
       if (audioTitle) audioTitle.textContent = file.name;
-      if (snapBtn) snapBtn.style.display = 'none';
       if (pipBtn) pipBtn.style.display = 'none';
     } else {
       this.audioStage.classList.remove('active');
       this.videoEl.classList.add('active');
-      if (snapBtn) snapBtn.style.display = 'inline-flex';
       if (pipBtn) pipBtn.style.display = 'inline-flex';
     }
 
