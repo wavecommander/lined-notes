@@ -353,10 +353,10 @@ modal-dialog[open],
 /* ─── TOAST NOTIFICATION ──────────────────────────────────────────────── */
 toast-notification,
 #toast {
-  position: fixed;
+  position: absolute;
   bottom: 24px;
   left: 50%;
-  transform: translateX(-50%) translateY(20px);
+  transform: translateX(-50%) translateY(12px);
   background: var(--bg-card);
   border: 1px solid var(--border-bright);
   box-shadow: var(--toast-shadow);
@@ -367,11 +367,13 @@ toast-notification,
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-  z-index: 200;
+  z-index: 50;
   display: flex;
   align-items: center;
   gap: 10px;
   font-family: var(--font-mono);
+  max-width: calc(100% - 32px);
+  white-space: nowrap;
 }
 
 toast-notification.show,

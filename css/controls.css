@@ -53,6 +53,11 @@ time-display,
   gap: 4px;
 }
 
+.mobile-tray-sep,
+.mobile-tray-btn {
+  display: none !important;
+}
+
 .timeline-separator {
   width: 1px;
   height: 18px;

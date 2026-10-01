@@ -462,6 +462,8 @@ export class LinedNotesApp {
 
     // Stop & reset playback
     this.player.resetPlaybackState();
+    const picker = document.getElementById('file-picker');
+    if (picker) picker.value = '';
 
     if (state.mediaUrl) {
       URL.revokeObjectURL(state.mediaUrl);

@@ -49,29 +49,51 @@
     display: none !important;
   }
 
-  /* Compact button styling on tablets & large phones */
+  /* Compact button styling on tablets & phones (<= 1024px) */
+  .btn-new-project,
   .btn-open-media,
   .btn-projects {
     padding: 6px 8px;
   }
 
+  .btn-new-project .btn-text,
   .btn-open-media .btn-text,
   .btn-projects .btn-text {
     display: none;
   }
 
-  /* On narrow phones (< 480px), move Open Media and Projects to overflow menu to prevent overcrowding (ISSUE-06) */
-  @media (max-width: 480px) {
+  .btn-new-project,
+  .btn-open-media {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: var(--radius-md);
+    order: 10;
+  }
 
-    .btn-open-media,
+  .btn-new-project svg,
+  .btn-open-media svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* On narrow phones (< 480px) */
+  @media (max-width: 480px) {
+    .logo-title {
+      display: none;
+    }
+
     .btn-projects {
       display: none !important;
     }
   }
 
   @media (max-width: 360px) {
-    .logo-title {
-      display: none;
+    .btn-new-project {
+      display: none !important;
     }
   }
 
@@ -127,6 +149,7 @@
   .mobile-menu-wrap {
     display: block;
     position: relative;
+    order: 20;
   }
 
   .mobile-menu-btn {
@@ -426,6 +449,37 @@
   .secondary-tools-group #speed-select,
   .secondary-tools-group .speed-separator {
     display: none !important;
+  }
+
+  .secondary-tools-group .mobile-tray-sep {
+    display: block !important;
+  }
+
+  .secondary-tools-group .mobile-tray-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+  }
+
+  .secondary-tools-group .mobile-tray-btn:hover,
+  .secondary-tools-group .mobile-tray-btn:active {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+  }
+
+  .secondary-tools-group .mobile-tray-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+    stroke: currentColor;
+    flex-shrink: 0;
   }
 
   @keyframes drawerSlide {

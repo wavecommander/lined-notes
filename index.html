@@ -30,7 +30,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css?v=39">
+  <link rel="stylesheet" href="css/main.css?v=45">
 
   <script>
     (function () {
@@ -69,8 +69,16 @@
 
       <div class="header-sep"></div>
 
-      <button class="btn btn-ghost btn-sm btn-open-media" onclick="document.getElementById('file-picker').click()"
-        title="Open Audio or Video File">
+      <button class="btn btn-ghost btn-sm btn-new-project" id="new-project-btn" onclick="app.newProject()"
+        title="Start New Project" aria-label="Start New Project">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        <span class="btn-text">New Project</span>
+      </button>
+      <button class="btn btn-ghost btn-sm btn-open-media" id="open-media-btn" onclick="document.getElementById('file-picker').click()"
+        title="Open Audio or Video File" aria-label="Open Audio or Video File">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
           <polyline points="17 8 12 3 7 8" />
@@ -372,6 +380,7 @@
         </div>
 
         <div id="capture-flash"></div>
+        <toast-notification id="toast"></toast-notification>
       </div>
 
       <!-- TIMELINE AREA -->
@@ -505,6 +514,22 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path
                   d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+              </svg>
+            </button>
+
+            <div class="timeline-separator mobile-tray-sep"></div>
+
+            <button class="btn-icon mobile-tray-btn" onclick="app.newProject()" title="New Project" aria-label="New Project">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <line x1="12" y1="5" x2="12" y2="19" stroke-linecap="round" />
+                <line x1="5" y1="12" x2="19" y2="12" stroke-linecap="round" />
+              </svg>
+            </button>
+            <button class="btn-icon mobile-tray-btn" onclick="document.getElementById('file-picker').click()" title="Select Media…" aria-label="Select Media…">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round" />
+                <polyline points="17 8 12 3 7 8" stroke-linecap="round" stroke-linejoin="round" />
+                <line x1="12" y1="3" x2="12" y2="15" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
           </div>
@@ -861,6 +886,13 @@
       </div>
 
       <div class="modal-footer" style="justify-content:space-between;margin-top:14px;">
+        <button class="btn btn-primary btn-sm" onclick="app.newProject(); app.closeSessionsModal();" title="Start a fresh project">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="margin-right:4px;">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          New Project
+        </button>
         <button class="btn btn-ghost" data-modal-close onclick="app.closeSessionsModal()">Close</button>
       </div>
     </div>
@@ -883,9 +915,8 @@
     </div>
   </modal-dialog>
 
-  <toast-notification id="toast"></toast-notification>
   <!-- APPLICATION ENTRY POINT -->
-  <script type="module" src="js/app.js?v=43"></script>
+  <script type="module" src="js/app.js?v=45"></script>
 </body>
 
 </html>

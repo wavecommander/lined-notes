@@ -170,7 +170,17 @@ export function interpolateColor(c1, c2, t) {
 }
 
 export function showToast(msg, showUndo = false, onUndo = null) {
-  const toastEl = document.querySelector('toast-notification');
+  const toastEl = document.querySelector('toast-notification') || document.getElementById('toast');
+  if (toastEl) {
+    const isNotesTab = window.innerWidth <= 1024 && document.getElementById('app')?.getAttribute('data-mobile-view') === 'notes';
+    const targetParent = isNotesTab
+      ? document.getElementById('notes-panel')
+      : document.getElementById('player-area');
+    if (targetParent && toastEl.parentElement !== targetParent) {
+      targetParent.appendChild(toastEl);
+    }
+  }
+
   if (toastEl && typeof toastEl.show === 'function') {
     toastEl.show(msg, showUndo, onUndo);
     return;

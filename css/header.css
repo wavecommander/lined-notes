@@ -48,6 +48,7 @@ header {
   flex-shrink: 0;
 }
 
+.btn-new-project,
 .btn-open-media {
   flex-shrink: 0;
   white-space: nowrap;
