@@ -58,7 +58,7 @@ export class LinedNotesApp {
           }
         });
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   applyTheme(theme, save = true, animate = false) {
@@ -70,7 +70,7 @@ export class LinedNotesApp {
     if (save) {
       try {
         localStorage.setItem(APP_CONFIG.themeStorageKey, theme);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (!animate) {
@@ -107,7 +107,7 @@ export class LinedNotesApp {
       const savedCopyTimestamp = localStorage.getItem(copyKey);
       state.copyIncludeTimestamp = savedCopyTimestamp === 'true';
       this.updateSettingsUI();
-    } catch (e) {}
+    } catch (e) { }
   }
 
   togglePauseOnType(enabled) {
@@ -118,7 +118,7 @@ export class LinedNotesApp {
     }
     try {
       localStorage.setItem(APP_CONFIG.pauseOnTypeKey, state.pauseOnType ? 'true' : 'false');
-    } catch (e) {}
+    } catch (e) { }
     this.updateSettingsUI();
   }
 
@@ -131,7 +131,7 @@ export class LinedNotesApp {
     try {
       const copyKey = (APP_CONFIG && APP_CONFIG.copyIncludeTimestampKey) || 'ln_copy_include_timestamp';
       localStorage.setItem(copyKey, state.copyIncludeTimestamp ? 'true' : 'false');
-    } catch (e) {}
+    } catch (e) { }
     this.updateSettingsUI();
     showToast(state.copyIncludeTimestamp ? 'Copy timecode enabled' : 'Copy timecode disabled');
   }
@@ -206,30 +206,26 @@ export class LinedNotesApp {
           e.preventDefault();
           this.zoomOut();
           break;
-        case ',':
-          this.player.stepFrame(-1);
-          break;
-        case '.':
-          this.player.stepFrame(1);
-          break;
         case 'n':
         case 'N':
           e.preventDefault();
           this.notes.captureCurrentTime();
           break;
-        case 'i':
-        case 'I':
-          this.notes.setInPoint();
+        case 'a':
+        case 'A':
+          this.notes.setAPoint();
           break;
-        case 'o':
-        case 'O':
-          this.notes.setOutPoint();
+        case 'b':
+        case 'B':
+          this.notes.setBPoint();
           break;
+        case ',':
         case '[':
-          this.notes.jumpPrevNote();
+          this.jumpPrevNote();
           break;
+        case '.':
         case ']':
-          this.notes.jumpNextNote();
+          this.jumpNextNote();
           break;
         case 'm':
         case 'M':
@@ -481,6 +477,82 @@ export class LinedNotesApp {
     if (picker) picker.value = '';
   }
 
+  newProject() {
+    if (!state.mediaFile && !state.detachedMode && state.notes.length === 0) {
+      showToast('Already on a new project');
+      return;
+    }
+
+    // Auto-save existing session so no work is lost
+    if (state.notes.length > 0) {
+      state.emit('requestsave');
+    }
+
+    // Stop & reset playback
+    this.player.resetPlaybackState();
+
+    if (state.mediaUrl) {
+      URL.revokeObjectURL(state.mediaUrl);
+      state.mediaUrl = null;
+    }
+
+    if (this.player.videoEl) {
+      try {
+        this.player.videoEl.pause();
+      } catch (e) { }
+      this.player.videoEl.removeAttribute('src');
+      this.player.videoEl.load();
+      this.player.videoEl.classList.remove('active');
+    }
+
+    if (this.player.audioStage) {
+      this.player.audioStage.classList.remove('active');
+    }
+
+    const detachedStage = document.getElementById('detached-stage');
+    if (detachedStage) detachedStage.style.display = 'none';
+
+    // Clear application state
+    state.mediaFile = null;
+    state.detachedMode = false;
+    state.detachedSessionKey = null;
+    state.detachedSessionName = null;
+    state.detachedSessionSize = 0;
+    state.notes = [];
+    state.activeNoteId = null;
+    state.editingNoteId = null;
+    state.APoint = null;
+    state.BPoint = null;
+    state.isLooping = false;
+    state.isTimeStamped = false;
+    state.waveformPeaks = null;
+    state.isSyntheticWaveform = false;
+    state.duration = 0;
+    state.currentTime = 0;
+    state.zoom = 1;
+    state.scrollOffset = 0;
+
+    // Restore empty drop-zone and header badge
+    const badge = document.getElementById('file-badge');
+    const nameText = document.getElementById('file-name-text');
+    if (badge) badge.classList.remove('active');
+    if (nameText) nameText.textContent = 'No media loaded';
+
+    const dropZone = document.getElementById('drop-zone');
+    if (dropZone) dropZone.classList.remove('hidden');
+
+    // Switch mobile tab to media panel so drop zone is visible
+    if (window.innerWidth <= 1024) {
+      state.emit('requestmobiletab', 'media');
+    }
+
+    state.emit('filereset');
+    state.emit('noteschange');
+    state.emit('timelinechanged');
+
+    showToast('Started new project');
+  }
+
   onDrop(e) {
     e.preventDefault();
     if (this.dropZone) this.dropZone.classList.remove('dragging');
@@ -557,12 +629,20 @@ export class LinedNotesApp {
     this.player.stepFrame(delta);
   }
 
+  jumpPrevNote() {
+    this.notes.jumpPrevNote();
+  }
+
+  jumpNextNote() {
+    this.notes.jumpNextNote();
+  }
+
   setInPoint() {
-    this.notes.setInPoint();
+    this.notes.setAPoint();
   }
 
   setOutPoint() {
-    this.notes.setOutPoint();
+    this.notes.setBPoint();
   }
 
   toggleLoop() {

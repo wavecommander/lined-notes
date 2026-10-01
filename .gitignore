@@ -3,3 +3,4 @@ worktrees/
 .DS_Store
 Thumbs.db
 /node_modules/
+/deploy/

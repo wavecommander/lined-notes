@@ -182,6 +182,21 @@
           </svg>
         </button>
         <div class="mobile-dropdown-menu" id="mobile-dropdown-menu">
+          <div class="dropdown-item" onclick="app.newProject(); app.closeMobileMenu();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <span>New Project</span>
+          </div>
+          <div class="dropdown-item" onclick="document.getElementById('file-picker').click(); app.closeMobileMenu();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <span>Select Media…</span>
+          </div>
+          <div class="dropdown-divider"></div>
           <div class="dropdown-item" onclick="app.toggleTheme(); app.closeMobileMenu();">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
               <circle cx="12" cy="12" r="5" />
@@ -429,14 +444,14 @@
 
           <!-- Secondary / Expandable Tools Group -->
           <div class="secondary-tools-group" id="secondary-tools-group">
-            <!-- Step Frame (outline-only vector glyphs) -->
-            <button class="btn-icon" onclick="app.stepFrame(-1)" title="Step 1 Frame Back (,)">
+            <!-- Previous / Next Note Navigation -->
+            <button class="btn-icon" onclick="app.jumpPrevNote()" title="Previous Note (, or [)" aria-label="Previous Note">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <line x1="6" y1="5" x2="6" y2="19" stroke-linecap="round" />
                 <polyline points="18 6 10 12 18 18" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
-            <button class="btn-icon" onclick="app.stepFrame(1)" title="Step 1 Frame Forward (.)">
+            <button class="btn-icon" onclick="app.jumpNextNote()" title="Next Note (. or ])" aria-label="Next Note">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <line x1="18" y1="5" x2="18" y2="19" stroke-linecap="round" />
                 <polyline points="6 6 14 12 6 18" stroke-linecap="round" stroke-linejoin="round" />
@@ -444,11 +459,11 @@
             </button>
 
             <!-- In/Out Points for range notes: Bracket Buttons -->
-            <button class="bracket-btn" id="in-point-btn" onclick="app.setInPoint()" title="Set In Point (I)">
-              <span class="bracket-char">[</span> In
+            <button class="bracket-btn" id="A-point-btn" onclick="app.setInPoint()" title="Set A Point (A)">
+              <span class="bracket-char">[</span> A
             </button>
-            <button class="bracket-btn" id="out-point-btn" onclick="app.setOutPoint()" title="Set Out Point (O)">
-              Out <span class="bracket-char">]</span>
+            <button class="bracket-btn" id="B-point-btn" onclick="app.setOutPoint()" title="Set B Point (B)">
+              B <span class="bracket-char">]</span>
             </button>
             <button class="btn-icon" id="loop-range-btn" onclick="app.toggleLoop()"
               title="Toggle A-B Range Loop (Shift+L)">
@@ -481,7 +496,7 @@
                 oninput="app.setVolume(this.value)">
             </div>
 
-            <div class="timeline-separator"></div>
+            <div class="timeline-separator speed-separator"></div>
 
             <select class="speed-select" id="speed-select" onchange="app.setSpeed(this.value)" title="Playback Speed">
               <option value="0.25">0.25×</option>
@@ -547,8 +562,7 @@
             <span class="kbd-pill"><kbd>Space</kbd> Play/Pause</span>
             <span class="kbd-pill"><kbd>N</kbd> Mark Time</span>
             <span class="kbd-pill"><kbd>I</kbd>/<kbd>O</kbd> In/Out</span>
-            <span class="kbd-pill"><kbd>,</kbd>/<kbd>.</kbd> Frame</span>
-            <span class="kbd-pill"><kbd>[</kbd>/<kbd>]</kbd> Prev/Next Note</span>
+            <span class="kbd-pill"><kbd>,</kbd>/<kbd>.</kbd> Prev/Next Note</span>
           </div>
         </div>
       </div><!-- /#controls-area -->
@@ -790,8 +804,8 @@
         <div class="shortcut-keys"><kbd>J</kbd> / <kbd>L</kbd></div>
         <div class="shortcut-desc">Skip backward / forward 10 seconds</div>
 
-        <div class="shortcut-keys"><kbd>,</kbd> / <kbd>.</kbd></div>
-        <div class="shortcut-desc">Step backward / forward 1 frame (0.04s)</div>
+        <div class="shortcut-keys"><kbd>,</kbd> / <kbd>.</kbd> or <kbd>[</kbd> / <kbd>]</kbd></div>
+        <div class="shortcut-desc">Jump to previous / next annotation note</div>
 
         <div class="shortcut-keys"><kbd>I</kbd> / <kbd>O</kbd></div>
         <div class="shortcut-desc">Set In Point / Out Point for range annotations</div>
@@ -801,9 +815,6 @@
 
         <div class="shortcut-keys"><kbd>+</kbd> / <kbd>−</kbd></div>
         <div class="shortcut-desc">Zoom timeline in / out (or Ctrl + Scroll)</div>
-
-        <div class="shortcut-keys"><kbd>[</kbd> / <kbd>]</kbd></div>
-        <div class="shortcut-desc">Jump to previous / next annotation note</div>
 
         <div class="shortcut-keys"><kbd>M</kbd></div>
         <div class="shortcut-desc">Mute / unmute audio</div>
@@ -889,7 +900,7 @@
 
   <toast-notification id="toast"></toast-notification>
   <!-- APPLICATION ENTRY POINT -->
-  <script type="module" src="js/app.js?v=39"></script>
+  <script type="module" src="js/app.js?v=40"></script>
 </body>
 
 </html>

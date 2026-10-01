@@ -125,34 +125,34 @@ export class NotesManager {
     flash.classList.add('flash');
   }
 
-  setInPoint() {
-    state.inPoint = state.currentTime;
-    if (state.outPoint !== null && state.outPoint < state.inPoint) {
-      state.outPoint = null;
+  setAPoint() {
+    state.APoint = state.currentTime;
+    if (state.BPoint !== null && state.BPoint < state.APoint) {
+      state.BPoint = null;
     }
     this.updateRangeStatusUI();
     state.emit('timelinechanged');
-    showToast(`In Point set at ${formatTime(state.inPoint)}`);
+    showToast(`A Point set at ${formatTime(state.APoint)}`);
   }
 
-  setOutPoint() {
-    if (state.inPoint === null) {
-      state.inPoint = 0;
+  setBPoint() {
+    if (state.APoint === null) {
+      state.APoint = 0;
     }
-    state.outPoint = Math.max(state.inPoint, state.currentTime);
+    state.BPoint = Math.max(state.APoint, state.currentTime);
     this.updateRangeStatusUI();
     state.emit('timelinechanged');
-    showToast(`Out Point set at ${formatTime(state.outPoint)}`);
+    showToast(`B Point set at ${formatTime(state.BPoint)}`);
   }
 
   clearRange() {
-    state.inPoint = null;
-    state.outPoint = null;
+    state.APoint = null;
+    state.BPoint = null;
     state.isLooping = false;
     const loopBtn = document.getElementById('loop-range-btn');
     if (loopBtn) loopBtn.classList.remove('active');
-    const inBtn = document.getElementById('in-point-btn');
-    const outBtn = document.getElementById('out-point-btn');
+    const inBtn = document.getElementById('A-point-btn');
+    const outBtn = document.getElementById('B-point-btn');
     if (inBtn) inBtn.classList.remove('active');
     if (outBtn) outBtn.classList.remove('active');
     this.updateRangeStatusUI();
@@ -161,12 +161,12 @@ export class NotesManager {
 
   updateRangeStatusUI() {
     const clearBtn = document.getElementById('clear-range-btn');
-    const inBtn = document.getElementById('in-point-btn');
-    const outBtn = document.getElementById('out-point-btn');
+    const inBtn = document.getElementById('A-point-btn');
+    const outBtn = document.getElementById('B-point-btn');
 
-    if (inBtn) inBtn.classList.toggle('active', state.inPoint !== null);
-    if (outBtn) outBtn.classList.toggle('active', state.outPoint !== null);
-    if (clearBtn) clearBtn.style.display = state.inPoint !== null ? 'inline-flex' : 'none';
+    if (inBtn) inBtn.classList.toggle('active', state.APoint !== null);
+    if (outBtn) outBtn.classList.toggle('active', state.BPoint !== null);
+    if (clearBtn) clearBtn.style.display = state.APoint !== null ? 'inline-flex' : 'none';
   }
 
   async takeSnapshot() {
@@ -203,10 +203,10 @@ export class NotesManager {
       return;
     }
 
-    const noteStart = state.inPoint !== null
-      ? state.inPoint
+    const noteStart = state.APoint !== null
+      ? state.APoint
       : (state.isTimeStamped ? state.stampTime : state.currentTime);
-    const noteEnd = state.outPoint !== null ? state.outPoint : null;
+    const noteEnd = state.BPoint !== null ? state.BPoint : null;
 
     let thumb = null;
     if (!state.isAudio && state.mediaFile) {
@@ -295,9 +295,40 @@ export class NotesManager {
     }
   }
 
+  getCurrentNoteIndex() {
+    if (!state.notes || state.notes.length === 0) return -1;
+    if (state.activeNoteId) {
+      const idx = state.notes.findIndex(n => n.id === state.activeNoteId);
+      if (idx !== -1) return idx;
+    }
+    return state.notes.findIndex(n => {
+      if (n.end && n.end > n.start) {
+        return state.currentTime >= n.start - 0.2 && state.currentTime <= n.end + 0.2;
+      }
+      return Math.abs(n.start - state.currentTime) < 0.5;
+    });
+  }
+
   jumpPrevNote() {
-    if (state.notes.length === 0) return;
-    const past = state.notes.filter(n => n.start < state.currentTime - 0.5);
+    if (!state.notes || state.notes.length === 0) {
+      showToast('No notes to move to');
+      return;
+    }
+    if (state.notes.length === 1) {
+      this.jumpToNote(state.notes[0].start);
+      return;
+    }
+
+    const currentIndex = this.getCurrentNoteIndex();
+    if (currentIndex !== -1) {
+      // When on a note, wrap around between notes
+      const prevIndex = (currentIndex - 1 + state.notes.length) % state.notes.length;
+      this.jumpToNote(state.notes[prevIndex].start);
+      return;
+    }
+
+    // In arbitrary time (not on a note), seek to nearest past note without wrapping time
+    const past = state.notes.filter(n => n.start < state.currentTime - 0.3);
     if (past.length > 0) {
       this.jumpToNote(past[past.length - 1].start);
     } else {
@@ -306,8 +337,25 @@ export class NotesManager {
   }
 
   jumpNextNote() {
-    if (state.notes.length === 0) return;
-    const future = state.notes.filter(n => n.start > state.currentTime + 0.5);
+    if (!state.notes || state.notes.length === 0) {
+      showToast('No notes to move to');
+      return;
+    }
+    if (state.notes.length === 1) {
+      this.jumpToNote(state.notes[0].start);
+      return;
+    }
+
+    const currentIndex = this.getCurrentNoteIndex();
+    if (currentIndex !== -1) {
+      // When on a note, wrap around between notes
+      const nextIndex = (currentIndex + 1) % state.notes.length;
+      this.jumpToNote(state.notes[nextIndex].start);
+      return;
+    }
+
+    // In arbitrary time (not on a note), seek to nearest future note without wrapping time
+    const future = state.notes.filter(n => n.start > state.currentTime + 0.3);
     if (future.length > 0) {
       this.jumpToNote(future[0].start);
     } else {

@@ -416,9 +416,9 @@ export class TimelineEngine {
     const visEnd = state.scrollOffset + visDur;
 
     // 1. In/Out Range Highlight if set
-    if (state.inPoint !== null) {
-      const inX = this.timeToX(state.inPoint, W);
-      const outX = this.timeToX(state.outPoint !== null ? state.outPoint : state.currentTime, W);
+    if (state.APoint !== null) {
+      const inX = this.timeToX(state.APoint, W);
+      const outX = this.timeToX(state.BPoint !== null ? state.BPoint : state.currentTime, W);
       const leftX = Math.max(0, Math.min(inX, outX));
       const rightX = Math.min(W, Math.max(inX, outX));
 
@@ -431,7 +431,7 @@ export class TimelineEngine {
         c.fillStyle = tc.playhead;
         c.fillRect(inX - 1, 0, 2, H);
       }
-      if (state.outPoint !== null && outX >= 0 && outX <= W) {
+      if (state.BPoint !== null && outX >= 0 && outX <= W) {
         c.fillStyle = tc.playhead;
         c.fillRect(outX - 1, 0, 2, H);
       }

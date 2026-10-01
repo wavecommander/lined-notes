@@ -425,8 +425,10 @@
     height: 18px;
   }
 
-  .secondary-tools-group.open {
-    display: flex;
+  /* Remove duplicated speed control from secondary tools tray on mobile (TSOFT-34) */
+  .secondary-tools-group #speed-select,
+  .secondary-tools-group .speed-separator {
+    display: none !important;
   }
 
   @keyframes drawerSlide {

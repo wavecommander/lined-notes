@@ -77,9 +77,9 @@ export class PlayerController {
         }
 
         // A-B Range Looping
-        if (state.isLooping && state.inPoint !== null && state.outPoint !== null) {
-          if (state.currentTime >= state.outPoint || state.currentTime < state.inPoint) {
-            this.seekTo(state.inPoint);
+        if (state.isLooping && state.APoint !== null && state.BPoint !== null) {
+          if (state.currentTime >= state.BPoint || state.currentTime < state.APoint) {
+            this.seekTo(state.APoint);
           }
         }
       }
@@ -205,8 +205,8 @@ export class PlayerController {
     state.notes = [];
     state.activeNoteId = null;
     state.editingNoteId = null;
-    state.inPoint = null;
-    state.outPoint = null;
+    state.APoint = null;
+    state.BPoint = null;
     state.isLooping = false;
     state.isTimeStamped = false;
     state.waveformPeaks = null;
@@ -515,7 +515,7 @@ export class PlayerController {
   }
 
   toggleLoop() {
-    if (state.inPoint === null || state.outPoint === null) {
+    if (state.APoint === null || state.BPoint === null) {
       showToast('Set both In and Out points to loop');
       return;
     }

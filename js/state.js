@@ -38,8 +38,8 @@ class StateStore {
     this.panStartOffset = 0;
 
     // Range / In-Out & Loop State
-    this.inPoint = null;
-    this.outPoint = null;
+    this.APoint = null;
+    this.BPoint = null;
     this.isLooping = false;
     this.stampTime = 0;
     this.isTimeStamped = false;
