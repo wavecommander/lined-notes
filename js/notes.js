@@ -5,7 +5,8 @@
 
 import { state } from './state.js';
 import { APP_CONFIG } from './config.js';
-import { formatTime, escapeHtml, copyText, showToast } from './utils.js';
+import { formatTime, parseTimeToSeconds, escapeHtml, copyText, showToast } from './utils.js';
+import './components/note-card.js';
 
 export class NotesManager {
   constructor(playerController) {
@@ -21,13 +22,19 @@ export class NotesManager {
     this.tagMenuDropdown = document.getElementById('tag-menu-dropdown');
     this.currentTagDot = document.getElementById('current-tag-dot');
     this.currentTagLabel = document.getElementById('current-tag-label');
-    this.currentLightboxTimecode = null;
+    this.tagPicker = document.querySelector('tag-picker');
 
     this.init();
   }
 
   init() {
-    this.renderTagMenu();
+    if (this.tagPicker) {
+      this.tagPicker.addEventListener('tag-select', (e) => {
+        state.selectedTag = e.detail.tagId;
+      });
+    } else {
+      this.renderTagMenu();
+    }
     this.renderTagFilters();
     this.renderNotes();
     this.setupEvents();
@@ -39,7 +46,6 @@ export class NotesManager {
       this.renderTagFilters();
     });
     state.on('filereset', () => this.resetRangeAndInputState());
-    state.on('filerestet', () => this.resetRangeAndInputState());
   }
 
   resetRangeAndInputState() {
@@ -54,53 +60,26 @@ export class NotesManager {
     state.deletedHistory = [];
     state.searchQuery = '';
     state.filterTag = 'all';
-    const searchInput = document.getElementById('search-notes-input') || document.getElementById('search-input');
+    const searchInput = document.getElementById('search-notes-input');
     if (searchInput) searchInput.value = '';
     this.renderTagFilters();
     this.renderNotes();
   }
 
   setupEvents() {
-    // Delegated click handler on notes list for editing, copying, deleting, and lightbox
+    // Componentized event listeners from <note-card> custom elements
     if (this.notesList) {
-      this.notesList.addEventListener('click', (e) => {
-        const timeChip = e.target.closest('.note-time-chip');
-        if (timeChip) {
-          e.stopPropagation();
-          const timeStr = timeChip.dataset.timeStr;
-          if (timeStr) this.seekToTimeStr(timeStr);
-          return;
-        }
-
-        const thumbImg = e.target.closest('.note-card-thumb');
-        if (thumbImg) {
-          e.stopPropagation();
-          const time = thumbImg.dataset.time !== undefined ? parseFloat(thumbImg.dataset.time) : null;
-          this.openLightbox(thumbImg.src, time);
-          return;
-        }
-
-        const actBtn = e.target.closest('[data-note-action]');
-        if (actBtn) {
-          e.stopPropagation();
-          const action = actBtn.dataset.noteAction;
-          const noteId = actBtn.dataset.noteId;
-          if (action === 'edit') this.startEditNote(noteId);
-          if (action === 'copy') this.copyNoteText(noteId);
-          if (action === 'delete') this.deleteNote(noteId);
-          if (action === 'save-edit') this.saveEditNote(noteId);
-          if (action === 'cancel-edit') this.cancelEditNote(noteId);
-          return;
-        }
-
-        const card = e.target.closest('.note-card');
-        if (card && card.dataset.start) {
-          this.jumpToNote(parseFloat(card.dataset.start));
-        }
-      });
+      this.notesList.addEventListener('note-jump', (e) => this.jumpToNote(e.detail.start));
+      this.notesList.addEventListener('note-seek', (e) => this.seekToTimeStr(e.detail.timeStr));
+      this.notesList.addEventListener('note-lightbox', (e) => this.openLightbox(e.detail.src, e.detail.time));
+      this.notesList.addEventListener('note-edit', (e) => this.startEditNote(e.detail.id));
+      this.notesList.addEventListener('note-save', (e) => this.saveEditNote(e.detail.id, e.detail.text));
+      this.notesList.addEventListener('note-cancel', (e) => this.cancelEditNote(e.detail.id));
+      this.notesList.addEventListener('note-copy', (e) => this.copyNoteText(e.detail.id));
+      this.notesList.addEventListener('note-delete', (e) => this.deleteNote(e.detail.id));
     }
 
-    // Close tag menu on outside click
+    // Close tag menu on outside click if legacy dropdown is used
     document.addEventListener('click', () => {
       if (this.tagMenuDropdown) this.tagMenuDropdown.classList.remove('open');
     });
@@ -181,24 +160,13 @@ export class NotesManager {
   }
 
   updateRangeStatusUI() {
-    const rangeText = document.getElementById('range-status-text');
-    const rangeVal = document.getElementById('range-val');
     const clearBtn = document.getElementById('clear-range-btn');
     const inBtn = document.getElementById('in-point-btn');
     const outBtn = document.getElementById('out-point-btn');
 
     if (inBtn) inBtn.classList.toggle('active', state.inPoint !== null);
     if (outBtn) outBtn.classList.toggle('active', state.outPoint !== null);
-
-    if (state.inPoint !== null) {
-      if (rangeText) rangeText.style.display = 'inline';
-      if (clearBtn) clearBtn.style.display = 'inline-flex';
-      const outStr = state.outPoint !== null ? formatTime(state.outPoint) : '…';
-      if (rangeVal) rangeVal.textContent = `${formatTime(state.inPoint)} → ${outStr}`;
-    } else {
-      if (rangeText) rangeText.style.display = 'none';
-      if (clearBtn) clearBtn.style.display = 'none';
-    }
+    if (clearBtn) clearBtn.style.display = state.inPoint !== null ? 'inline-flex' : 'none';
   }
 
   async takeSnapshot() {
@@ -303,12 +271,15 @@ export class NotesManager {
     this.renderNotes();
   }
 
-  saveEditNote(id) {
-    const editArea = document.getElementById(`edit-text-${id}`);
-    if (!editArea) return;
+  saveEditNote(id, text = null) {
     const note = state.notes.find(n => n.id === id);
     if (note) {
-      note.text = editArea.value.trim() || note.text;
+      if (typeof text === 'string') {
+        note.text = text.trim() || note.text;
+      } else {
+        const editArea = this.notesList ? this.notesList.querySelector(`textarea`) : null;
+        if (editArea) note.text = editArea.value.trim() || note.text;
+      }
       note.updatedAt = new Date().toISOString();
     }
     state.editingNoteId = null;
@@ -373,13 +344,19 @@ export class NotesManager {
     const newActiveId = active ? active.id : null;
     if (newActiveId !== state.activeNoteId) {
       state.activeNoteId = newActiveId;
-      document.querySelectorAll('.note-card').forEach(card => {
-        const isActive = card.dataset.id === state.activeNoteId;
-        card.classList.toggle('active', isActive);
-        if (isActive) {
-          card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      });
+      if (this.notesList) {
+        this.notesList.querySelectorAll('note-card, .note-card').forEach(card => {
+          const isActive = card.dataset.id === state.activeNoteId;
+          if (typeof card.setActive === 'function') {
+            card.setActive(isActive);
+          } else {
+            card.classList.toggle('active', isActive);
+          }
+          if (isActive) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        });
+      }
     }
   }
 
@@ -407,16 +384,7 @@ export class NotesManager {
   }
 
   seekToTimeStr(str) {
-    const clean = str.replace(',', '.');
-    const parts = clean.split(':');
-    let secs = 0;
-    if (parts.length === 3) {
-      secs = parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
-    } else if (parts.length === 2) {
-      secs = parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
-    } else {
-      secs = parseFloat(clean);
-    }
+    const secs = parseTimeToSeconds(str);
     if (!isNaN(secs)) {
       this.player.seekTo(secs);
     }
@@ -468,52 +436,10 @@ export class NotesManager {
     this.notesList.querySelectorAll('.note-card').forEach(el => el.remove());
 
     filtered.forEach(note => {
-      const card = document.createElement('div');
-      card.className = `note-card ${note.id === state.activeNoteId ? 'active' : ''}`;
-      card.dataset.id = note.id;
-      card.dataset.start = note.start;
-      const tagObj = state.tags.find(t => t.id === note.tag) || state.tags[0];
-      card.style.borderLeftColor = tagObj.color;
-
-      if (state.editingNoteId === note.id) {
-        // Edit Mode
-        card.innerHTML = `
-          <div class="note-edit-box">
-            <textarea id="edit-text-${note.id}" class="note-edit-textarea">${escapeHtml(note.text)}</textarea>
-            <div class="note-edit-btns">
-              <button class="btn btn-ghost btn-sm" data-note-action="cancel-edit" data-note-id="${note.id}">Cancel</button>
-              <button class="btn btn-primary btn-sm" data-note-action="save-edit" data-note-id="${note.id}">Save</button>
-            </div>
-          </div>
-        `;
-      } else {
-        // View Mode
-        const rangeText = note.end ? ` → ${formatTime(note.end)}` : '';
-        const thumbHtml = note.thumb ? `<img class="note-card-thumb" src="${note.thumb}" data-time="${note.start}" alt="Snapshot">` : '';
-
-        card.innerHTML = `
-          <div class="note-card-header">
-            <div class="note-card-badges">
-              <span class="note-time-badge">${formatTime(note.start)}${rangeText}</span>
-              <span class="note-tag-badge" style="background:${tagObj.color}">${escapeHtml(tagObj.label)}</span>
-            </div>
-            <div class="note-card-actions">
-              <button class="note-act-btn" data-note-action="edit" data-note-id="${note.id}" title="Edit Note">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-              </button>
-              <button class="note-act-btn" data-note-action="copy" data-note-id="${note.id}" title="Copy Note">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              </button>
-              <button class="note-act-btn del" data-note-action="delete" data-note-id="${note.id}" title="Delete Note">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              </button>
-            </div>
-          </div>
-          ${thumbHtml}
-          <div class="note-card-body">${this.formatNoteText(note.text)}</div>
-        `;
-      }
-
+      const card = document.createElement('note-card');
+      card.note = note;
+      card.setActive(note.id === state.activeNoteId);
+      card.isEditing = (state.editingNoteId === note.id);
       this.notesList.appendChild(card);
     });
   }
@@ -536,6 +462,10 @@ export class NotesManager {
 
   selectTag(tagId) {
     state.selectedTag = tagId;
+    if (this.tagPicker && typeof this.tagPicker.selectTag === 'function') {
+      this.tagPicker.selectTag(tagId);
+      return;
+    }
     const tagObj = state.tags.find(t => t.id === tagId) || state.tags[0];
     if (this.currentTagDot) this.currentTagDot.style.background = tagObj.color;
     if (this.currentTagLabel) this.currentTagLabel.textContent = tagObj.label;
@@ -543,6 +473,10 @@ export class NotesManager {
 
   toggleTagMenu(e) {
     if (e) e.stopPropagation();
+    if (this.tagPicker && typeof this.tagPicker.toggleMenu === 'function') {
+      this.tagPicker.toggleMenu(e);
+      return;
+    }
     if (this.tagMenuDropdown) this.tagMenuDropdown.classList.toggle('open');
   }
 
@@ -552,13 +486,23 @@ export class NotesManager {
     if (modal && img) {
       img.src = src;
       this.currentLightboxTimecode = (timecode !== null && isFinite(timecode)) ? timecode : null;
-      modal.classList.add('open');
+      if (typeof modal.open === 'function') {
+        modal.open();
+      } else {
+        modal.classList.add('open');
+      }
     }
   }
 
   closeLightbox() {
     const modal = document.getElementById('lightbox-modal');
-    if (modal) modal.classList.remove('open');
+    if (modal) {
+      if (typeof modal.close === 'function') {
+        modal.close();
+      } else {
+        modal.classList.remove('open');
+      }
+    }
     this.currentLightboxTimecode = null;
   }
 

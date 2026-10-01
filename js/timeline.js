@@ -65,7 +65,6 @@ export class TimelineEngine {
     });
     state.on('noteschange', () => this.drawTimeline());
     state.on('filereset', () => this.resetTimelineState());
-    state.on('filerestet', () => this.resetTimelineState());
   }
 
   resetTimelineState() {
@@ -159,13 +158,9 @@ export class TimelineEngine {
     if (!hasMedia || !state.duration) {
       state.zoom = 1;
       state.scrollOffset = 0;
-      const zoomVal = document.getElementById('zoom-val');
-      if (zoomVal) zoomVal.textContent = '1.0×';
       return;
     }
     state.zoom = Math.max(1, Math.min(32, val));
-    const zoomVal = document.getElementById('zoom-val');
-    if (zoomVal) zoomVal.textContent = `${state.zoom.toFixed(1)}×`;
 
     if (state.zoom === 1) {
       state.scrollOffset = 0;

@@ -4,7 +4,7 @@
    ========================================================================== */
 
 import { state } from './state.js';
-import { formatTime, formatSRTTime, formatVTTTime, escapeHtml, copyText, showToast } from './utils.js';
+import { formatTime, formatSRTTime, formatVTTTime, calculateSubtitleCueEnd, escapeHtml, copyText, showToast } from './utils.js';
 
 export class ExportManager {
   constructor() {
@@ -26,11 +26,17 @@ export class ExportManager {
     if (this.shareBtn) {
       this.shareBtn.style.display = (typeof navigator.share === 'function') ? 'inline-flex' : 'none';
     }
-    if (this.exportModal) this.exportModal.classList.add('open');
+    if (this.exportModal) {
+      if (typeof this.exportModal.open === 'function') this.exportModal.open();
+      else this.exportModal.classList.add('open');
+    }
   }
 
   closeExportModal() {
-    if (this.exportModal) this.exportModal.classList.remove('open');
+    if (this.exportModal) {
+      if (typeof this.exportModal.close === 'function') this.exportModal.close();
+      else this.exportModal.classList.remove('open');
+    }
   }
 
   selectExportFmt(el) {
@@ -77,15 +83,7 @@ export class ExportManager {
       case 'srt':
         state.notes.forEach((n, idx) => {
           const cueStart = formatSRTTime(n.start);
-          let endTime;
-          if (n.end && n.end > n.start) {
-            endTime = n.end;
-          } else if (state.notes[idx + 1] && state.notes[idx + 1].start > n.start + 0.5) {
-            endTime = Math.min(n.start + 3.0, state.notes[idx + 1].start);
-          } else {
-            endTime = n.start + 2.5;
-          }
-          endTime = Math.max(n.start + 1.0, endTime);
+          const endTime = calculateSubtitleCueEnd(n, state.notes[idx + 1]);
           const cueEnd = formatSRTTime(endTime);
           content += `${idx + 1}\n${cueStart} --> ${cueEnd}\n${n.text}\n\n`;
         });
@@ -97,15 +95,7 @@ export class ExportManager {
         content = 'WEBVTT\n\n';
         state.notes.forEach((n, idx) => {
           const cueStart = formatVTTTime(n.start);
-          let endTime;
-          if (n.end && n.end > n.start) {
-            endTime = n.end;
-          } else if (state.notes[idx + 1] && state.notes[idx + 1].start > n.start + 0.5) {
-            endTime = Math.min(n.start + 3.0, state.notes[idx + 1].start);
-          } else {
-            endTime = n.start + 2.5;
-          }
-          endTime = Math.max(n.start + 1.0, endTime);
+          const endTime = calculateSubtitleCueEnd(n, state.notes[idx + 1]);
           const cueEnd = formatVTTTime(endTime);
           content += `${idx + 1}\n${cueStart} --> ${cueEnd}\n${n.text}\n\n`;
         });

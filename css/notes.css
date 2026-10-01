@@ -157,6 +157,7 @@
 }
 
 /* Note Card */
+note-card,
 .note-card {
   background: var(--bg-card);
   border: 1px solid var(--border);

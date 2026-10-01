@@ -2,6 +2,7 @@
    Lined Notes Application Coordinator & Entry Point
    ========================================================================== */
 
+import './components/index.js';
 import { state } from './state.js';
 import { APP_CONFIG } from './config.js';
 import { LinedNotesDB } from './db.js';
@@ -26,7 +27,6 @@ export class LinedNotesApp {
 
     this.shortcutsModal = document.getElementById('shortcuts-modal');
     this.settingsModal = document.getElementById('settings-modal');
-    this.pauseToggleBtn = document.getElementById('pause-toggle-btn');
     this.dropZone = document.getElementById('drop-zone');
     this.deferredInstallPrompt = null;
 
@@ -102,7 +102,6 @@ export class LinedNotesApp {
     try {
       const savedPause = localStorage.getItem(APP_CONFIG.pauseOnTypeKey);
       state.pauseOnType = savedPause === 'true';
-      this.updatePauseToggleUI();
 
       const copyKey = (APP_CONFIG && APP_CONFIG.copyIncludeTimestampKey) || 'ln_copy_include_timestamp';
       const savedCopyTimestamp = localStorage.getItem(copyKey);
@@ -120,7 +119,6 @@ export class LinedNotesApp {
     try {
       localStorage.setItem(APP_CONFIG.pauseOnTypeKey, state.pauseOnType ? 'true' : 'false');
     } catch (e) {}
-    this.updatePauseToggleUI();
     this.updateSettingsUI();
   }
 
@@ -146,15 +144,6 @@ export class LinedNotesApp {
     const pauseToggle = document.getElementById('setting-pause-on-type');
     if (pauseToggle) {
       pauseToggle.checked = !!state.pauseOnType;
-    }
-  }
-
-  updatePauseToggleUI() {
-    const btn = this.pauseToggleBtn || document.getElementById('pause-toggle-btn');
-    if (btn) {
-      btn.classList.toggle('active', !!state.pauseOnType);
-      btn.setAttribute('aria-pressed', state.pauseOnType ? 'true' : 'false');
-      btn.setAttribute('title', state.pauseOnType ? 'Pause while typing is ON (Click to disable)' : 'Pause while typing is OFF (Click to enable)');
     }
   }
 
@@ -316,23 +305,28 @@ export class LinedNotesApp {
   // ─── MOBILE VIEW SWITCHER ──────────────────────────────────────────
   setMobileTab(tab) {
     state.mobileTab = tab;
-    const appEl = document.getElementById('app');
-    if (appEl) {
-      appEl.setAttribute('data-mobile-view', tab);
-    }
-    const tabMedia = document.getElementById('tab-btn-media');
-    const tabNotes = document.getElementById('tab-btn-notes');
-    if (tabMedia && tabNotes) {
-      if (tab === 'notes') {
-        tabMedia.classList.remove('active');
-        tabMedia.setAttribute('aria-selected', 'false');
-        tabNotes.classList.add('active');
-        tabNotes.setAttribute('aria-selected', 'true');
-      } else {
-        tabNotes.classList.remove('active');
-        tabNotes.setAttribute('aria-selected', 'false');
-        tabMedia.classList.add('active');
-        tabMedia.setAttribute('aria-selected', 'true');
+    const mobileTabs = document.querySelector('mobile-tabs');
+    if (mobileTabs && typeof mobileTabs.setTab === 'function') {
+      mobileTabs.setTab(tab);
+    } else {
+      const appEl = document.getElementById('app');
+      if (appEl) {
+        appEl.setAttribute('data-mobile-view', tab);
+      }
+      const tabMedia = document.getElementById('tab-btn-media');
+      const tabNotes = document.getElementById('tab-btn-notes');
+      if (tabMedia && tabNotes) {
+        if (tab === 'notes') {
+          tabMedia.classList.remove('active');
+          tabMedia.setAttribute('aria-selected', 'false');
+          tabNotes.classList.add('active');
+          tabNotes.setAttribute('aria-selected', 'true');
+        } else {
+          tabNotes.classList.remove('active');
+          tabNotes.setAttribute('aria-selected', 'false');
+          tabMedia.classList.add('active');
+          tabMedia.setAttribute('aria-selected', 'true');
+        }
       }
     }
     if (tab === 'media') {
@@ -373,34 +367,41 @@ export class LinedNotesApp {
 
   // ─── MODAL CONTROLS ────────────────────────────────────────────────
   openShortcutsModal() {
-    if (this.shortcutsModal) this.shortcutsModal.classList.add('open');
+    if (this.shortcutsModal) {
+      if (typeof this.shortcutsModal.open === 'function') this.shortcutsModal.open();
+      else this.shortcutsModal.classList.add('open');
+    }
   }
 
   closeShortcutsModal() {
-    if (this.shortcutsModal) this.shortcutsModal.classList.remove('open');
+    if (this.shortcutsModal) {
+      if (typeof this.shortcutsModal.close === 'function') this.shortcutsModal.close();
+      else this.shortcutsModal.classList.remove('open');
+    }
   }
 
   openSettingsModal() {
     this.updateSettingsUI();
     const modal = this.settingsModal || document.getElementById('settings-modal');
-    if (modal) modal.classList.add('open');
+    if (modal) {
+      if (typeof modal.open === 'function') modal.open();
+      else modal.classList.add('open');
+    }
   }
 
   closeSettingsModal() {
     const modal = this.settingsModal || document.getElementById('settings-modal');
-    if (modal) modal.classList.remove('open');
+    if (modal) {
+      if (typeof modal.close === 'function') modal.close();
+      else modal.classList.remove('open');
+    }
   }
 
   closeAllModals() {
-    this.export.closeExportModal();
-    this.import.closeImportModal();
-    this.sessions.closeSessionsModal();
-    this.notes.closeLightbox();
-    this.closeShortcutsModal();
-    this.closeSettingsModal();
+    document.querySelectorAll('modal-dialog').forEach(m => m.close());
     this.closeMobileMenu();
-    const tagMenu = document.getElementById('tag-menu-dropdown');
-    if (tagMenu) tagMenu.classList.remove('open');
+    const tagPicker = document.querySelector('tag-picker');
+    if (tagPicker) tagPicker.closeMenu();
   }
 
   // ─── PWA & INSTALLATION ────────────────────────────────────────────

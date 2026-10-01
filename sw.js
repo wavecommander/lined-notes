@@ -3,7 +3,7 @@
    Offline support, asset caching & PWA installation foundation
    ========================================================================== */
 
-const CACHE_VERSION = 'lined-notes-v35';
+const CACHE_VERSION = 'lined-notes-v39';
 const CACHE_NAME = `lined-notes-cache-${CACHE_VERSION}`;
 
 // Core assets required for 100% offline functionality
@@ -45,17 +45,37 @@ const PRECACHE_ASSETS = [
   './js/sessions.js',
   './js/export.js',
   './js/import.js',
-  './js/waveform-worker.js'
+  './js/waveform-utils.js',
+  './js/waveform-worker.js',
+  // Web Components
+  './js/components/index.js',
+  './js/components/modal-dialog.js',
+  './js/components/note-card.js',
+  './js/components/tag-picker.js',
+  './js/components/time-display.js',
+  './js/components/toast-notification.js',
+  './js/components/mobile-tabs.js'
 ];
 
-// Install: pre-cache static assets
+// Install: pre-cache static assets with cache: 'reload' to bypass stale browser HTTP disk cache
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(PRECACHE_ASSETS).catch((err) => {
-          console.warn('[SW] Some precache assets could not be cached:', err);
-        });
+        return Promise.all(
+          PRECACHE_ASSETS.map((url) => {
+            const req = new Request(url, { cache: 'reload' });
+            return fetch(req)
+              .then((resp) => {
+                if (resp && resp.status === 200) {
+                  return cache.put(url, resp);
+                }
+              })
+              .catch((err) => {
+                console.warn('[SW] Could not precache:', url, err);
+              });
+          })
+        );
       })
       .then(() => self.skipWaiting())
   );
@@ -99,7 +119,7 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(async () => {
           // Offline fallback
-          const cachedResponse = await caches.match(request);
+          const cachedResponse = await caches.match(request, { ignoreSearch: true });
           if (cachedResponse) return cachedResponse;
           return caches.match('./index.html');
         })
@@ -109,7 +129,7 @@ self.addEventListener('fetch', (event) => {
 
   // For static assets: Stale-While-Revalidate
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
+    caches.match(request, { ignoreSearch: true }).then((cachedResponse) => {
       const fetchPromise = fetch(request)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {

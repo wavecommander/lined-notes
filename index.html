@@ -30,7 +30,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css?v=32">
+  <link rel="stylesheet" href="css/main.css?v=39">
 
   <script>
     (function () {
@@ -65,26 +65,7 @@
       </a>
 
       <!-- Mobile View Switcher Tabs (<= 1024px) -->
-      <div class="mobile-tabs" id="mobile-tabs" role="tablist">
-        <button class="mobile-tab-btn active" id="tab-btn-media" onclick="app.setMobileTab('media')" role="tab"
-          aria-selected="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
-            <polygon points="5 3 19 12 5 21 5 3" />
-          </svg>
-          <span>Media</span>
-        </button>
-        <button class="mobile-tab-btn" id="tab-btn-notes" onclick="app.setMobileTab('notes')" role="tab"
-          aria-selected="false">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-          </svg>
-          <span>Notes</span>
-          <span class="mobile-tab-badge" id="mobile-tab-count">0</span>
-        </button>
-      </div>
+      <mobile-tabs id="mobile-tabs"></mobile-tabs>
 
       <div class="header-sep"></div>
 
@@ -390,7 +371,7 @@
       <div id="controls-area">
         <!-- Transport Row -->
         <div class="transport-row">
-          <div class="time-readout" id="time-display">00:00:00.0 <span class="dur">/ 00:00:00.0</span></div>
+          <time-display id="time-display"></time-display>
 
           <!-- Primary Playback Controls -->
           <div class="playback-controls-group">
@@ -541,16 +522,7 @@
           </div>
 
           <!-- Tag Selection -->
-          <div class="tag-picker-wrap">
-            <div class="tag-badge-btn" id="current-tag-btn" onclick="app.toggleTagMenu(event)">
-              <span class="tag-dot" id="current-tag-dot" style="background:var(--tag-note)"></span>
-              <span id="current-tag-label">Note</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </div>
-            <div class="tag-menu-dropdown" id="tag-menu-dropdown"></div>
-          </div>
+          <tag-picker id="tag-picker"></tag-picker>
 
           <input type="text" id="note-text-input"
             data-placeholder-desktop="Type annotation note here… (Press Enter to save, N to capture timestamp)"
@@ -649,12 +621,12 @@
   </div><!-- /#app -->
 
   <!-- EXPORT MODAL -->
-  <div class="modal-overlay" id="export-modal" onclick="if (event.target === this) app.closeExportModal()">
+  <modal-dialog id="export-modal">
     <div class="modal-card">
       <div class="modal-drag-indicator"></div>
       <div class="modal-header">
         <div class="modal-title">Export Annotations</div>
-        <button class="modal-close-btn" onclick="app.closeExportModal()">✕</button>
+        <button class="modal-close-btn" data-modal-close onclick="app.closeExportModal()">✕</button>
       </div>
 
       <div class="export-grid">
@@ -705,15 +677,15 @@
         <button class="btn btn-primary" onclick="app.doExportDownload()">Download File</button>
       </div>
     </div>
-  </div>
+  </modal-dialog>
 
   <!-- IMPORT MODAL -->
-  <div class="modal-overlay" id="import-modal" onclick="if (event.target === this) app.closeImportModal()">
+  <modal-dialog id="import-modal">
     <div class="modal-card">
       <div class="modal-drag-indicator"></div>
       <div class="modal-header">
         <div class="modal-title">Import Annotations</div>
-        <button class="modal-close-btn" onclick="app.closeImportModal()">✕</button>
+        <button class="modal-close-btn" data-modal-close onclick="app.closeImportModal()">✕</button>
       </div>
 
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6;">
@@ -749,18 +721,18 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="app.closeImportModal()">Cancel</button>
+        <button class="btn btn-ghost" data-modal-close onclick="app.closeImportModal()">Cancel</button>
       </div>
     </div>
-  </div>
+  </modal-dialog>
 
   <!-- SETTINGS MODAL -->
-  <div class="modal-overlay" id="settings-modal" onclick="if (event.target === this) app.closeSettingsModal()">
+  <modal-dialog id="settings-modal">
     <div class="modal-card">
       <div class="modal-drag-indicator"></div>
       <div class="modal-header">
         <div class="modal-title">Settings</div>
-        <button class="modal-close-btn" onclick="app.closeSettingsModal()">✕</button>
+        <button class="modal-close-btn" data-modal-close onclick="app.closeSettingsModal()">✕</button>
       </div>
 
       <div class="settings-list">
@@ -791,18 +763,18 @@
       </div>
 
       <div class="modal-footer" style="margin-top:16px;">
-        <button class="btn btn-primary" onclick="app.closeSettingsModal()">Done</button>
+        <button class="btn btn-primary" data-modal-close onclick="app.closeSettingsModal()">Done</button>
       </div>
     </div>
-  </div>
+  </modal-dialog>
 
   <!-- KEYBOARD SHORTCUTS MODAL -->
-  <div class="modal-overlay" id="shortcuts-modal" onclick="if (event.target === this) app.closeShortcutsModal()">
+  <modal-dialog id="shortcuts-modal">
     <div class="modal-card">
       <div class="modal-drag-indicator"></div>
       <div class="modal-header">
         <div class="modal-title">Keyboard Shortcuts</div>
-        <button class="modal-close-btn" onclick="app.closeShortcutsModal()">✕</button>
+        <button class="modal-close-btn" data-modal-close onclick="app.closeShortcutsModal()">✕</button>
       </div>
 
       <div class="shortcuts-grid">
@@ -850,13 +822,13 @@
       </div>
 
       <div class="modal-footer" style="margin-top:16px;">
-        <button class="btn btn-primary" onclick="app.closeShortcutsModal()">Got It</button>
+        <button class="btn btn-primary" data-modal-close onclick="app.closeShortcutsModal()">Got It</button>
       </div>
     </div>
-  </div>
+  </modal-dialog>
 
   <!-- SESSIONS / PROJECTS MODAL -->
-  <div class="modal-overlay" id="sessions-modal" onclick="if (event.target === this) app.closeSessionsModal()">
+  <modal-dialog id="sessions-modal">
     <div class="modal-card modal-card-lg">
       <div class="modal-drag-indicator"></div>
       <div class="modal-header">
@@ -864,7 +836,7 @@
           <div class="modal-title">Saved Projects & Sessions</div>
           <div class="modal-subtitle">Locally stored annotations across all your media files</div>
         </div>
-        <button class="modal-close-btn" onclick="app.closeSessionsModal()">✕</button>
+        <button class="modal-close-btn" data-modal-close onclick="app.closeSessionsModal()">✕</button>
       </div>
 
       <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;overflow:hidden;">
@@ -893,13 +865,13 @@
       </div>
 
       <div class="modal-footer" style="justify-content:space-between;margin-top:14px;">
-        <button class="btn btn-ghost" onclick="app.closeSessionsModal()">Close</button>
+        <button class="btn btn-ghost" data-modal-close onclick="app.closeSessionsModal()">Close</button>
       </div>
     </div>
-  </div>
+  </modal-dialog>
 
   <!-- SNAPSHOT LIGHTBOX -->
-  <div class="modal-overlay" id="lightbox-modal" onclick="app.closeLightbox()">
+  <modal-dialog id="lightbox-modal">
     <div class="lightbox-content" onclick="event.stopPropagation()">
       <img id="lightbox-img" src="" alt="Thumbnail Snapshot">
       <div class="lightbox-actions">
@@ -913,14 +885,11 @@
         </button>
       </div>
     </div>
-  </div>
+  </modal-dialog>
 
-  <div id="toast">
-    <span id="toast-text"></span>
-    <button class="toast-btn" id="toast-action" style="display:none;" onclick="app.onToastAction()">Undo</button>
-  </div>
+  <toast-notification id="toast"></toast-notification>
   <!-- APPLICATION ENTRY POINT -->
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=39"></script>
 </body>
 
 </html>

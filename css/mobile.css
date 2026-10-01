@@ -40,10 +40,8 @@
     font-weight: var(--fw-bold);
   }
 
-  .logo-badge,
   .header-sep,
   .file-badge,
-  #autosave-status,
   #pwa-install-btn,
   .theme-toggle-btn,
   #settings-btn,
@@ -78,6 +76,7 @@
   }
 
   /* Segmented View Tabs */
+  mobile-tabs,
   .mobile-tabs {
     display: flex;
     align-items: center;
@@ -309,6 +308,7 @@
     display: none;
   }
 
+  time-display,
   .time-readout {
     font-size: var(--text-md);
     font-variant-numeric: tabular-nums;
@@ -444,10 +444,10 @@
   /* Annotation Input Box Grid */
   .annotation-input-box {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto 1fr;
     grid-template-areas:
-      "stamp tag pause"
-      "input input save";
+      "stamp tag"
+      "input save";
     gap: 6px;
     padding: 8px;
     background: var(--bg-card);
@@ -462,6 +462,7 @@
     min-height: 36px;
   }
 
+  tag-picker,
   .tag-picker-wrap {
     grid-area: tag;
   }
@@ -472,14 +473,6 @@
     font-size: var(--text-2xs);
     width: 100%;
     justify-content: space-between;
-  }
-
-  .pause-toggle-btn {
-    grid-area: pause;
-    min-height: 36px;
-    height: 36px;
-    padding: 0 8px;
-    font-size: var(--text-2xs);
   }
 
   #note-text-input {
@@ -502,17 +495,6 @@
     display: none;
   }
 
-  @media (max-width: 400px) {
-    .pause-toggle-label {
-      display: none;
-    }
-
-    .pause-toggle-btn {
-      padding: 0 6px;
-      gap: 5px;
-    }
-  }
-
   /* Notes List View */
   .notes-panel-header {
     padding: 10px 12px;
@@ -531,6 +513,7 @@
     display: none;
   }
 
+  note-card,
   .note-card {
     margin: 6px 10px;
     padding: 12px;
@@ -549,6 +532,7 @@
   }
 
   /* Bottom Sheet Modals on Mobile */
+  modal-dialog,
   .modal-overlay {
     align-items: flex-end;
     padding: 0;

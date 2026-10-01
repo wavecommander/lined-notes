@@ -4,7 +4,7 @@
    ========================================================================== */
 
 import { state } from './state.js';
-import { showToast } from './utils.js';
+import { showToast, parseTimeToSeconds } from './utils.js';
 
 export class ImportManager {
   constructor() {
@@ -13,11 +13,17 @@ export class ImportManager {
   }
 
   openImportModal() {
-    if (this.importModal) this.importModal.classList.add('open');
+    if (this.importModal) {
+      if (typeof this.importModal.open === 'function') this.importModal.open();
+      else this.importModal.classList.add('open');
+    }
   }
 
   closeImportModal() {
-    if (this.importModal) this.importModal.classList.remove('open');
+    if (this.importModal) {
+      if (typeof this.importModal.close === 'function') this.importModal.close();
+      else this.importModal.classList.remove('open');
+    }
   }
 
   handleImportFile(file) {
@@ -110,16 +116,7 @@ export class ImportManager {
   }
 
   parseSubtitleTime(str) {
-    if (!str) return NaN;
-    const clean = str.replace(',', '.');
-    const parts = clean.split(':');
-    if (parts.length === 3) {
-      return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
-    }
-    if (parts.length === 2) {
-      return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
-    }
-    return parseFloat(clean);
+    return parseTimeToSeconds(str);
   }
 
   /**

@@ -28,6 +28,29 @@ export function formatVTTTime(secs) {
   return formatSRTTime(secs).replace(',', '.');
 }
 
+export function parseTimeToSeconds(str) {
+  if (!str) return NaN;
+  const clean = String(str).trim().replace(',', '.');
+  const parts = clean.split(':');
+  if (parts.length === 3) {
+    return parseFloat(parts[0]) * 3600 + parseFloat(parts[1]) * 60 + parseFloat(parts[2]);
+  }
+  if (parts.length === 2) {
+    return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+  }
+  return parseFloat(clean);
+}
+
+export function calculateSubtitleCueEnd(note, nextNote) {
+  if (note.end && note.end > note.start) {
+    return note.end;
+  }
+  if (nextNote && nextNote.start > note.start + 0.5) {
+    return Math.min(note.start + 3.0, nextNote.start);
+  }
+  return Math.max(note.start + 1.0, note.start + 2.5);
+}
+
 export function formatBytes(bytes) {
   if (!bytes || bytes === 0) return '0 B';
   const k = 1024;
@@ -147,6 +170,12 @@ export function interpolateColor(c1, c2, t) {
 }
 
 export function showToast(msg, showUndo = false, onUndo = null) {
+  const toastEl = document.querySelector('toast-notification');
+  if (toastEl && typeof toastEl.show === 'function') {
+    toastEl.show(msg, showUndo, onUndo);
+    return;
+  }
+
   const toast = document.getElementById('toast');
   const text = document.getElementById('toast-text');
   const undoBtn = document.getElementById('toast-action');

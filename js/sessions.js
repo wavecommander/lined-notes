@@ -63,13 +63,6 @@ export class SessionsManager {
     try {
       await this.db.set(key, payload);
       state.isDirty = false; // Reset dirty state on auto-save
-      const statusEl = document.getElementById('autosave-status');
-      if (statusEl) {
-        statusEl.style.color = 'var(--accent-primary)';
-        setTimeout(() => {
-          statusEl.style.color = 'var(--text-muted)';
-        }, 1000);
-      }
       this.updateProjectsCountBadge();
     } catch (e) {
       console.warn('Persistence save error:', e);
@@ -114,11 +107,17 @@ export class SessionsManager {
 
   openSessionsModal() {
     this.renderSessionsList();
-    if (this.sessionsModal) this.sessionsModal.classList.add('open');
+    if (this.sessionsModal) {
+      if (typeof this.sessionsModal.open === 'function') this.sessionsModal.open();
+      else this.sessionsModal.classList.add('open');
+    }
   }
 
   closeSessionsModal() {
-    if (this.sessionsModal) this.sessionsModal.classList.remove('open');
+    if (this.sessionsModal) {
+      if (typeof this.sessionsModal.close === 'function') this.sessionsModal.close();
+      else this.sessionsModal.classList.remove('open');
+    }
   }
 
   async renderSessionsList(filterQuery = '') {
@@ -262,7 +261,6 @@ export class SessionsManager {
     // Reset playback & all transport / input / range / timeline states
     this.player.resetPlaybackState();
     state.emit('filereset');
-    state.emit('filerestet');
 
     // Check if active media file matches
     if (state.mediaFile && state.mediaFile.name === fileName && state.mediaFile.size === fileSize) {
@@ -336,9 +334,6 @@ export class SessionsManager {
       state.isSyntheticWaveform = true;
     }
 
-    const statusText = document.getElementById('waveform-status-text');
-    if (statusText) statusText.textContent = 'Synthetic (Detached)';
-
     this.player.updateTimeDisplay();
     state.emit('noteschange');
     state.emit('timelinechanged');
@@ -379,7 +374,6 @@ export class SessionsManager {
       }
 
       state.emit('filereset');
-      state.emit('filerestet');
       state.emit('noteschange');
       state.emit('timelinechanged');
     }
