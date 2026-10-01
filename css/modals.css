@@ -59,8 +59,9 @@
 }
 
 .modal-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--text-lg);
+  font-weight: var(--fw-semibold);
+  letter-spacing: -0.01em;
   color: var(--text-primary);
 }
 
@@ -71,7 +72,7 @@
 }
 
 .modal-subtitle {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   font-weight: normal;
 }
@@ -130,13 +131,13 @@
 
 .fmt-badge {
   font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-bold);
   color: var(--accent-primary);
 }
 
 .fmt-desc {
-  font-size: 11px;
+  font-size: var(--text-2xs);
   color: var(--text-muted);
   margin-top: 4px;
 }
@@ -150,7 +151,7 @@
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 8px 16px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   max-height: 380px;
   overflow-y: auto;
   padding-right: 6px;
@@ -255,8 +256,8 @@
 }
 
 .session-file-name {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--text-md);
+  font-weight: var(--fw-semibold);
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -264,9 +265,9 @@
 }
 
 .session-badge-current {
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-family: var(--font-mono);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   text-transform: uppercase;
   background: var(--accent-primary);
   color: #ffffff;
@@ -276,7 +277,7 @@
 }
 
 .session-time-ago {
-  font-size: 11px;
+  font-size: var(--text-2xs);
   font-family: var(--font-mono);
   color: var(--text-muted);
   flex-shrink: 0;
@@ -286,7 +287,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-secondary);
   font-family: var(--font-mono);
   flex-wrap: wrap;
@@ -300,7 +301,7 @@
 }
 
 .session-tag-pill {
-  font-size: 10px;
+  font-size: var(--text-2xs);
   padding: 2px 7px;
   border-radius: var(--radius-full);
   border: 1px solid var(--tag-color, var(--accent-primary));
@@ -333,13 +334,13 @@
 }
 
 .sessions-empty-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--text-lg);
+  font-weight: var(--fw-semibold);
   color: var(--text-secondary);
 }
 
 .sessions-empty-desc {
-  font-size: 12px;
+  font-size: var(--text-xs);
   max-width: 320px;
   line-height: 1.5;
 }
@@ -355,7 +356,7 @@
   box-shadow: var(--toast-shadow);
   padding: 8px 16px;
   border-radius: var(--radius-full);
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-primary);
   opacity: 0;
   pointer-events: none;
@@ -379,8 +380,8 @@
   border: none;
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-semibold);
   cursor: pointer;
 }
 
@@ -419,4 +420,98 @@
   justify-content: center;
   align-items: center;
   gap: 10px;
+}
+
+/* ─── SETTINGS MODAL ─────────────────────────────────────────────────── */
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.settings-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-bright);
+}
+
+.settings-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.settings-item-title {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+.settings-item-desc {
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Modern Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background-color: var(--border-bright);
+  border-radius: 999px;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--accent-primary);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+}
+
+.toggle-switch input:focus-visible + .toggle-slider {
+  box-shadow: 0 0 0 2px var(--accent-dim), 0 0 0 4px var(--accent-primary);
 }

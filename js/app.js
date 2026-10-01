@@ -25,6 +25,7 @@ export class LinedNotesApp {
     this.import = new ImportManager();
 
     this.shortcutsModal = document.getElementById('shortcuts-modal');
+    this.settingsModal = document.getElementById('settings-modal');
     this.pauseToggleBtn = document.getElementById('pause-toggle-btn');
     this.dropZone = document.getElementById('drop-zone');
     this.deferredInstallPrompt = null;
@@ -102,6 +103,11 @@ export class LinedNotesApp {
       const savedPause = localStorage.getItem(APP_CONFIG.pauseOnTypeKey);
       state.pauseOnType = savedPause === 'true';
       this.updatePauseToggleUI();
+
+      const copyKey = (APP_CONFIG && APP_CONFIG.copyIncludeTimestampKey) || 'ln_copy_include_timestamp';
+      const savedCopyTimestamp = localStorage.getItem(copyKey);
+      state.copyIncludeTimestamp = savedCopyTimestamp === 'true';
+      this.updateSettingsUI();
     } catch (e) {}
   }
 
@@ -115,6 +121,32 @@ export class LinedNotesApp {
       localStorage.setItem(APP_CONFIG.pauseOnTypeKey, state.pauseOnType ? 'true' : 'false');
     } catch (e) {}
     this.updatePauseToggleUI();
+    this.updateSettingsUI();
+  }
+
+  toggleCopyIncludeTimestamp(enabled) {
+    if (typeof enabled === 'boolean') {
+      state.copyIncludeTimestamp = enabled;
+    } else {
+      state.copyIncludeTimestamp = !state.copyIncludeTimestamp;
+    }
+    try {
+      const copyKey = (APP_CONFIG && APP_CONFIG.copyIncludeTimestampKey) || 'ln_copy_include_timestamp';
+      localStorage.setItem(copyKey, state.copyIncludeTimestamp ? 'true' : 'false');
+    } catch (e) {}
+    this.updateSettingsUI();
+    showToast(state.copyIncludeTimestamp ? 'Copy timecode enabled' : 'Copy timecode disabled');
+  }
+
+  updateSettingsUI() {
+    const copyToggle = document.getElementById('setting-copy-timestamp');
+    if (copyToggle) {
+      copyToggle.checked = !!state.copyIncludeTimestamp;
+    }
+    const pauseToggle = document.getElementById('setting-pause-on-type');
+    if (pauseToggle) {
+      pauseToggle.checked = !!state.pauseOnType;
+    }
   }
 
   updatePauseToggleUI() {
@@ -178,12 +210,12 @@ export class LinedNotesApp {
         case '+':
         case '=':
           e.preventDefault();
-          this.timeline.setZoom(state.zoom * 1.5);
+          this.zoomIn();
           break;
         case '-':
         case '_':
           e.preventDefault();
-          this.timeline.setZoom(state.zoom / 1.5);
+          this.zoomOut();
           break;
         case ',':
           this.player.stepFrame(-1);
@@ -233,6 +265,15 @@ export class LinedNotesApp {
           this.closeAllModals();
           break;
       }
+    });
+
+    // Dismiss modals when clicking directly on overlay backdrop
+    document.querySelectorAll('.modal-overlay').forEach((overlay) => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          this.closeAllModals();
+        }
+      });
     });
 
     // Auto-pause when user starts typing if enabled
@@ -339,12 +380,24 @@ export class LinedNotesApp {
     if (this.shortcutsModal) this.shortcutsModal.classList.remove('open');
   }
 
+  openSettingsModal() {
+    this.updateSettingsUI();
+    const modal = this.settingsModal || document.getElementById('settings-modal');
+    if (modal) modal.classList.add('open');
+  }
+
+  closeSettingsModal() {
+    const modal = this.settingsModal || document.getElementById('settings-modal');
+    if (modal) modal.classList.remove('open');
+  }
+
   closeAllModals() {
     this.export.closeExportModal();
     this.import.closeImportModal();
     this.sessions.closeSessionsModal();
     this.notes.closeLightbox();
     this.closeShortcutsModal();
+    this.closeSettingsModal();
     this.closeMobileMenu();
     const tagMenu = document.getElementById('tag-menu-dropdown');
     if (tagMenu) tagMenu.classList.remove('open');
@@ -451,6 +504,24 @@ export class LinedNotesApp {
 
   resetZoom() {
     this.timeline.resetZoom();
+  }
+
+  zoomIn() {
+    const nextZoom = state.zoom * 1.5;
+    if (this.timeline && typeof this.timeline.zoomIn === 'function') {
+      this.timeline.zoomIn();
+    } else if (this.timeline && typeof this.timeline.setZoom === 'function') {
+      this.timeline.setZoom(nextZoom);
+    }
+  }
+
+  zoomOut() {
+    const nextZoom = state.zoom / 1.5;
+    if (this.timeline && typeof this.timeline.zoomOut === 'function') {
+      this.timeline.zoomOut();
+    } else if (this.timeline && typeof this.timeline.setZoom === 'function') {
+      this.timeline.setZoom(nextZoom);
+    }
   }
 
   startScrub(e) {
@@ -616,4 +687,5 @@ export class LinedNotesApp {
 // Global bootstrap instance
 const app = new LinedNotesApp();
 window.app = app;
+window.state = state;
 export default app;

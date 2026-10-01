@@ -31,6 +31,7 @@ export class NotesManager {
     this.renderTagFilters();
     this.renderNotes();
     this.setupEvents();
+    this.setupResponsivePlaceholder();
 
     state.on('timeupdate', () => this.checkActiveNote());
     state.on('noteschange', () => {
@@ -103,6 +104,29 @@ export class NotesManager {
     document.addEventListener('click', () => {
       if (this.tagMenuDropdown) this.tagMenuDropdown.classList.remove('open');
     });
+  }
+
+  setupResponsivePlaceholder() {
+    if (!this.noteInput) return;
+
+    const desktopPlaceholder = this.noteInput.dataset.placeholderDesktop ||
+      'Type annotation note here… (Press Enter to save, N to capture timestamp)';
+    const mobilePlaceholder = this.noteInput.dataset.placeholderMobile ||
+      'Type annotation note here…';
+
+    const mediaQuery = window.matchMedia('(max-width: 1024px)');
+    const updatePlaceholder = () => {
+      this.noteInput.placeholder = mediaQuery.matches ? mobilePlaceholder : desktopPlaceholder;
+    };
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updatePlaceholder);
+    } else if (typeof mediaQuery.addListener === 'function') {
+      mediaQuery.addListener(updatePlaceholder);
+    }
+    window.addEventListener('resize', updatePlaceholder, { passive: true });
+
+    updatePlaceholder();
   }
 
   captureCurrentTime() {
@@ -295,7 +319,7 @@ export class NotesManager {
 
   jumpToNote(start) {
     this.player.seekTo(start);
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= 1024) {
       state.emit('requestmobiletab', 'media');
     }
   }
@@ -333,7 +357,9 @@ export class NotesManager {
   copyNoteText(id) {
     const note = state.notes.find(n => n.id === id);
     if (!note) return;
-    const str = `[${formatTime(note.start)}] ${note.text}`;
+    const str = state.copyIncludeTimestamp
+      ? `[${formatTime(note.start)}] ${note.text}`
+      : note.text;
     copyText(str, 'Note copied to clipboard');
   }
 

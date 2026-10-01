@@ -125,8 +125,8 @@ html[data-theme="light"] #audio-stage::after {
 }
 
 .audio-info-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--text-lg);
+  font-weight: var(--fw-semibold);
   color: var(--text-primary);
   text-align: center;
   word-break: break-all;
@@ -135,7 +135,7 @@ html[data-theme="light"] #audio-stage::after {
 
 .audio-info-sub {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   color: var(--text-muted);
 }
 
@@ -227,8 +227,9 @@ html[data-theme="light"] #drop-zone:hover {
 }
 
 .drop-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--text-lg);
+  font-weight: var(--fw-semibold);
+  letter-spacing: -0.01em;
   color: var(--text-primary);
 }
 
@@ -237,7 +238,7 @@ html[data-theme="light"] #drop-zone:hover {
 }
 
 .drop-desc {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-secondary);
   line-height: 1.6;
 }
@@ -252,7 +253,7 @@ html[data-theme="light"] #drop-zone:hover {
 
 .drop-pill {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   padding: 2px 7px;
   border-radius: var(--radius-full);
   background: var(--bg-input);
@@ -300,9 +301,9 @@ html[data-theme="light"] #drop-zone:hover {
 }
 
 .detached-badge {
-  font-size: 11px;
+  font-size: var(--text-2xs);
   font-family: var(--font-mono);
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--accent-primary);
@@ -313,14 +314,14 @@ html[data-theme="light"] #drop-zone:hover {
 }
 
 .detached-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--text-lg);
+  font-weight: var(--fw-semibold);
   color: var(--text-primary);
   word-break: break-all;
 }
 
 .detached-desc {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-secondary);
   line-height: 1.5;
   max-width: 380px;
@@ -411,8 +412,8 @@ html[data-theme="light"] #drop-zone:hover {
   border-radius: var(--radius-full);
   padding: 8px 14px 8px 12px;
   font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
   color: #f5f2eb;
   cursor: pointer;
   user-select: none;
@@ -466,7 +467,7 @@ html[data-theme="light"] #drop-zone:hover {
 
 .fullscreen-exit-kbd {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   color: var(--text-secondary);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);

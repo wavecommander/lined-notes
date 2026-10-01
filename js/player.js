@@ -5,6 +5,214 @@
 import { state } from './state.js';
 import { APP_CONFIG } from './config.js';
 import { formatTime, formatBytes, showToast } from './utils.js';
+/**
+ * Demuxes audio streams from WebM and Matroska (.mkv) video files into a pure audio/webm
+ * container that AudioContext.decodeAudioData can decode without video overhead or failure.
+ *
+ * @param {ArrayBuffer} arrayBuffer - Raw WebM / MKV file bytes
+ * @returns {ArrayBuffer|{noAudioTrack: boolean}|null} Demuxed audio/webm ArrayBuffer or status object
+ */
+export function extractAudioFromWebM(arrayBuffer) {
+  const data = new Uint8Array(arrayBuffer);
+  const len = data.length;
+
+  function readVint(offset, raw = false) {
+    if (offset >= len) return null;
+    const first = data[offset];
+    if (first === 0) return null;
+    let mask = 0x80;
+    let width = 1;
+    while ((first & mask) === 0 && width <= 8) {
+      mask >>= 1;
+      width++;
+    }
+    if (offset + width > len) return null;
+    let val = raw ? 0 : (first & (mask - 1));
+    for (let i = (raw ? 0 : 1); i < width; i++) {
+      val = (val * 256) + data[offset + i];
+    }
+    return { val, width };
+  }
+
+  function isUnknownSize(width, val) {
+    if (width >= 1 && width <= 8) {
+      return val === (Math.pow(2, 7 * width) - 1);
+    }
+    return false;
+  }
+
+  function readElement(offset) {
+    if (offset >= len) return null;
+    const idInfo = readVint(offset, true);
+    if (!idInfo) return null;
+    const sizeOffset = offset + idInfo.width;
+    const sizeInfo = readVint(sizeOffset, false);
+    if (!sizeInfo) return null;
+    const dataOffset = sizeOffset + sizeInfo.width;
+    const unknown = isUnknownSize(sizeInfo.width, sizeInfo.val);
+    const size = unknown ? (len - dataOffset) : sizeInfo.val;
+    return {
+      id: idInfo.val,
+      idWidth: idInfo.width,
+      sizeWidth: sizeInfo.width,
+      headerSize: idInfo.width + sizeInfo.width,
+      size,
+      unknownSize: unknown,
+      dataOffset,
+      end: dataOffset + size
+    };
+  }
+
+  function encodeVint(val, fixedWidth = 0) {
+    let width = 1;
+    if (fixedWidth > 0) {
+      width = fixedWidth;
+    } else {
+      while (val >= (1 << (7 * width)) - 1 && width < 8) {
+        width++;
+      }
+    }
+    const bytes = new Uint8Array(width);
+    let v = val;
+    for (let i = width - 1; i >= 0; i--) {
+      bytes[i] = v & 0xff;
+      v = Math.floor(v / 256);
+    }
+    bytes[0] |= (1 << (8 - width));
+    return bytes;
+  }
+
+  // 1. Verify EBML Header (0x1A45DFA3)
+  const ebmlHeader = readElement(0);
+  if (!ebmlHeader || ebmlHeader.id !== 0x1A45DFA3) return null;
+
+  // 2. Segment (0x18538067)
+  const segment = readElement(ebmlHeader.end);
+  if (!segment || segment.id !== 0x18538067) return null;
+
+  let pos = segment.dataOffset;
+  const segEnd = segment.end <= len ? segment.end : len;
+
+  let segmentInfoBuf = null;
+  let audioTrackNumber = null;
+  let audioTrackEntryBuf = null;
+  const audioClusters = [];
+
+  while (pos < segEnd) {
+    const el = readElement(pos);
+    if (!el || el.end > len || el.headerSize === 0) break;
+
+    if (el.id === 0x1549A966) { // Segment Info
+      segmentInfoBuf = data.slice(pos, el.end);
+    } else if (el.id === 0x1654AE6B) { // Tracks
+      let trackPos = el.dataOffset;
+      while (trackPos < el.end) {
+        const tEntry = readElement(trackPos);
+        if (!tEntry || tEntry.headerSize === 0) break;
+        if (tEntry.id === 0xAE) { // TrackEntry
+          let childPos = tEntry.dataOffset;
+          let trackNum = null;
+          let trackType = null;
+          while (childPos < tEntry.end) {
+            const child = readElement(childPos);
+            if (!child || child.headerSize === 0) break;
+            if (child.id === 0xD7) { // TrackNumber
+              let n = 0;
+              for (let i = 0; i < child.size; i++) n = (n * 256) + data[child.dataOffset + i];
+              trackNum = n;
+            } else if (child.id === 0x83) { // TrackType
+              let t = 0;
+              for (let i = 0; i < child.size; i++) t = (t * 256) + data[child.dataOffset + i];
+              trackType = t; // 1 = Video, 2 = Audio
+            }
+            childPos = child.end;
+          }
+          if (trackType === 2 && audioTrackNumber === null) {
+            audioTrackNumber = trackNum;
+            audioTrackEntryBuf = data.slice(trackPos, tEntry.end);
+          }
+        }
+        trackPos = tEntry.end;
+      }
+    } else if (el.id === 0x1F43B675) { // Cluster
+      if (audioTrackNumber !== null) {
+        let clusterChild = el.dataOffset;
+        let timecodeBuf = null;
+        const clusterAudioBlocks = [];
+        while (clusterChild < el.end) {
+          const blockEl = readElement(clusterChild);
+          if (!blockEl || blockEl.headerSize === 0) break;
+          if (blockEl.id === 0xE7) { // Timestamp/Timecode
+            timecodeBuf = data.slice(clusterChild, blockEl.end);
+          } else if (blockEl.id === 0xA3 || blockEl.id === 0xA1) { // SimpleBlock or Block
+            const blockTrack = readVint(blockEl.dataOffset, false);
+            if (blockTrack && blockTrack.val === audioTrackNumber) {
+              clusterAudioBlocks.push(data.slice(clusterChild, blockEl.end));
+            }
+          }
+          clusterChild = blockEl.end;
+        }
+        if (clusterAudioBlocks.length > 0) {
+          let totalClusterPayload = (timecodeBuf ? timecodeBuf.length : 0);
+          for (const b of clusterAudioBlocks) totalClusterPayload += b.length;
+          const clusterIdBytes = new Uint8Array([0x1F, 0x43, 0xB6, 0x75]);
+          const clusterSizeBytes = encodeVint(totalClusterPayload, 4);
+          const clusterTotalLen = clusterIdBytes.length + clusterSizeBytes.length + totalClusterPayload;
+          const newCluster = new Uint8Array(clusterTotalLen);
+          let off = 0;
+          newCluster.set(clusterIdBytes, off); off += clusterIdBytes.length;
+          newCluster.set(clusterSizeBytes, off); off += clusterSizeBytes.length;
+          if (timecodeBuf) {
+            newCluster.set(timecodeBuf, off); off += timecodeBuf.length;
+          }
+          for (const b of clusterAudioBlocks) {
+            newCluster.set(b, off); off += b.length;
+          }
+          audioClusters.push(newCluster);
+        }
+      }
+    }
+    pos = el.end;
+  }
+
+  if (audioTrackNumber === null || !audioTrackEntryBuf) {
+    return { noAudioTrack: true };
+  }
+
+  // Assemble new Tracks element containing only the audio TrackEntry
+  const tracksIdBytes = new Uint8Array([0x16, 0x54, 0xAE, 0x6B]);
+  const tracksSizeBytes = encodeVint(audioTrackEntryBuf.length, 4);
+  const newTracks = new Uint8Array(tracksIdBytes.length + tracksSizeBytes.length + audioTrackEntryBuf.length);
+  let off = 0;
+  newTracks.set(tracksIdBytes, off); off += tracksIdBytes.length;
+  newTracks.set(tracksSizeBytes, off); off += tracksSizeBytes.length;
+  newTracks.set(audioTrackEntryBuf, off);
+
+  // Calculate segment size
+  let segmentPayloadSize = (segmentInfoBuf ? segmentInfoBuf.length : 0) + newTracks.length;
+  for (const c of audioClusters) segmentPayloadSize += c.length;
+
+  const segmentIdBytes = new Uint8Array([0x18, 0x53, 0x80, 0x67]);
+  const segmentSizeBytes = encodeVint(segmentPayloadSize, 8);
+
+  const ebmlHeaderBuf = data.slice(0, ebmlHeader.end);
+  const totalFileSize = ebmlHeaderBuf.length + segmentIdBytes.length + segmentSizeBytes.length + segmentPayloadSize;
+
+  const finalBuffer = new Uint8Array(totalFileSize);
+  let finalOffset = 0;
+  finalBuffer.set(ebmlHeaderBuf, finalOffset); finalOffset += ebmlHeaderBuf.length;
+  finalBuffer.set(segmentIdBytes, finalOffset); finalOffset += segmentIdBytes.length;
+  finalBuffer.set(segmentSizeBytes, finalOffset); finalOffset += segmentSizeBytes.length;
+  if (segmentInfoBuf) {
+    finalBuffer.set(segmentInfoBuf, finalOffset); finalOffset += segmentInfoBuf.length;
+  }
+  finalBuffer.set(newTracks, finalOffset); finalOffset += newTracks.length;
+  for (const c of audioClusters) {
+    finalBuffer.set(c, finalOffset); finalOffset += c.length;
+  }
+
+  return finalBuffer.buffer;
+}
 
 export class PlayerController {
   constructor() {
@@ -48,6 +256,9 @@ export class PlayerController {
       state.duration = v.duration || 0;
       state.currentTime = v.currentTime || 0;
       this.updateTimeDisplay();
+      if (state.isSyntheticWaveform && state.mediaFile && state.duration > 0) {
+        this.generateSyntheticWaveform(state.mediaFile, state.duration);
+      }
       state.emit('medialoaded');
     });
 
@@ -159,6 +370,7 @@ export class PlayerController {
       const detachedStage = document.getElementById('detached-stage');
       if (detachedStage) detachedStage.style.display = 'none';
       state.isAudio = file.type.startsWith('audio/');
+      state.isSyntheticWaveform = false;
 
       if (state.mediaUrl) URL.revokeObjectURL(state.mediaUrl);
       state.mediaUrl = URL.createObjectURL(file);
@@ -197,6 +409,7 @@ export class PlayerController {
     state.isLooping = false;
     state.isTimeStamped = false;
     state.waveformPeaks = null;
+    state.isSyntheticWaveform = false;
     state.duration = 0;
     state.currentTime = 0;
     state.zoom = 1;
@@ -250,15 +463,66 @@ export class PlayerController {
     if (this.dropZone) this.dropZone.classList.add('hidden');
   }
 
+  /**
+   * Generates a realistic synthetic waveform acoustic envelope when native decoding
+   * is unsupported, oversized, or when the video lacks an audio track.
+   * Deterministically seeded from file attributes for consistent timeline rendering.
+   */
+  generateSyntheticWaveform(file, duration) {
+    const samples = APP_CONFIG.waveformSampleCount || 1600;
+    const dur = (duration && duration > 0) ? duration : (state.duration > 0 ? state.duration : 60);
+
+    // Deterministic PRNG seed based on filename, size, and duration
+    let seed = 0x5a17b3d9;
+    const key = `${(file && file.name) || 'media'}_${(file && file.size) || 0}_${Math.round(dur)}`;
+    for (let i = 0; i < key.length; i++) {
+      seed = (seed * 31 + key.charCodeAt(i)) & 0xffffffff;
+    }
+
+    function prng() {
+      seed = (seed + 0x6d2b79f5) & 0xffffffff;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+
+    const rawPeaks = new Float32Array(samples);
+    const phrasePeriod = Math.max(8, samples / Math.max(1, dur / 4.8));
+    const syllablePeriod = Math.max(3, samples / Math.max(1, dur * 1.7));
+
+    for (let i = 0; i < samples; i++) {
+      const phraseWave = Math.sin((i / phrasePeriod) * Math.PI * 2);
+      const phraseMask = Math.max(0, phraseWave * 0.72 + 0.28);
+      const rhythm = Math.sin((i / syllablePeriod) * Math.PI * 2) * 0.26 + 0.74;
+      const noise = prng() * 0.48 + 0.12;
+      let val = phraseMask * rhythm * noise;
+      val = Math.max(0.06, Math.min(0.96, val * 1.52));
+      rawPeaks[i] = val;
+    }
+
+    // 3-point smoothing for organic acoustic curve
+    const peaks = new Float32Array(samples);
+    for (let i = 0; i < samples; i++) {
+      const prev = rawPeaks[Math.max(0, i - 1)];
+      const curr = rawPeaks[i];
+      const next = rawPeaks[Math.min(samples - 1, i + 1)];
+      peaks[i] = (prev * 0.22) + (curr * 0.56) + (next * 0.22);
+    }
+
+    state.waveformPeaks = peaks;
+    state.isSyntheticWaveform = true;
+    state.emit('timelinechanged');
+    return peaks;
+  }
+
   async generateWaveformPeaks(file) {
     const statusText = document.getElementById('waveform-status-text');
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const maxDecodeSize = isMobile ? APP_CONFIG.maxDecodeSizeMobile : APP_CONFIG.maxDecodeSizeDesktop;
 
     if (file.size > maxDecodeSize) {
-      if (statusText) statusText.textContent = 'Synthetic';
-      state.waveformPeaks = null;
-      state.emit('timelinechanged');
+      if (statusText) statusText.textContent = 'Synthetic (Large File)';
+      this.generateSyntheticWaveform(file, state.duration);
       return;
     }
 
@@ -269,40 +533,92 @@ export class PlayerController {
       if (!AudioCtx) throw new Error('Web Audio not supported');
       const audioCtx = new AudioCtx();
 
-      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-      const rawData = audioBuffer.getChannelData(0);
-      const samples = APP_CONFIG.waveformSampleCount || 1200;
-      const blockSize = Math.floor(rawData.length / samples);
-      const peaks = new Float32Array(samples);
+      let audioBuffer = null;
 
-      for (let i = 0; i < samples; i++) {
-        const blockStart = blockSize * i;
-        let sum = 0;
-        for (let j = 0; j < blockSize; j++) {
-          sum += Math.abs(rawData[blockStart + j] || 0);
+      // Check for WebM or Matroska container by extension, MIME type, or EBML magic header
+      const isNamedWebM = /\.(webm|mkv)$/i.test(file.name) ||
+        file.type === 'video/webm' ||
+        file.type === 'video/x-matroska';
+      const isEbmlHeader = arrayBuffer.byteLength >= 4 &&
+        new Uint8Array(arrayBuffer, 0, 4).every((b, i) => b === [0x1A, 0x45, 0xDF, 0xA3][i]);
+      const isWebMOrMkv = isNamedWebM || isEbmlHeader;
+
+      // Fast Path 1: For non-WebM containers (MP4, MP3, WAV, AAC, FLAC, OGG), try direct decode
+      if (!isWebMOrMkv) {
+        try {
+          audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+        } catch (directErr) {
+          console.log('[Waveform] Direct decode skipped/failed, evaluating demuxer fallback');
         }
-        peaks[i] = sum / blockSize;
       }
 
-      let maxPeak = 0;
-      for (let i = 0; i < samples; i++) {
-        if (peaks[i] > maxPeak) maxPeak = peaks[i];
+      // Demux Path 2: For WebM/MKV containers, isolate pure audio stream from video clusters
+      if (!audioBuffer && isWebMOrMkv) {
+        const demuxResult = extractAudioFromWebM(arrayBuffer);
+        if (demuxResult && demuxResult.noAudioTrack) {
+          // File is a video with no audio track (e.g. screen recording or muted clip)
+          if (statusText) statusText.textContent = 'Synthetic (No Audio Track)';
+          this.generateSyntheticWaveform(file, state.duration);
+          audioCtx.close();
+          return;
+        } else if (demuxResult instanceof ArrayBuffer) {
+          try {
+            audioBuffer = await audioCtx.decodeAudioData(demuxResult);
+          } catch (demuxDecodeErr) {
+            console.warn('[Waveform] Demuxed WebM/MKV audio decode error:', demuxDecodeErr);
+          }
+        }
       }
-      if (maxPeak > 0) {
+
+      // Fallback Path 3: Try direct decode if not already attempted
+      if (!audioBuffer && isWebMOrMkv) {
+        try {
+          audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+        } catch (finalErr) {
+          // Fall through to synthetic waveform
+        }
+      }
+
+      if (audioBuffer) {
+        const rawData = audioBuffer.getChannelData(0);
+        const samples = APP_CONFIG.waveformSampleCount || 1600;
+        const blockSize = Math.floor(rawData.length / samples);
+        const peaks = new Float32Array(samples);
+
         for (let i = 0; i < samples; i++) {
-          peaks[i] = peaks[i] / maxPeak;
+          const blockStart = blockSize * i;
+          let sum = 0;
+          for (let j = 0; j < blockSize; j++) {
+            sum += Math.abs(rawData[blockStart + j] || 0);
+          }
+          peaks[i] = sum / Math.max(1, blockSize);
         }
-      }
 
-      state.waveformPeaks = peaks;
-      if (statusText) statusText.textContent = 'Decoded (HD)';
-      audioCtx.close();
-      state.emit('timelinechanged');
+        let maxPeak = 0;
+        for (let i = 0; i < samples; i++) {
+          if (peaks[i] > maxPeak) maxPeak = peaks[i];
+        }
+        if (maxPeak > 0) {
+          for (let i = 0; i < samples; i++) {
+            peaks[i] = peaks[i] / maxPeak;
+          }
+        }
+
+        state.waveformPeaks = peaks;
+        state.isSyntheticWaveform = false;
+        if (statusText) statusText.textContent = 'Decoded (HD)';
+        audioCtx.close();
+        state.emit('timelinechanged');
+      } else {
+        // High-fidelity synthetic fallback
+        if (statusText) statusText.textContent = isWebMOrMkv ? 'Synthetic (WebM)' : 'Synthetic';
+        this.generateSyntheticWaveform(file, state.duration);
+        audioCtx.close();
+      }
     } catch (err) {
       console.warn('Waveform decode fallback:', err);
-      if (statusText) statusText.textContent = 'Timeline Ready';
-      state.waveformPeaks = null;
-      state.emit('timelinechanged');
+      if (statusText) statusText.textContent = 'Synthetic';
+      this.generateSyntheticWaveform(file, state.duration);
     }
   }
 
@@ -647,6 +963,24 @@ export class PlayerController {
         }
 
         this.audioBarElements[i].style.height = `${this.audioBarHeights[i].toFixed(1)}px`;
+      }
+
+      // Real-time waveform refinement for synthetic waveforms during audio playback
+      if (state.isSyntheticWaveform && state.waveformPeaks && state.duration > 0) {
+        let peakEnergy = 0;
+        for (let b = 1; b < Math.min(120, this.analyserNode.frequencyBinCount); b++) {
+          if (this.freqData[b] > peakEnergy) peakEnergy = this.freqData[b];
+        }
+        const liveAmp = Math.min(1.0, (peakEnergy / 255) / (vol > 0.05 ? vol : 1.0));
+        if (liveAmp > 0.03) {
+          const progress = Math.max(0, Math.min(1, state.currentTime / state.duration));
+          const idx = Math.floor(progress * (state.waveformPeaks.length - 1));
+          state.waveformPeaks[idx] = state.waveformPeaks[idx] * 0.25 + liveAmp * 0.75;
+          const statusText = document.getElementById('waveform-status-text');
+          if (statusText && statusText.textContent.startsWith('Synthetic')) {
+            statusText.textContent = 'Live Audio';
+          }
+        }
       }
       return;
     }

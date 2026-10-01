@@ -19,17 +19,20 @@
 .transport-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 8px 10px;
 }
 
 .time-readout {
   font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
   color: var(--text-primary);
   white-space: nowrap;
-  letter-spacing: 0.02em;
-  min-width: 155px;
+  letter-spacing: -0.01em;
+  min-width: 176px;
+  flex-shrink: 0;
   margin-right: 4px;
 }
 
@@ -141,8 +144,8 @@
   background: var(--bg-surface);
   color: var(--text-secondary);
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-medium);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -189,7 +192,7 @@
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-2xs);
   padding: 0 8px;
   border-radius: 8px;
   cursor: pointer;
@@ -258,8 +261,9 @@ input[type="range"]::-webkit-slider-thumb {
 
 .stamp-button {
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
   color: var(--accent-primary);
   background: var(--accent-dim);
   border: 1px solid rgba(217, 119, 66, 0.35);
@@ -296,8 +300,8 @@ input[type="range"]::-webkit-slider-thumb {
   gap: 5px;
   padding: 4px 8px;
   border-radius: var(--radius-sm);
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-medium);
   cursor: pointer;
   border: 1px solid transparent;
   user-select: none;
@@ -317,7 +321,7 @@ input[type="range"]::-webkit-slider-thumb {
   border: none;
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--text-sm);
   outline: none;
   min-width: 140px;
 }
@@ -337,8 +341,8 @@ input[type="range"]::-webkit-slider-thumb {
   padding: 3px 9px;
   height: 28px;
   font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-medium);
   color: var(--text-muted);
   cursor: pointer;
   user-select: none;
@@ -445,4 +449,12 @@ input[type="range"]::-webkit-slider-thumb {
 .mobile-speed-btn,
 .mobile-tools-toggle {
   display: none;
+}
+
+.mobile-tools-toggle svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.8;
+  stroke: currentColor;
+  flex-shrink: 0;
 }

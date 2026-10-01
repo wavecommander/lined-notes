@@ -5,8 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <meta name="theme-color" content="#141210">
-  <meta name="description" content="Lined Notes — Professional Audio & Video Timeline Annotation Studio">
-  <title>Lined Notes — Audio & Video Annotation Studio</title>
+  <meta name="description" content="Lined Notes — Professional Audio & Video Annotation">
+  <title>Lined Notes — Audio & Video Annotation</title>
 
   <!-- PWA Manifest & App Metadata -->
   <link rel="manifest" href="manifest.webmanifest">
@@ -30,7 +30,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/main.css?v=32">
 
   <script>
     (function () {
@@ -64,7 +64,7 @@
         <span class="logo-title">Lined Notes</span>
       </a>
 
-      <!-- Mobile View Switcher Tabs (<= 768px) -->
+      <!-- Mobile View Switcher Tabs (<= 1024px) -->
       <div class="mobile-tabs" id="mobile-tabs" role="tablist">
         <button class="mobile-tab-btn active" id="tab-btn-media" onclick="app.setMobileTab('media')" role="tab"
           aria-selected="true">
@@ -105,8 +105,9 @@
         <span class="btn-text">Saved Projects</span>
         <span class="projects-count-badge" id="projects-count-badge" style="display:none;">0</span>
       </button>
-      <input type="file" id="file-picker" accept="audio/*,video/*" style="display:none"
-        onchange="app.handleFileSelect(this.files[0])">
+      <input type="file" id="file-picker"
+        accept="audio/*,video/*,.mp4,.mkv,.webm,.mov,.avi,.m4v,.ogv,.mp3,.wav,.m4a,.aac,.ogg,.opus,.flac,.weba"
+        style="display:none" onchange="app.handleFileSelect(this.files[0])">
 
       <div class="file-badge" id="file-badge" title="Current Loaded File">
         <div class="dot"></div>
@@ -143,16 +144,6 @@
         <span>Install App</span>
       </button>
 
-      <!-- Auto-save status -->
-      <div id="autosave-status"
-        style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:5px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-          <polyline points="17 21 17 13 7 13 7 21" />
-        </svg>
-        <span>Auto-saved</span>
-      </div>
-
       <!-- Theme toggle -->
       <button class="btn-icon theme-toggle-btn" id="theme-toggle-btn" onclick="app.toggleTheme()"
         title="Toggle Theme (T)">
@@ -172,15 +163,34 @@
         </svg>
       </button>
 
-      <button class="btn-icon" onclick="app.openShortcutsModal()" title="Keyboard Shortcuts (?)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-          <line x1="12" y1="17" x2="12.01" y2="17" />
+      <button class="btn-icon" onclick="app.openShortcutsModal()" title="Keyboard Shortcuts (?)"
+        aria-label="Keyboard Shortcuts">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" width="14" height="14">
+          <rect width="20" height="16" x="2" y="4" rx="2" />
+          <path d="M6 8h.001" />
+          <path d="M10 8h.001" />
+          <path d="M14 8h.001" />
+          <path d="M18 8h.001" />
+          <path d="M8 12h.001" />
+          <path d="M12 12h.001" />
+          <path d="M16 12h.001" />
+          <path d="M7 16h10" />
         </svg>
       </button>
 
-      <!-- Mobile Overflow Menu (<= 768px) -->
+      <!-- Settings -->
+      <button class="btn-icon" id="settings-btn" onclick="app.openSettingsModal()" title="Settings"
+        aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" width="14" height="14">
+          <path
+            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      </button>
+
+      <!-- Mobile Overflow Menu (<= 1024px) -->
       <div class="mobile-menu-wrap" id="mobile-menu-wrap">
         <button class="btn-icon mobile-menu-btn" id="mobile-menu-btn" onclick="app.toggleMobileMenu(event)"
           title="Options menu" aria-label="Options menu">
@@ -232,12 +242,28 @@
             <span>Import Annotations…</span>
           </div>
           <div class="dropdown-item" onclick="app.openShortcutsModal(); app.closeMobileMenu();">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" width="14" height="14">
+              <rect width="20" height="16" x="2" y="4" rx="2" />
+              <path d="M6 8h.001" />
+              <path d="M10 8h.001" />
+              <path d="M14 8h.001" />
+              <path d="M18 8h.001" />
+              <path d="M8 12h.001" />
+              <path d="M12 12h.001" />
+              <path d="M16 12h.001" />
+              <path d="M7 16h10" />
             </svg>
             <span>Keyboard Shortcuts</span>
+          </div>
+          <div class="dropdown-item" onclick="app.openSettingsModal(); app.closeMobileMenu();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" width="14" height="14">
+              <path
+                d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <span>Settings</span>
           </div>
           <div class="dropdown-divider"></div>
           <div class="dropdown-item text-danger" onclick="app.clearAllNotes(); app.closeMobileMenu();">
@@ -354,22 +380,6 @@
 
       <!-- TIMELINE AREA -->
       <div id="timeline-container">
-        <div class="timeline-toolbar">
-          <div class="timeline-status" id="timeline-status">
-            <span>Waveform: <strong id="waveform-status-text">Ready</strong></span>
-            <span id="range-status-text" style="display:none;color:var(--accent-cyan);">Range: <span
-                id="range-val"></span></span>
-          </div>
-          <div class="zoom-controls">
-            <span>Zoom:</span>
-            <button class="zoom-btn" onclick="app.setZoom(app.zoom / 1.5)" title="Zoom Out">−</button>
-            <span class="zoom-val" id="zoom-val">1×</span>
-            <button class="zoom-btn" onclick="app.setZoom(app.zoom * 1.5)" title="Zoom In">+</button>
-            <button class="zoom-btn" onclick="app.resetZoom()" title="Reset Zoom"
-              style="width:auto;padding:0 5px;">Reset</button>
-          </div>
-        </div>
-
         <div id="timeline-canvas-wrap" onpointerdown="app.startScrub(event)" onpointermove="app.onTimelineHover(event)"
           onpointerleave="app.clearHover()" onwheel="app.onTimelineWheel(event)">
           <canvas id="timeline-canvas"></canvas>
@@ -419,10 +429,17 @@
               title="Cycle Playback Speed" aria-label="Cycle speed">1×</button>
             <button class="mobile-tools-toggle" id="mobile-tools-toggle" onclick="app.toggleMobileTools()"
               title="Additional Playback Tools" aria-label="Toggle tools">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="3" />
-                <path
-                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                stroke-linejoin="round" width="16" height="16">
+                <line x1="6" y1="4" x2="6" y2="12" />
+                <line x1="6" y1="16" x2="6" y2="20" />
+                <circle cx="6" cy="14" r="2" />
+                <line x1="12" y1="4" x2="12" y2="6" />
+                <line x1="12" y1="10" x2="12" y2="20" />
+                <circle cx="12" cy="8" r="2" />
+                <line x1="18" y1="4" x2="18" y2="13" />
+                <line x1="18" y1="17" x2="18" y2="20" />
+                <circle cx="18" cy="15" r="2" />
               </svg>
             </button>
           </div>
@@ -536,18 +553,17 @@
           </div>
 
           <input type="text" id="note-text-input"
+            data-placeholder-desktop="Type annotation note here… (Press Enter to save, N to capture timestamp)"
+            data-placeholder-mobile="Type annotation note here…"
             placeholder="Type annotation note here… (Press Enter to save, N to capture timestamp)" maxlength="1000">
-
-          <!-- Pause While Typing Toggle Pill -->
-          <button type="button" class="pause-toggle-btn active" id="pause-toggle-btn" onclick="app.togglePauseOnType()"
-            title="Pause while typing is ON (Click to disable)" aria-pressed="true">
-            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" width="10" height="10">
-              <rect x="5" y="4" width="4.5" height="16" rx="1.5" />
-              <rect x="14.5" y="4" width="4.5" height="16" rx="1.5" />
-            </svg>
-            <span class="pause-toggle-label">Pause on type</span>
-            <span class="pause-toggle-track"><span class="pause-toggle-thumb"></span></span>
-          </button>
+          <script>
+            (function () {
+              if (window.matchMedia && window.matchMedia('(max-width: 1024px)').matches) {
+                var el = document.getElementById('note-text-input');
+                if (el) el.placeholder = el.dataset.placeholderMobile || 'Type annotation note here…';
+              }
+            })();
+          </script>
 
           <button class="btn btn-primary btn-sm" onclick="app.saveNote()">+ Add Note</button>
         </div>
@@ -633,7 +649,7 @@
   </div><!-- /#app -->
 
   <!-- EXPORT MODAL -->
-  <div class="modal-overlay" id="export-modal">
+  <div class="modal-overlay" id="export-modal" onclick="if (event.target === this) app.closeExportModal()">
     <div class="modal-card">
       <div class="modal-drag-indicator"></div>
       <div class="modal-header">
@@ -692,7 +708,7 @@
   </div>
 
   <!-- IMPORT MODAL -->
-  <div class="modal-overlay" id="import-modal">
+  <div class="modal-overlay" id="import-modal" onclick="if (event.target === this) app.closeImportModal()">
     <div class="modal-card">
       <div class="modal-drag-indicator"></div>
       <div class="modal-header">
@@ -738,8 +754,50 @@
     </div>
   </div>
 
+  <!-- SETTINGS MODAL -->
+  <div class="modal-overlay" id="settings-modal" onclick="if (event.target === this) app.closeSettingsModal()">
+    <div class="modal-card">
+      <div class="modal-drag-indicator"></div>
+      <div class="modal-header">
+        <div class="modal-title">Settings</div>
+        <button class="modal-close-btn" onclick="app.closeSettingsModal()">✕</button>
+      </div>
+
+      <div class="settings-list">
+        <!-- Setting Item: Copy with Timestamp -->
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Copy note with timecode</div>
+            <div class="settings-item-desc">Include the start timestamp when copying note text (e.g. [01:24.5] Note
+              text)</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="setting-copy-timestamp" onchange="app.toggleCopyIncludeTimestamp(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <!-- Setting Item: Pause on Type -->
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Pause while typing</div>
+            <div class="settings-item-desc">Automatically pause media playback when typing an annotation note</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="setting-pause-on-type" onchange="app.togglePauseOnType(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="margin-top:16px;">
+        <button class="btn btn-primary" onclick="app.closeSettingsModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- KEYBOARD SHORTCUTS MODAL -->
-  <div class="modal-overlay" id="shortcuts-modal">
+  <div class="modal-overlay" id="shortcuts-modal" onclick="if (event.target === this) app.closeShortcutsModal()">
     <div class="modal-card">
       <div class="modal-drag-indicator"></div>
       <div class="modal-header">
@@ -798,7 +856,7 @@
   </div>
 
   <!-- SESSIONS / PROJECTS MODAL -->
-  <div class="modal-overlay" id="sessions-modal">
+  <div class="modal-overlay" id="sessions-modal" onclick="if (event.target === this) app.closeSessionsModal()">
     <div class="modal-card modal-card-lg">
       <div class="modal-drag-indicator"></div>
       <div class="modal-header">

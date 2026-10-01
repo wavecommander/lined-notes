@@ -19,11 +19,13 @@ header {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: var(--text-md);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
   color: var(--text-primary);
   text-decoration: none;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .logo-icon {
@@ -39,8 +41,8 @@ header {
 }
 
 .logo-badge {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-semibold);
   font-family: var(--font-mono);
   color: var(--accent-primary);
   background: var(--accent-dim);
@@ -54,6 +56,12 @@ header {
   width: 1px;
   height: 22px;
   background: var(--border);
+  flex-shrink: 0;
+}
+
+.btn-open-media {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .file-badge {
@@ -64,9 +72,11 @@ header {
   border: 1px solid var(--border);
   padding: 4px 10px;
   border-radius: var(--radius-full);
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-secondary);
   max-width: 320px;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .file-badge .dot {
@@ -75,6 +85,7 @@ header {
   border-radius: 50%;
   background: var(--text-muted);
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
 }
 
 .file-badge.active .dot {
@@ -87,7 +98,8 @@ header {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-2xs);
+  min-width: 0;
 }
 
 .btn-projects {
@@ -95,6 +107,8 @@ header {
   align-items: center;
   gap: 6px;
   position: relative;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .projects-count-badge {
@@ -107,8 +121,8 @@ header {
   border-radius: var(--radius-full);
   background: var(--accent-primary);
   color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-bold);
   font-family: var(--font-mono);
   line-height: 1;
 }
@@ -118,27 +132,77 @@ header {
   display: none;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: var(--text-2xs);
   font-family: var(--font-mono);
   color: #d97742;
   background: rgba(217, 119, 66, 0.12);
   border: 1px solid rgba(217, 119, 66, 0.28);
   padding: 3px 8px;
   border-radius: var(--radius-full);
+  flex-shrink: 0;
 }
 
-/* Auto-save status */
-#autosave-status {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 5px;
+/* PWA Install Button */
+#pwa-install-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+
+header .spacer {
+  flex: 1;
+  min-width: 8px;
+}
+
+.theme-toggle-btn,
+header .btn-icon {
+  flex-shrink: 0;
+  min-width: 32px;
+}
+
+header .btn-icon svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  flex-shrink: 0;
 }
 
 /* Mobile-only elements hidden on desktop */
 .mobile-tabs,
 .mobile-menu-wrap {
   display: none;
+}
+
+/* ─── Intermediate Viewport Graceful Degradation on Desktop (1025px – 1240px) ────────── */
+
+/* Moderate desktop compression (<= 1240px) */
+@media (max-width: 1240px) {
+  .file-badge {
+    max-width: 220px;
+  }
+}
+
+/* Tighter desktop compression (<= 1160px down to 1025px) */
+@media (max-width: 1160px) {
+  .btn-open-media .btn-text,
+  .btn-projects .btn-text {
+    display: none;
+  }
+
+  .header-sep {
+    display: none;
+  }
+
+  #pwa-install-btn span {
+    display: none;
+  }
+
+  .file-badge {
+    max-width: 180px;
+  }
+
+  header {
+    gap: 10px;
+  }
 }

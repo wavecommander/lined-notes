@@ -58,9 +58,28 @@ html[data-theme="dark"] {
   --note-card-active-border: rgba(217, 119, 66, 0.45);
   --note-card-active-shadow: 0 0 16px rgba(217, 119, 66, 0.12);
 
-  /* Typography & Sizing */
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+  /* Typography Families */
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, "Cascadia Code", "Source Code Pro", Menlo, Consolas, monospace;
+
+  /* Standardized 5-Step Typographic Scale (Identical across Dark and Light modes) */
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+
+  /* Font Weights */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* Line Heights */
+  --lh-tight: 1.3;
+  --lh-snug: 1.4;
+  --lh-normal: 1.5;
 
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -74,6 +93,14 @@ html[data-theme="dark"] {
   /* Unified Theme Transition Animation Curve */
   --ease-theme: cubic-bezier(0.4, 0, 0.2, 1);
   --dur-theme: 0.3s;
+}
+
+@media (max-width: 1280px) {
+  :root,
+  html[data-theme="dark"],
+  html[data-theme="light"] {
+    --sidebar-w: 320px;
+  }
 }
 
 html[data-theme="light"] {

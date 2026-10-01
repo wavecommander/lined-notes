@@ -47,7 +47,7 @@ export class ExportManager {
     switch (state.selectedExportFmt) {
       case 'json':
         content = JSON.stringify({
-          app: 'Lined Notes Studio',
+          app: 'Lined Notes',
           version: '1.1.0',
           fileName: fileName,
           duration: state.duration,
@@ -168,7 +168,7 @@ export class ExportManager {
 <body>
 <div class="card">
   <h1>${escapeHtml(fileName)}</h1>
-  <div class="meta">Exported from Lined Notes Studio · ${new Date().toLocaleString()} · ${state.notes.length} Annotations</div>
+  <div class="meta">Exported from Lined Notes · ${new Date().toLocaleString()} · ${state.notes.length} Annotations</div>
   <table>
     <thead><tr><th>Timestamp</th><th>Tag</th><th>Note</th></tr></thead>
     <tbody>${rows}</tbody>
@@ -204,7 +204,7 @@ export class ExportManager {
       try {
         if (a.parentNode) a.parentNode.removeChild(a);
         URL.revokeObjectURL(url);
-      } catch (e) {}
+      } catch (e) { }
     }, 4000);
 
     this.closeExportModal();

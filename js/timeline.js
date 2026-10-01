@@ -57,6 +57,12 @@ export class TimelineEngine {
     this.setupThemeTransition();
 
     state.on('timelinechanged', () => this.drawTimeline());
+    state.on('medialoaded', () => this.drawTimeline());
+    state.on('timeupdate', () => {
+      if (!state.isPlaying) {
+        this.drawTimeline();
+      }
+    });
     state.on('noteschange', () => this.drawTimeline());
     state.on('filereset', () => this.resetTimelineState());
     state.on('filerestet', () => this.resetTimelineState());
@@ -149,6 +155,14 @@ export class TimelineEngine {
   }
 
   setZoom(val, centerTime = null) {
+    const hasMedia = Boolean(state.mediaFile || state.detachedMode);
+    if (!hasMedia || !state.duration) {
+      state.zoom = 1;
+      state.scrollOffset = 0;
+      const zoomVal = document.getElementById('zoom-val');
+      if (zoomVal) zoomVal.textContent = '1.0×';
+      return;
+    }
     state.zoom = Math.max(1, Math.min(32, val));
     const zoomVal = document.getElementById('zoom-val');
     if (zoomVal) zoomVal.textContent = `${state.zoom.toFixed(1)}×`;
@@ -168,6 +182,14 @@ export class TimelineEngine {
     this.setZoom(1);
     state.scrollOffset = 0;
     this.drawTimeline();
+  }
+
+  zoomIn() {
+    this.setZoom(state.zoom * 1.5);
+  }
+
+  zoomOut() {
+    this.setZoom(state.zoom / 1.5);
   }
 
   startScrub(e) {
@@ -254,17 +276,21 @@ export class TimelineEngine {
   }
 
   calculateTickInterval(dur) {
-    if (dur <= 5) return 0.5;
-    if (dur <= 15) return 1;
-    if (dur <= 30) return 2;
-    if (dur <= 60) return 5;
-    if (dur <= 120) return 10;
-    if (dur <= 300) return 15;
-    if (dur <= 600) return 30;
-    if (dur <= 1800) return 60;
-    if (dur <= 3600) return 120;
-    if (dur <= 7200) return 300;
-    return 600;
+    const W = this.cachedW || 800;
+    const widthFactor = W < 420 ? 2.2 : (W < 640 ? 1.6 : (W < 900 ? 1.2 : 1));
+    const scaledDur = dur * widthFactor;
+
+    if (scaledDur <= 5) return 0.5;
+    if (scaledDur <= 15) return 1;
+    if (scaledDur <= 30) return 2;
+    if (scaledDur <= 60) return 5;
+    if (scaledDur <= 120) return 10;
+    if (scaledDur <= 300) return 30;
+    if (scaledDur <= 600) return 60;
+    if (scaledDur <= 1800) return 120;
+    if (scaledDur <= 3600) return 300;
+    if (scaledDur <= 7200) return 600;
+    return 1200;
   }
 
   setupThemeTransition() {
@@ -386,7 +412,6 @@ export class TimelineEngine {
       c.fillStyle = tc.emptyText;
       c.font = `11px ${monoFont}`;
       c.textAlign = 'center';
-      c.fillText('Open an audio or video file to populate timeline', W / 2, H / 2 + 18);
       c.restore();
       return;
     }
@@ -417,7 +442,7 @@ export class TimelineEngine {
       }
     }
 
-    // 2. Waveform Visualization
+    // 2. Waveform Visualization (HD Decoded or Realistic Synthetic)
     const midY = H / 2 + 6;
     if (state.waveformPeaks && state.waveformPeaks.length > 0) {
       const peaks = state.waveformPeaks;
@@ -431,13 +456,13 @@ export class TimelineEngine {
         if (tPeak + peakDuration < visStart || tPeak > visEnd) continue;
         const x = this.timeToX(tPeak, W);
         const isPlayed = x <= progressX;
-        const amp = peaks[i] * (H * 0.38);
+        const amp = Math.max(1.5, peaks[i] * (H * 0.38));
 
         c.fillStyle = isPlayed ? tc.wavePlayed : tc.waveUnplayed;
         c.fillRect(x, midY - amp, Math.max(1, barW - 0.5), amp * 2);
       }
     } else {
-      // Synthetic Waveform Track
+      // Pending / Empty Waveform Track with active progress indicator
       c.fillStyle = tc.trackBg;
       c.fillRect(0, midY - 1, W, 2);
       const playedX = this.timeToX(state.currentTime, W);
@@ -447,6 +472,20 @@ export class TimelineEngine {
       const clampEnd = Math.max(0, Math.min(W, playedX));
       if (clampEnd > clampStart) {
         c.fillRect(clampStart, midY - 1, clampEnd - clampStart, 2);
+      }
+
+      // If media file is loaded and still analyzing, render subtle animated placeholder wave
+      if (state.mediaFile) {
+        const barStep = 5;
+        const barCount = Math.floor(W / barStep);
+        c.fillStyle = tc.waveUnplayed;
+        c.globalAlpha = 0.3;
+        for (let i = 0; i < barCount; i++) {
+          const bx = i * barStep;
+          const h = 3 + Math.sin(i * 0.25) * 2;
+          c.fillRect(bx, midY - h, 2, h * 2);
+        }
+        c.globalAlpha = 1.0;
       }
     }
 
@@ -469,6 +508,7 @@ export class TimelineEngine {
     const tickInterval = this.calculateTickInterval(visDur);
     const firstTick = Math.floor(visStart / tickInterval) * tickInterval;
     const lastTick = Math.ceil(visEnd / tickInterval) * tickInterval;
+    let lastLabelX = -999;
 
     c.font = `9px ${monoFont}`;
     c.textAlign = 'center';
@@ -478,13 +518,25 @@ export class TimelineEngine {
       const x = this.timeToX(t, W);
       if (x < -10 || x > W + 10) continue;
 
-      const isMajor = Math.abs(Math.round(t / tickInterval) % 5) === 0 || tickInterval >= 15;
+      const pixelSpacing = (W / Math.max(1, visDur)) * tickInterval;
+      const isMajor = pixelSpacing >= 50 ? true : (Math.abs(Math.round(t / tickInterval) % 5) === 0);
       c.fillStyle = isMajor ? tc.tickMajor : tc.tickMinor;
-      c.fillRect(x, 0, 1, isMajor ? 10 : 5);
+      c.fillRect(x, 0, 1, isMajor ? 9 : 4);
 
-      if (isMajor && x > 25 && x < W - 25) {
+      if (isMajor && x > 24 && x < W - 24 && (x - lastLabelX >= 48)) {
         c.fillStyle = tc.tickText;
-        c.fillText(formatTime(t, false), x, 22);
+        const h = Math.floor(t / 3600);
+        const m = Math.floor((t % 3600) / 60);
+        const s = Math.floor(t % 60);
+        let label;
+        if (tickInterval < 1) {
+          const frac = (t % 1).toFixed(1).substring(1);
+          label = h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}${frac}` : `${m}:${String(s).padStart(2, '0')}${frac}`;
+        } else {
+          label = h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
+        }
+        c.fillText(label, x, 20);
+        lastLabelX = x;
       }
     }
 

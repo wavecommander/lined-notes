@@ -13,10 +13,11 @@ export const APP_CONFIG = {
   defaultTheme: 'dark',
   themeStorageKey: 'ln_theme',
   pauseOnTypeKey: 'ln_pause_on_type',
+  copyIncludeTimestampKey: 'ln_copy_include_timestamp',
 
-  // Audio waveform decoding limits (ISSUE-05: memory safe for mobile)
-  maxDecodeSizeDesktop: 120 * 1024 * 1024, // 120MB
-  maxDecodeSizeMobile: 35 * 1024 * 1024,    // 35MB
+  // Audio waveform decoding limits (memory safe for desktop and mobile)
+  maxDecodeSizeDesktop: 500 * 1024 * 1024, // 500MB
+  maxDecodeSizeMobile: 120 * 1024 * 1024,   // 120MB
   waveformSampleCount: 1600,
 
   // Snapshot configuration

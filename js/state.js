@@ -32,6 +32,7 @@ class StateStore {
     this.hoverTime = null;
     this.hoverX = null;
     this.waveformPeaks = null;
+    this.isSyntheticWaveform = false;
     this.isPanning = false;
     this.panStartX = 0;
     this.panStartOffset = 0;
@@ -55,6 +56,7 @@ class StateStore {
     // Application Preferences & Flags
     this.theme = 'dark';
     this.pauseOnType = false;
+    this.copyIncludeTimestamp = false;
     this.selectedExportFmt = 'json';
     this.deletedHistory = [];
     this.mobileTab = 'media';

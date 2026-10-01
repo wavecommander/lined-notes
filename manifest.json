@@ -1,12 +1,16 @@
 {
   "id": "lined-notes-app",
-  "name": "Lined Notes — Audio & Video Annotation Studio",
+  "name": "Lined Notes",
   "short_name": "Lined Notes",
-  "description": "Professional timeline audio & video annotation studio. Add timestamped notes, transcribe, export, and review media locally.",
+  "description": "Professional timeline audio & video annotation application. Add timestamped notes, transcribe, export, and review media locally.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
   "background_color": "#141210",
   "theme_color": "#141210",
   "orientation": "any",
@@ -70,17 +74,40 @@
       "action": "./index.html",
       "name": "Audio & Video Media",
       "accept": {
-        "video/mp4": [".mp4", ".m4v"],
-        "video/webm": [".webm"],
-        "video/x-matroska": [".mkv"],
-        "video/quicktime": [".mov"],
-        "audio/mpeg": [".mp3"],
-        "audio/wav": [".wav"],
-        "audio/mp4": [".m4a"],
-        "audio/ogg": [".ogg"],
-        "audio/flac": [".flac"],
-        "audio/aac": [".aac"],
-        "audio/webm": [".weba"]
+        "video/mp4": [
+          ".mp4",
+          ".m4v"
+        ],
+        "video/webm": [
+          ".webm"
+        ],
+        "video/x-matroska": [
+          ".mkv"
+        ],
+        "video/quicktime": [
+          ".mov"
+        ],
+        "audio/mpeg": [
+          ".mp3"
+        ],
+        "audio/wav": [
+          ".wav"
+        ],
+        "audio/mp4": [
+          ".m4a"
+        ],
+        "audio/ogg": [
+          ".ogg"
+        ],
+        "audio/flac": [
+          ".flac"
+        ],
+        "audio/aac": [
+          ".aac"
+        ],
+        "audio/webm": [
+          ".weba"
+        ]
       }
     }
   ]

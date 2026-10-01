@@ -276,7 +276,7 @@ export class SessionsManager {
       state.notes = data.notes || [];
       state.currentTime = 0;
       if (this.player.videoEl) {
-        try { this.player.videoEl.currentTime = 0; } catch (e) {}
+        try { this.player.videoEl.currentTime = 0; } catch (e) { }
       }
       this.player.updateTimeDisplay();
       state.emit('noteschange');
@@ -334,10 +334,15 @@ export class SessionsManager {
     state.isAudio = !!data.isAudio;
     state.activeNoteId = null;
     state.editingNoteId = null;
-    state.waveformPeaks = null;
+    if (this.player && typeof this.player.generateSyntheticWaveform === 'function') {
+      this.player.generateSyntheticWaveform({ name: fileName, size: data.fileSize || 0 }, state.duration);
+    } else {
+      state.waveformPeaks = null;
+      state.isSyntheticWaveform = true;
+    }
 
     const statusText = document.getElementById('waveform-status-text');
-    if (statusText) statusText.textContent = 'Synthetic';
+    if (statusText) statusText.textContent = 'Synthetic (Detached)';
 
     this.player.updateTimeDisplay();
     state.emit('noteschange');

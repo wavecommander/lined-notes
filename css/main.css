@@ -3,12 +3,12 @@
    Orchestrates all component layers & responsive design
    ========================================================================== */
 
-@import "./tokens.css";
-@import "./base.css";
-@import "./header.css";
-@import "./player.css";
-@import "./timeline.css";
-@import "./controls.css";
-@import "./notes.css";
-@import "./modals.css";
-@import "./mobile.css";
+@import "./tokens.css?v=32";
+@import "./base.css?v=32";
+@import "./header.css?v=32";
+@import "./player.css?v=32";
+@import "./timeline.css?v=32";
+@import "./controls.css?v=32";
+@import "./notes.css?v=32";
+@import "./modals.css?v=32";
+@import "./mobile.css?v=32";
