@@ -263,9 +263,30 @@ export class LinedNotesApp {
     this.dropZone.addEventListener('drop', (e) => {
       e.preventDefault();
       this.dropZone.classList.remove('dragging');
+
+      // Check if dropped item was a URL string / link
+      const text = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('text/uri-list');
+      if (text && text.trim().startsWith('http')) {
+        this.player.loadExternalUrl(text.trim());
+        return;
+      }
+
       const files = e.dataTransfer.files;
-      if (files.length > 0) {
+      if (files && files.length > 0) {
         this.player.loadFile(files[0]);
+      }
+    });
+
+    // Global clipboard paste detection for YouTube / video URLs
+    window.addEventListener('paste', (e) => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
+      if (isInput) return;
+
+      const pastedText = (e.clipboardData || window.clipboardData)?.getData('text');
+      if (pastedText && (pastedText.includes('youtube.com') || pastedText.includes('youtu.be') || pastedText.trim().startsWith('http'))) {
+        e.preventDefault();
+        this.player.loadExternalUrl(pastedText.trim());
       }
     });
   }
@@ -368,8 +389,57 @@ export class LinedNotesApp {
   closeAllModals() {
     document.querySelectorAll('modal-dialog').forEach(m => m.close());
     this.closeMobileMenu();
+    this.closeUrlModal();
     const tagPicker = document.querySelector('tag-picker');
     if (tagPicker) tagPicker.closeMenu();
+  }
+
+  // ─── URL MODAL CONTROLS ───────────────────────────────────────────
+  openUrlModal() {
+    const modal = document.getElementById('url-modal');
+    const input = document.getElementById('url-modal-input');
+    if (input) input.value = '';
+    if (modal) {
+      if (typeof modal.open === 'function') modal.open();
+      else modal.classList.add('open');
+      setTimeout(() => input?.focus(), 80);
+    }
+  }
+
+  closeUrlModal() {
+    const modal = document.getElementById('url-modal');
+    if (modal) {
+      if (typeof modal.close === 'function') modal.close();
+      else modal.classList.remove('open');
+    }
+  }
+
+  async loadFromUrlModal() {
+    const input = document.getElementById('url-modal-input');
+    const val = input ? input.value.trim() : '';
+    if (!val) {
+      showToast('Please enter a YouTube or video URL');
+      input?.focus();
+      return;
+    }
+    const success = await this.player.loadExternalUrl(val);
+    if (success) {
+      this.closeUrlModal();
+    }
+  }
+
+  async loadFromDropUrlInput() {
+    const input = document.getElementById('drop-url-input');
+    const val = input ? input.value.trim() : '';
+    if (!val) {
+      showToast('Please enter a YouTube or video URL');
+      input?.focus();
+      return;
+    }
+    const success = await this.player.loadExternalUrl(val);
+    if (success && input) {
+      input.value = '';
+    }
   }
 
   // ─── PWA & INSTALLATION ────────────────────────────────────────────
@@ -450,7 +520,8 @@ export class LinedNotesApp {
   }
 
   newProject() {
-    if (!state.mediaFile && !state.detachedMode && state.notes.length === 0) {
+    const hasMedia = state.mediaFile || state.detachedMode || state.mediaSourceType === 'youtube' || state.mediaSourceType === 'url';
+    if (!hasMedia && state.notes.length === 0) {
       showToast('Already on a new project');
       return;
     }
@@ -464,11 +535,13 @@ export class LinedNotesApp {
     this.player.resetPlaybackState();
     const picker = document.getElementById('file-picker');
     if (picker) picker.value = '';
+    const dropUrlInput = document.getElementById('drop-url-input');
+    if (dropUrlInput) dropUrlInput.value = '';
 
-    if (state.mediaUrl) {
+    if (state.mediaUrl && state.mediaUrl.startsWith('blob:')) {
       URL.revokeObjectURL(state.mediaUrl);
-      state.mediaUrl = null;
     }
+    state.mediaUrl = null;
 
     if (this.player.videoEl) {
       try {
@@ -477,6 +550,10 @@ export class LinedNotesApp {
       this.player.videoEl.removeAttribute('src');
       this.player.videoEl.load();
       this.player.videoEl.classList.remove('active');
+    }
+
+    if (this.player.youtubeStage) {
+      this.player.youtubeStage.classList.remove('active');
     }
 
     if (this.player.audioStage) {
@@ -488,6 +565,10 @@ export class LinedNotesApp {
 
     // Clear application state
     state.mediaFile = null;
+    state.mediaSourceType = null;
+    state.externalUrl = null;
+    state.youtubeVideoId = null;
+    state.mediaTitle = null;
     state.detachedMode = false;
     state.detachedSessionKey = null;
     state.detachedSessionName = null;

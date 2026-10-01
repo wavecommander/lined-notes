@@ -30,7 +30,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css?v=45">
+  <link rel="stylesheet" href="css/main.css?v=46">
 
   <script>
     (function () {
@@ -85,6 +85,14 @@
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
         <span class="btn-text">Open Media</span>
+      </button>
+      <button class="btn btn-ghost btn-sm btn-open-url" id="open-url-btn" onclick="app.openUrlModal()"
+        title="Open YouTube or Video URL" aria-label="Open YouTube or Video URL">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+        </svg>
+        <span class="btn-text">Open URL</span>
       </button>
       <button class="btn btn-ghost btn-sm btn-projects" id="projects-btn" onclick="app.openSessionsModal()"
         title="Saved Projects & Sessions">
@@ -204,6 +212,13 @@
             </svg>
             <span>Select Media…</span>
           </div>
+          <div class="dropdown-item" onclick="app.openUrlModal(); app.closeMobileMenu();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <span>Open Video URL…</span>
+          </div>
           <div class="dropdown-divider"></div>
           <div class="dropdown-item" onclick="app.toggleTheme(); app.closeMobileMenu();">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
@@ -308,11 +323,25 @@
               <span class="drop-pill">M4A</span>
               <span class="drop-pill">OGG</span>
             </div>
+            <div class="drop-url-bar" onclick="event.stopPropagation()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" class="drop-url-icon">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+              <input type="url" id="drop-url-input" placeholder="Or paste YouTube or video URL…"
+                onkeydown="if(event.key==='Enter') app.loadFromDropUrlInput()">
+              <button class="btn btn-primary btn-sm" onclick="app.loadFromDropUrlInput()">Load</button>
+            </div>
           </div>
         </div>
 
         <!-- Video Element -->
         <video id="video-el" playsinline></video>
+
+        <!-- YouTube Player Stage -->
+        <div id="youtube-stage">
+          <div id="youtube-player"></div>
+        </div>
 
         <!-- Audio Visualizer Stage -->
         <div id="audio-stage">
@@ -915,8 +944,45 @@
     </div>
   </modal-dialog>
 
+  <!-- OPEN URL MODAL -->
+  <modal-dialog id="url-modal">
+    <div class="modal-card">
+      <div class="modal-drag-indicator"></div>
+      <div class="modal-header">
+        <div class="modal-title">Open Video from URL</div>
+        <button class="modal-close-btn" data-modal-close onclick="app.closeUrlModal()">✕</button>
+      </div>
+
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6;">
+        Paste a <strong style="color:var(--accent-orange)">YouTube</strong> link or direct
+        <strong style="color:var(--accent-cyan)">MP4/WebM</strong> video stream URL to annotate.
+      </div>
+
+      <div class="url-input-container" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+        <div class="url-input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="url-input-icon">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          <input type="url" id="url-modal-input" placeholder="https://www.youtube.com/watch?v=... or https://example.com/video.mp4"
+            autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter') app.loadFromUrlModal()">
+        </div>
+        <div class="url-format-hints">
+          <span class="url-hint-pill">YouTube (watch, embed, shorts)</span>
+          <span class="url-hint-pill">youtu.be</span>
+          <span class="url-hint-pill">Direct MP4 / WebM</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-modal-close onclick="app.closeUrlModal()">Cancel</button>
+        <button class="btn btn-primary" id="url-modal-load-btn" onclick="app.loadFromUrlModal()">Load Video</button>
+      </div>
+    </div>
+  </modal-dialog>
+
   <!-- APPLICATION ENTRY POINT -->
-  <script type="module" src="js/app.js?v=45"></script>
+  <script type="module" src="js/app.js?v=46"></script>
 </body>
 
 </html>

@@ -525,3 +525,56 @@ toast-notification .toast-btn,
 .toggle-switch input:focus-visible+.toggle-slider {
   box-shadow: 0 0 0 2px var(--accent-dim), 0 0 0 4px var(--accent-primary);
 }
+
+/* Open URL Modal Styles */
+.url-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.url-input-wrap:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+.url-input-icon {
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.url-input-wrap input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  width: 100%;
+}
+
+.url-input-wrap input::placeholder {
+  color: var(--text-muted);
+}
+
+.url-format-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.url-hint-pill {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}

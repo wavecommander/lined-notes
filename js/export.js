@@ -46,16 +46,19 @@ export class ExportManager {
   }
 
   generateExportContent() {
-    const fileName = state.mediaFile ? state.mediaFile.name : (state.detachedSessionName || 'Annotations');
-    const baseName = fileName.replace(/\.[^.]+$/, '');
+    const fileName = state.mediaFile ? state.mediaFile.name : (state.mediaTitle || state.detachedSessionName || 'Annotations');
+    const baseName = fileName.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_');
     let content = '', ext = state.selectedExportFmt, mime = 'text/plain';
 
     switch (state.selectedExportFmt) {
       case 'json':
         content = JSON.stringify({
           app: 'Lined Notes',
-          version: '1.1.0',
+          version: '1.2.0',
           fileName: fileName,
+          sourceType: state.mediaSourceType || (state.mediaFile ? 'file' : 'detached'),
+          url: state.externalUrl || null,
+          youtubeVideoId: state.youtubeVideoId || null,
           duration: state.duration,
           exportedAt: new Date().toISOString(),
           tags: state.tags,
@@ -68,6 +71,9 @@ export class ExportManager {
       case 'md':
         content = `# Annotations: ${fileName}\n\n`;
         content += `> Exported from **Lined Notes** on ${new Date().toLocaleString()}  \n`;
+        if (state.externalUrl) {
+          content += `> Media Source: <${state.externalUrl}>  \n`;
+        }
         content += `> Duration: ${formatTime(state.duration)} | Total Annotations: ${state.notes.length}\n\n`;
         content += `---\n\n`;
         state.notes.forEach(n => {
@@ -131,13 +137,22 @@ export class ExportManager {
     state.notes.forEach(n => {
       const tagObj = state.tags.find(t => t.id === n.tag) || state.tags[0];
       const rangeStr = n.end ? ` → ${formatTime(n.end)}` : '';
+      const timeDisplay = `${formatTime(n.start)}${rangeStr}`;
+      const timeCell = (state.mediaSourceType === 'youtube' && state.youtubeVideoId)
+        ? `<a href="https://www.youtube.com/watch?v=${state.youtubeVideoId}&t=${Math.floor(n.start)}s" target="_blank" style="color:#d97742;text-decoration:none;" title="Open on YouTube">${timeDisplay} ↗</a>`
+        : timeDisplay;
+
       rows += `
         <tr>
-          <td style="font-family:monospace;color:#d97742;white-space:nowrap;">${formatTime(n.start)}${rangeStr}</td>
+          <td style="font-family:monospace;white-space:nowrap;">${timeCell}</td>
           <td><span style="background:${tagObj.color};color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;">${escapeHtml(tagObj.label)}</span></td>
           <td style="white-space:pre-wrap;">${escapeHtml(n.text)}</td>
         </tr>`;
     });
+
+    const sourceMeta = state.externalUrl
+      ? `<div style="margin-bottom:8px;">Source: <a href="${escapeHtml(state.externalUrl)}" target="_blank" style="color:#d97742;">${escapeHtml(state.externalUrl)}</a></div>`
+      : '';
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -158,7 +173,10 @@ export class ExportManager {
 <body>
 <div class="card">
   <h1>${escapeHtml(fileName)}</h1>
-  <div class="meta">Exported from Lined Notes · ${new Date().toLocaleString()} · ${state.notes.length} Annotations</div>
+  <div class="meta">
+    ${sourceMeta}
+    Exported from Lined Notes · ${new Date().toLocaleString()} · ${state.notes.length} Annotations
+  </div>
   <table>
     <thead><tr><th>Timestamp</th><th>Tag</th><th>Note</th></tr></thead>
     <tbody>${rows}</tbody>

@@ -57,7 +57,10 @@ export class SessionsManager {
       isAudio: state.isAudio,
       tags: usedTags,
       updatedAt: new Date().toISOString(),
-      notes: state.notes
+      notes: state.notes,
+      sourceType: state.mediaSourceType || (state.mediaFile ? 'file' : 'detached'),
+      url: state.externalUrl || null,
+      youtubeVideoId: state.youtubeVideoId || null
     };
 
     try {
@@ -188,9 +191,18 @@ export class SessionsManager {
         return `<span class="session-tag-pill" style="--tag-color:${color}">${escapeHtml(label)}</span>`;
       }).join('');
 
-      const mediaIconSvg = isAudio
+      let mediaIconSvg = isAudio
         ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`
         : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="2" y="2" width="20" height="20" rx="4"/><polygon points="10 8 16 12 10 16 10 8"/></svg>`;
+
+      let typeBadge = '';
+      if (item.data?.sourceType === 'youtube' || item.data?.youtubeVideoId) {
+        mediaIconSvg = `<svg viewBox="0 0 24 24" fill="#ff0000" width="16" height="16"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`;
+        typeBadge = '<span class="session-badge-type" style="background:rgba(255,0,0,0.12);color:#ff4e45;border:1px solid rgba(255,0,0,0.24);font-size:10px;padding:1px 6px;border-radius:var(--radius-full);font-weight:600;font-family:var(--font-mono);">YouTube</span>';
+      } else if (item.data?.sourceType === 'url') {
+        mediaIconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2" width="16" height="16"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
+        typeBadge = '<span class="session-badge-type" style="background:rgba(56,189,248,0.12);color:var(--accent-cyan);border:1px solid rgba(56,189,248,0.24);font-size:10px;padding:1px 6px;border-radius:var(--radius-full);font-weight:600;font-family:var(--font-mono);">Web Video</span>';
+      }
 
       // Using data-session-action and data-session-key (resolves ISSUE-01 single-quote bug)
       html += `
@@ -199,6 +211,7 @@ export class SessionsManager {
             <div class="session-file-info">
               <span class="session-media-icon">${mediaIconSvg}</span>
               <span class="session-file-name" title="${escapeHtml(fileName)}">${escapeHtml(fileName)}</span>
+              ${typeBadge}
               ${isCurrent ? '<span class="session-badge-current">Active</span>' : ''}
             </div>
             <div class="session-time-ago">${timeAgoText}</div>
@@ -279,7 +292,38 @@ export class SessionsManager {
       return;
     }
 
-    // Enter Detached Review Mode
+    // Auto-reload YouTube streams without entering Detached Review Mode
+    if (data.sourceType === 'youtube' && (data.youtubeVideoId || data.url)) {
+      this.closeSessionsModal();
+      const videoId = data.youtubeVideoId || (data.url && (data.url.match(/v=([a-zA-Z0-9_-]{11})/i) || [])[1]);
+      const loaded = await this.player.loadYouTube({
+        videoId: videoId,
+        url: data.url || `https://www.youtube.com/watch?v=${videoId}`,
+        title: fileName
+      }, {
+        isRestoring: true,
+        notes: data.notes || [],
+        title: fileName
+      });
+      if (loaded) return;
+    }
+
+    // Auto-reload direct web video URLs without entering Detached Review Mode
+    if (data.sourceType === 'url' && data.url) {
+      this.closeSessionsModal();
+      const loaded = await this.player.loadDirectUrl({
+        url: data.url,
+        title: fileName,
+        isAudio: !!data.isAudio
+      }, {
+        isRestoring: true,
+        notes: data.notes || [],
+        title: fileName
+      });
+      if (loaded) return;
+    }
+
+    // Enter Detached Review Mode fallback (for local files or offline remote media)
     state.detachedMode = true;
     state.detachedSessionKey = key;
     state.detachedSessionName = fileName;
@@ -362,6 +406,10 @@ export class SessionsManager {
       state.detachedSessionKey = null;
       state.detachedSessionName = null;
       state.detachedSessionSize = 0;
+      state.mediaSourceType = null;
+      state.externalUrl = null;
+      state.youtubeVideoId = null;
+      state.mediaTitle = null;
       if (this.detachedStage) this.detachedStage.style.display = 'none';
 
       if (!state.mediaFile) {

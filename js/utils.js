@@ -211,3 +211,143 @@ export function showToast(msg, showUndo = false, onUndo = null) {
     toast.classList.remove('show');
   }, 2800);
 }
+
+/**
+ * Parses user-provided media URLs (YouTube or direct stream).
+ * Supports YouTube standard, short, embed, live, and shorts formats,
+ * as well as generic direct HTTP/HTTPS media URLs.
+ */
+export function parseMediaUrl(inputStr) {
+  if (!inputStr || typeof inputStr !== 'string') return null;
+  const raw = inputStr.trim();
+  if (!raw) return null;
+
+  // 1. YouTube URL matchers
+  // Matches:
+  // - https://www.youtube.com/watch?v=VIDEO_ID
+  // - https://m.youtube.com/watch?v=VIDEO_ID
+  // - https://youtu.be/VIDEO_ID
+  // - https://www.youtube.com/embed/VIDEO_ID
+  // - https://www.youtube.com/shorts/VIDEO_ID
+  // - https://www.youtube.com/live/VIDEO_ID
+  // - https://music.youtube.com/watch?v=VIDEO_ID
+  const ytRegex = /(?:https?:\/\/)?(?:www\.|m\.|music\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i;
+  const ytMatch = raw.match(ytRegex);
+
+  if (ytMatch && ytMatch[1]) {
+    const videoId = ytMatch[1];
+    let startTime = null;
+
+    // Check for timestamp query param: ?t=1m30s, ?t=90, ?start=90
+    const timeMatch = raw.match(/[?&#](?:t|start)=([0-9hms]+)/i);
+    if (timeMatch && timeMatch[1]) {
+      const tVal = timeMatch[1];
+      if (/^\d+$/.test(tVal)) {
+        startTime = parseInt(tVal, 10);
+      } else {
+        let total = 0;
+        const h = tVal.match(/(\d+)h/i);
+        const m = tVal.match(/(\d+)m/i);
+        const s = tVal.match(/(\d+)s/i);
+        if (h) total += parseInt(h[1], 10) * 3600;
+        if (m) total += parseInt(m[1], 10) * 60;
+        if (s) total += parseInt(s[1], 10);
+        if (total > 0) startTime = total;
+      }
+    }
+
+    return {
+      type: 'youtube',
+      videoId,
+      startTime,
+      url: `https://www.youtube.com/watch?v=${videoId}`,
+      title: `YouTube: ${videoId}`
+    };
+  }
+
+  // Raw 11-char YouTube ID pasted directly
+  if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) {
+    return {
+      type: 'youtube',
+      videoId: raw,
+      startTime: null,
+      url: `https://www.youtube.com/watch?v=${raw}`,
+      title: `YouTube: ${raw}`
+    };
+  }
+
+  // 2. Generic direct web media URL
+  try {
+    const parsed = new URL(raw.startsWith('//') ? `https:${raw}` : raw);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      const pathname = parsed.pathname || '';
+      const filename = pathname.split('/').filter(Boolean).pop() || parsed.hostname;
+      const isAudio = Boolean(filename && filename.match(/\.(mp3|wav|ogg|m4a|aac|flac|opus|weba)($|\?)/i));
+      return {
+        type: 'direct',
+        url: parsed.href,
+        title: decodeURIComponent(filename),
+        isAudio
+      };
+    }
+  } catch (e) {
+    return null;
+  }
+
+  return null;
+}
+
+export function getYouTubeThumbnailUrl(videoId, quality = 'hqdefault') {
+  if (!videoId) return null;
+  return `https://img.youtube.com/vi/${videoId}/${quality}.jpg`;
+}
+
+/**
+ * Creates a thumbnail data URL with an optional overlaid timecode badge.
+ * Gracefully falls back to raw thumbnail URL if cross-origin canvas security blocks export.
+ */
+export async function createCompositeThumbnail(thumbUrl, timecode = null) {
+  if (!thumbUrl) return null;
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 320;
+        canvas.height = 180;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        if (timecode !== null && !isNaN(timecode)) {
+          const tcStr = formatTime(timecode);
+          ctx.font = '600 13px "JetBrains Mono", monospace';
+          const textW = ctx.measureText(tcStr).width;
+          const padX = 8, padY = 4;
+          const badgeW = textW + padX * 2;
+          const badgeH = 22;
+          const x = canvas.width - badgeW - 10;
+          const y = canvas.height - badgeH - 10;
+
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+          ctx.beginPath();
+          ctx.roundRect ? ctx.roundRect(x, y, badgeW, badgeH, 4) : ctx.rect(x, y, badgeW, badgeH);
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(tcStr, x + padX, y + 16);
+        }
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        resolve(dataUrl);
+      } catch (err) {
+        // Fallback to direct thumbnail URL if canvas is tainted
+        resolve(thumbUrl);
+      }
+    };
+    img.onerror = () => {
+      resolve(thumbUrl);
+    };
+    img.src = thumbUrl;
+  });
+}
