@@ -3,7 +3,7 @@
    Offline support, asset caching & PWA installation foundation
    ========================================================================== */
 
-const CACHE_VERSION = 'lined-notes-v47';
+const CACHE_VERSION = 'lined-notes-v48';
 const CACHE_NAME = `lined-notes-cache-${CACHE_VERSION}`;
 
 // Core assets required for 100% offline functionality

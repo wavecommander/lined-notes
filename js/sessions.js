@@ -17,6 +17,7 @@ export class SessionsManager {
     this.menuProjectsCount = document.getElementById('menu-projects-count');
     this.searchInput = document.getElementById('sessions-search-input');
     this.detachedStage = document.getElementById('detached-stage');
+    this.editingSessionKey = null;
 
     this.init();
   }
@@ -25,7 +26,7 @@ export class SessionsManager {
     state.on('requestsave', () => this.saveSession());
     state.on('medialoaded', () => this.autoRestoreSession());
 
-    // Delegated click handler on sessions list for open, export, and delete (ISSUE-01 fix)
+    // Delegated click handler on sessions list for open, export, delete, and rename
     if (this.sessionsList) {
       this.sessionsList.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-session-action]');
@@ -36,6 +37,25 @@ export class SessionsManager {
         if (action === 'open') this.openSessionByKey(key);
         if (action === 'export') this.exportSessionByKey(key);
         if (action === 'delete') this.deleteSessionByKey(key, e);
+        if (action === 'edit-name') this.startRename(key);
+        if (action === 'save-name') {
+          const input = this.sessionsList.querySelector(`.session-rename-input[data-session-key="${key}"]`);
+          if (input) this.renameSession(key, input.value);
+        }
+        if (action === 'cancel-name') this.cancelRename();
+      });
+
+      this.sessionsList.addEventListener('keydown', (e) => {
+        if (e.target && e.target.classList.contains('session-rename-input')) {
+          const key = e.target.dataset.sessionKey;
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.renameSession(key, e.target.value);
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            this.cancelRename();
+          }
+        }
       });
     }
 
@@ -109,6 +129,7 @@ export class SessionsManager {
   }
 
   openSessionsModal() {
+    this.editingSessionKey = null;
     this.renderSessionsList();
     if (this.sessionsModal) {
       if (typeof this.sessionsModal.open === 'function') this.sessionsModal.open();
@@ -117,6 +138,7 @@ export class SessionsManager {
   }
 
   closeSessionsModal() {
+    this.editingSessionKey = null;
     if (this.sessionsModal) {
       if (typeof this.sessionsModal.close === 'function') this.sessionsModal.close();
       else this.sessionsModal.classList.remove('open');
@@ -204,16 +226,45 @@ export class SessionsManager {
         typeBadge = '<span class="session-badge-type" style="background:rgba(56,189,248,0.12);color:var(--accent-cyan);border:1px solid rgba(56,189,248,0.24);font-size:10px;padding:1px 6px;border-radius:var(--radius-full);font-weight:600;font-family:var(--font-mono);">Web Video</span>';
       }
 
+      let fileInfoHtml = '';
+      if (this.editingSessionKey === key) {
+        fileInfoHtml = `
+          <div class="session-rename-form">
+            <span class="session-media-icon">${mediaIconSvg}</span>
+            <input type="text" class="session-rename-input" name="project-rename-input" aria-label="Project name" data-session-key="${escapeHtml(key)}" value="${escapeHtml(fileName)}" maxlength="120" spellcheck="false" autocomplete="off" />
+            <button type="button" class="session-rename-action-btn check" data-session-action="save-name" data-session-key="${escapeHtml(key)}" title="Save project name (Enter)" aria-label="Save project name">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </button>
+            <button type="button" class="session-rename-action-btn cancel" data-session-action="cancel-name" data-session-key="${escapeHtml(key)}" title="Cancel (Esc)" aria-label="Cancel">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>`;
+      } else {
+        fileInfoHtml = `
+          <div class="session-file-info">
+            <span class="session-media-icon">${mediaIconSvg}</span>
+            <span class="session-file-name" title="${escapeHtml(fileName)}">${escapeHtml(fileName)}</span>
+            <button type="button" class="session-rename-btn" data-session-action="edit-name" data-session-key="${escapeHtml(key)}" title="Rename project" aria-label="Rename project">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+              </svg>
+            </button>
+            ${typeBadge}
+            ${isCurrent ? '<span class="session-badge-current">Active</span>' : ''}
+          </div>`;
+      }
+
       // Using data-session-action and data-session-key (resolves ISSUE-01 single-quote bug)
       html += `
         <div class="session-card ${isCurrent ? 'active' : ''}">
           <div class="session-card-header">
-            <div class="session-file-info">
-              <span class="session-media-icon">${mediaIconSvg}</span>
-              <span class="session-file-name" title="${escapeHtml(fileName)}">${escapeHtml(fileName)}</span>
-              ${typeBadge}
-              ${isCurrent ? '<span class="session-badge-current">Active</span>' : ''}
-            </div>
+            ${fileInfoHtml}
             <div class="session-time-ago">${timeAgoText}</div>
           </div>
 
@@ -249,6 +300,68 @@ export class SessionsManager {
     });
 
     this.sessionsList.innerHTML = html;
+
+    if (this.editingSessionKey) {
+      const activeInput = this.sessionsList.querySelector(`.session-rename-input[data-session-key="${this.editingSessionKey}"]`);
+      if (activeInput) {
+        activeInput.focus();
+        activeInput.select();
+      }
+    }
+  }
+
+  startRename(key) {
+    this.editingSessionKey = key;
+    const q = this.searchInput ? this.searchInput.value : '';
+    this.renderSessionsList(q);
+  }
+
+  cancelRename() {
+    this.editingSessionKey = null;
+    const q = this.searchInput ? this.searchInput.value : '';
+    this.renderSessionsList(q);
+  }
+
+  async renameSession(key, newName) {
+    const trimmed = (newName || '').trim();
+    if (!trimmed) {
+      showToast('Project name cannot be empty');
+      return;
+    }
+    const data = await this.db.get(key);
+    if (!data) return;
+
+    data.fileName = trimmed;
+    data.updatedAt = new Date().toISOString();
+    await this.db.set(key, data);
+
+    // If this session is the active session, update state & UI headers
+    if (state.getStorageKey() === key || state.detachedSessionKey === key) {
+      state.mediaTitle = trimmed;
+      if (state.detachedMode) {
+        state.detachedSessionName = trimmed;
+        const detachedFileNameEl = document.getElementById('detached-file-name');
+        if (detachedFileNameEl) detachedFileNameEl.textContent = trimmed;
+      }
+      const nameText = document.getElementById('file-name-text');
+      if (nameText) {
+        if (state.mediaSourceType === 'youtube') {
+          nameText.textContent = `▶ YouTube: ${trimmed}`;
+        } else if (state.mediaSourceType === 'url') {
+          nameText.textContent = `🔗 ${trimmed}`;
+        } else if (state.detachedMode) {
+          nameText.textContent = `${trimmed} (Detached)`;
+        } else {
+          nameText.textContent = trimmed;
+        }
+      }
+      document.title = `${trimmed} — Lined Notes`;
+    }
+
+    this.editingSessionKey = null;
+    const q = this.searchInput ? this.searchInput.value : '';
+    await this.renderSessionsList(q);
+    showToast(`Project renamed to "${trimmed}"`);
   }
 
   async openSessionByKey(key) {
