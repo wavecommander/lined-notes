@@ -47,7 +47,7 @@ export class SessionsManager {
     if (!key) return;
 
     const usedTags = Array.from(new Set(state.notes.map(n => n.tag).filter(Boolean)));
-    const fileName = state.mediaFile ? state.mediaFile.name : (state.detachedSessionName || 'Untitled Media');
+    const fileName = state.mediaFile ? state.mediaFile.name : (state.mediaTitle || state.detachedSessionName || 'Untitled Media');
     const fileSize = state.mediaFile ? state.mediaFile.size : (state.detachedSessionSize || 0);
 
     const payload = {
