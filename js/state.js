@@ -28,6 +28,7 @@ class StateStore {
     this.detachedMode = false;
     this.detachedSessionKey = null;
     this.detachedSessionName = null;
+    this.detachedOriginalFileName = null;
     this.detachedSessionSize = 0;
 
     // Timeline Zoom & Pan

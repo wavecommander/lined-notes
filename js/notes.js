@@ -738,7 +738,7 @@ export class NotesManager {
       return;
     }
 
-    const baseName = (state.mediaFile?.name || 'snapshot').replace(/\.[^/.]+$/, '');
+    const baseName = (state.mediaTitle || state.mediaFile?.name || 'snapshot').replace(/\.[^/.]+$/, '');
     const timeStr = timecode !== null ? formatTime(timecode).replace(/[:.]/g, '-') : 'frame';
     const isPng = Boolean(fullResUrl);
     const filename = `${baseName}_${timeStr}.png`;

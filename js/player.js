@@ -185,14 +185,27 @@ export class PlayerController {
     if (!file) return;
 
     // Check if attaching to an existing detached review session
-    if (state.detachedMode && file.name === state.detachedSessionName) {
+    const isDetachedMatch = Boolean(
+      state.detachedMode && (
+        file.name === state.detachedSessionName ||
+        (state.detachedOriginalFileName && file.name === state.detachedOriginalFileName) ||
+        (state.detachedSessionKey && state.detachedSessionKey === `ln_session_${file.name}_${file.size}`)
+      )
+    );
+
+    if (isDetachedMatch) {
       this.resetPlaybackState();
       state.mediaFile = file;
       state.mediaSourceType = 'file';
       state.externalUrl = null;
       state.youtubeVideoId = null;
-      state.mediaTitle = file.name;
+      const preservedTitle = state.detachedSessionName || state.mediaTitle || file.name;
+      state.mediaTitle = preservedTitle;
       state.detachedMode = false;
+      state.detachedSessionKey = null;
+      state.detachedSessionName = null;
+      state.detachedOriginalFileName = null;
+      state.detachedSessionSize = 0;
       const detachedStage = document.getElementById('detached-stage');
       if (detachedStage) detachedStage.style.display = 'none';
       if (this.youtubeStage) this.youtubeStage.classList.remove('active');
@@ -203,7 +216,7 @@ export class PlayerController {
       state.mediaUrl = URL.createObjectURL(file);
 
       this.updateMediaUI(file);
-      showToast(`Attached ${file.name} to session`);
+      showToast(`Attached ${file.name} to session "${preservedTitle}"`);
       this.generateWaveformPeaks(file);
 
       state.emit('filereset');
@@ -221,6 +234,7 @@ export class PlayerController {
     state.detachedMode = false;
     state.detachedSessionKey = null;
     state.detachedSessionName = null;
+    state.detachedOriginalFileName = null;
     state.detachedSessionSize = 0;
     const detachedStage = document.getElementById('detached-stage');
     if (detachedStage) detachedStage.style.display = 'none';
@@ -260,12 +274,15 @@ export class PlayerController {
     const badge = document.getElementById('file-badge');
     const nameText = document.getElementById('file-name-text');
     if (badge) badge.classList.add('active');
+    const displayTitle = state.mediaTitle || (file ? file.name : 'Media');
     if (nameText) {
-      nameText.textContent = file.name;
-      nameText.title = `${file.name} (${formatBytes(file.size)})`;
+      nameText.textContent = displayTitle;
+      if (file) {
+        nameText.title = `${displayTitle} (${file.name} • ${formatBytes(file.size)})`;
+      }
     }
-    if (file && file.name) {
-      document.title = `${file.name} — Lined Notes`;
+    if (displayTitle) {
+      document.title = `${displayTitle} — Lined Notes`;
     }
 
     this.videoEl.src = state.mediaUrl;
@@ -282,7 +299,7 @@ export class PlayerController {
       this.videoEl.classList.remove('active');
       this.audioStage.classList.add('active');
       const audioTitle = document.getElementById('audio-title');
-      if (audioTitle) audioTitle.textContent = file.name;
+      if (audioTitle) audioTitle.textContent = displayTitle;
       if (pipBtn) pipBtn.style.display = 'none';
     } else {
       this.audioStage.classList.remove('active');
@@ -610,17 +627,20 @@ export class PlayerController {
     state.isAudio = false;
 
     // Eagerly resolve YouTube title via public oEmbed API if title is placeholder
-    if (!options.title || options.title.startsWith('YouTube:')) {
+    const hasCustomOptionTitle = Boolean(options.title && !options.title.startsWith('YouTube:'));
+    if (!hasCustomOptionTitle && (!state.mediaTitle || state.mediaTitle.startsWith('YouTube:'))) {
       fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${parsed.videoId}&format=json`)
         .then(res => res.json())
         .then(data => {
           if (data && data.title && state.mediaSourceType === 'youtube' && state.youtubeVideoId === parsed.videoId) {
-            state.mediaTitle = data.title;
-            this.updateMediaBadgeForUrl({
-              type: 'youtube',
-              title: data.title,
-              url: parsed.url
-            });
+            if (!state.mediaTitle || state.mediaTitle.startsWith('YouTube:')) {
+              state.mediaTitle = data.title;
+              this.updateMediaBadgeForUrl({
+                type: 'youtube',
+                title: data.title,
+                url: parsed.url
+              });
+            }
           }
         })
         .catch(() => {});
@@ -703,12 +723,16 @@ export class PlayerController {
         try {
           const data = typeof this.ytPlayer.getVideoData === 'function' ? this.ytPlayer.getVideoData() : null;
           if (data && data.title) {
-            state.mediaTitle = data.title;
-            this.updateMediaBadgeForUrl({
-              type: 'youtube',
-              title: data.title,
-              url: parsed.url
-            });
+            const hasCustomTitle = Boolean(options.title && !options.title.startsWith('YouTube:'));
+            const currentTitleIsCustom = Boolean(state.mediaTitle && !state.mediaTitle.startsWith('YouTube:'));
+            if (!hasCustomTitle && !currentTitleIsCustom) {
+              state.mediaTitle = data.title;
+              this.updateMediaBadgeForUrl({
+                type: 'youtube',
+                title: data.title,
+                url: parsed.url
+              });
+            }
           }
         } catch (e) { }
 

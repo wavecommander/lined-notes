@@ -46,7 +46,7 @@ export class ExportManager {
   }
 
   generateExportContent() {
-    const fileName = state.mediaFile ? state.mediaFile.name : (state.mediaTitle || state.detachedSessionName || 'Annotations');
+    const fileName = state.mediaTitle || (state.mediaFile ? state.mediaFile.name : (state.detachedSessionName || 'Annotations'));
     const baseName = fileName.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_');
     let content = '', ext = state.selectedExportFmt, mime = 'text/plain';
 

@@ -68,11 +68,13 @@ export class SessionsManager {
     if (!key) return;
 
     const usedTags = Array.from(new Set(state.notes.map(n => n.tag).filter(Boolean)));
-    const fileName = state.mediaFile ? state.mediaFile.name : (state.mediaTitle || state.detachedSessionName || 'Untitled Media');
+    const fileName = state.mediaTitle || (state.mediaFile ? state.mediaFile.name : (state.detachedSessionName || 'Untitled Media'));
+    const originalFileName = state.mediaFile ? state.mediaFile.name : (state.detachedOriginalFileName || null);
     const fileSize = state.mediaFile ? state.mediaFile.size : (state.detachedSessionSize || 0);
 
     const payload = {
       fileName: fileName,
+      originalFileName: originalFileName,
       fileSize: fileSize,
       duration: state.duration || 0,
       isAudio: state.isAudio,
@@ -98,11 +100,38 @@ export class SessionsManager {
     if (!key) return;
     try {
       const data = await this.db.get(key);
-      if (data && Array.isArray(data.notes) && data.notes.length > 0 && state.notes.length === 0) {
-        state.notes = data.notes;
-        state.emit('noteschange');
-        state.emit('timelinechanged');
-        showToast(`Restored ${state.notes.length} notes from previous session`);
+      if (data) {
+        // Restore custom project title if previously renamed or saved
+        if (data.fileName && data.fileName !== state.mediaTitle) {
+          state.mediaTitle = data.fileName;
+          const nameText = document.getElementById('file-name-text');
+          if (nameText) {
+            if (state.mediaSourceType === 'youtube') {
+              nameText.textContent = `▶ YouTube: ${data.fileName}`;
+              nameText.title = `${data.fileName} (${state.externalUrl || ''})`;
+            } else if (state.mediaSourceType === 'url') {
+              nameText.textContent = `🔗 ${data.fileName}`;
+              nameText.title = `${data.fileName} (${state.externalUrl || ''})`;
+            } else {
+              nameText.textContent = data.fileName;
+              if (state.mediaFile) {
+                nameText.title = `${data.fileName} (${state.mediaFile.name} • ${formatBytes(state.mediaFile.size)})`;
+              }
+            }
+          }
+          const audioTitle = document.getElementById('audio-title');
+          if (audioTitle && state.isAudio) {
+            audioTitle.textContent = data.fileName;
+          }
+          document.title = `${data.fileName} — Lined Notes`;
+        }
+
+        if (Array.isArray(data.notes) && data.notes.length > 0 && state.notes.length === 0) {
+          state.notes = data.notes;
+          state.emit('noteschange');
+          state.emit('timelinechanged');
+          showToast(`Restored ${state.notes.length} notes for ${state.mediaTitle || 'session'}`);
+        }
       }
     } catch (e) {
       console.warn('Persistence restore error:', e);
@@ -378,8 +407,10 @@ export class SessionsManager {
     }
     this.editingSessionKey = null;
 
+    const isActive = (state.getStorageKey() === key || state.detachedSessionKey === key);
+
     // If this session is the active session, update state & UI headers
-    if (state.getStorageKey() === key || state.detachedSessionKey === key) {
+    if (isActive) {
       state.mediaTitle = trimmed;
       if (state.detachedMode) {
         state.detachedSessionName = trimmed;
@@ -390,24 +421,35 @@ export class SessionsManager {
       if (nameText) {
         if (state.mediaSourceType === 'youtube') {
           nameText.textContent = `▶ YouTube: ${trimmed}`;
+          nameText.title = `${trimmed} (${state.externalUrl || ''})`;
         } else if (state.mediaSourceType === 'url') {
           nameText.textContent = `🔗 ${trimmed}`;
+          nameText.title = `${trimmed} (${state.externalUrl || ''})`;
         } else if (state.detachedMode) {
           nameText.textContent = `${trimmed} (Detached)`;
+          nameText.title = `${trimmed} (Detached Review Mode — media file not attached)`;
         } else {
           nameText.textContent = trimmed;
+          if (state.mediaFile) {
+            nameText.title = `${trimmed} (${state.mediaFile.name} • ${formatBytes(state.mediaFile.size)})`;
+          }
         }
+      }
+      const audioTitle = document.getElementById('audio-title');
+      if (audioTitle && state.isAudio) {
+        audioTitle.textContent = trimmed;
       }
       document.title = `${trimmed} — Lined Notes`;
     }
 
     try {
-      const data = await this.db.get(key);
-      if (data) {
-        data.fileName = trimmed;
-        data.updatedAt = new Date().toISOString();
-        await this.db.set(key, data);
+      const data = (await this.db.get(key)) || {};
+      data.fileName = trimmed;
+      data.updatedAt = new Date().toISOString();
+      if (isActive && state.mediaFile && !data.originalFileName) {
+        data.originalFileName = state.mediaFile.name;
       }
+      await this.db.set(key, data);
       showToast(`Project renamed to "${trimmed}"`);
     } catch (err) {
       console.error('Failed to persist renamed session:', err);
@@ -433,16 +475,42 @@ export class SessionsManager {
     }
 
     const fileName = data.fileName || 'Untitled Media';
+    const originalFileName = data.originalFileName || null;
     const fileSize = data.fileSize || 0;
 
     // Reset playback & all transport / input / range / timeline states
     this.player.resetPlaybackState();
     state.emit('filereset');
 
-    // Check if active media file matches
-    if (state.mediaFile && state.mediaFile.name === fileName && state.mediaFile.size === fileSize) {
+    // Check if active media file matches (by storage key, original filename, or disk name)
+    const isCurrentFileMatch = Boolean(
+      state.mediaFile && (
+        state.getStorageKey() === key ||
+        (state.mediaFile.size === fileSize && (
+          state.mediaFile.name === fileName ||
+          (originalFileName && state.mediaFile.name === originalFileName)
+        ))
+      )
+    );
+
+    if (isCurrentFileMatch) {
       state.detachedMode = false;
+      state.detachedSessionKey = null;
+      state.detachedSessionName = null;
+      state.detachedOriginalFileName = null;
+      state.mediaTitle = fileName;
       if (this.detachedStage) this.detachedStage.style.display = 'none';
+      const nameText = document.getElementById('file-name-text');
+      if (nameText) {
+        nameText.textContent = fileName;
+        nameText.title = `${fileName} (${state.mediaFile.name} • ${formatBytes(state.mediaFile.size)})`;
+      }
+      const audioTitle = document.getElementById('audio-title');
+      if (audioTitle && state.isAudio) {
+        audioTitle.textContent = fileName;
+      }
+      document.title = `${fileName} — Lined Notes`;
+
       state.notes = data.notes || [];
       state.currentTime = 0;
       if (this.player.videoEl) {
@@ -491,7 +559,9 @@ export class SessionsManager {
     state.detachedMode = true;
     state.detachedSessionKey = key;
     state.detachedSessionName = fileName;
+    state.detachedOriginalFileName = originalFileName;
     state.detachedSessionSize = fileSize;
+    state.mediaTitle = fileName;
     state.mediaFile = null;
 
     if (state.mediaUrl) {
@@ -528,6 +598,7 @@ export class SessionsManager {
       nameText.textContent = `${fileName} (Detached)`;
       nameText.title = `${fileName} (Detached Review Mode — media file not attached)`;
     }
+    document.title = `${fileName} (Detached) — Lined Notes`;
 
     state.notes = data.notes || [];
     state.duration = data.duration || (state.notes.length > 0 ? Math.max(...state.notes.map(n => n.end || n.start || 0)) + 5 : 60);
@@ -569,6 +640,7 @@ export class SessionsManager {
       state.detachedMode = false;
       state.detachedSessionKey = null;
       state.detachedSessionName = null;
+      state.detachedOriginalFileName = null;
       state.detachedSessionSize = 0;
       state.mediaSourceType = null;
       state.externalUrl = null;
