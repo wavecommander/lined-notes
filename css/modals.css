@@ -23,6 +23,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -97,8 +98,9 @@
 
 .modal-footer {
   display: flex;
-  align-items: center;
   justify-content: flex-end;
+  flex-flow: row-reverse;
+  align-items: center;
   gap: 8px;
 }
 
@@ -504,14 +506,14 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-.toggle-switch input:checked + .toggle-slider {
+.toggle-switch input:checked+.toggle-slider {
   background-color: var(--accent-primary);
 }
 
-.toggle-switch input:checked + .toggle-slider::before {
+.toggle-switch input:checked+.toggle-slider::before {
   transform: translateX(18px);
 }
 
-.toggle-switch input:focus-visible + .toggle-slider {
+.toggle-switch input:focus-visible+.toggle-slider {
   box-shadow: 0 0 0 2px var(--accent-dim), 0 0 0 4px var(--accent-primary);
 }

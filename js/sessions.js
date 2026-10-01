@@ -15,7 +15,6 @@ export class SessionsManager {
     this.projectsBtn = document.getElementById('projects-btn');
     this.projectsBadge = document.getElementById('projects-count-badge');
     this.menuProjectsCount = document.getElementById('menu-projects-count');
-    this.storageInfo = document.getElementById('sessions-storage-info');
     this.searchInput = document.getElementById('sessions-search-input');
     this.detachedStage = document.getElementById('detached-stage');
 
@@ -143,10 +142,6 @@ export class SessionsManager {
       const notes = item.data?.notes || [];
       return notes.some(n => (n.text || '').toLowerCase().includes(q) || (n.tag || '').toLowerCase().includes(q));
     });
-
-    if (this.storageInfo) {
-      this.storageInfo.textContent = `${rawSessions.length} total saved project${rawSessions.length === 1 ? '' : 's'}`;
-    }
 
     if (filtered.length === 0) {
       if (rawSessions.length === 0) {

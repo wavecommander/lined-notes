@@ -3,7 +3,7 @@
    Offline support, asset caching & PWA installation foundation
    ========================================================================== */
 
-const CACHE_VERSION = 'lined-notes-v34';
+const CACHE_VERSION = 'lined-notes-v35';
 const CACHE_NAME = `lined-notes-cache-${CACHE_VERSION}`;
 
 // Core assets required for 100% offline functionality
@@ -44,7 +44,8 @@ const PRECACHE_ASSETS = [
   './js/notes.js',
   './js/sessions.js',
   './js/export.js',
-  './js/import.js'
+  './js/import.js',
+  './js/waveform-worker.js'
 ];
 
 // Install: pre-cache static assets

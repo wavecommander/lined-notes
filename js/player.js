@@ -244,6 +244,11 @@ export class PlayerController {
     this.freqData = null;
     this.audioBarsRafId = null;
 
+    // Dedicated Web Worker for off-thread waveform calculation & audio demuxing
+    this.waveformWorker = null;
+    this.waveformTaskId = 0;
+    this.initWaveformWorker();
+
     this.initEvents();
     this.setupAudioBars();
     this.setupFullscreenListeners();
@@ -515,10 +520,182 @@ export class PlayerController {
     return peaks;
   }
 
+  initWaveformWorker() {
+    try {
+      this.waveformWorker = new Worker('js/waveform-worker.js');
+      this.waveformWorker.onerror = (err) => {
+        console.warn('[WaveformWorker] Worker runtime error, falling back to in-thread calculation:', err);
+      };
+    } catch (err) {
+      console.warn('[WaveformWorker] Worker initialization error, will use optimized in-thread fallback:', err);
+      this.waveformWorker = null;
+    }
+  }
+
+  /**
+   * Offloads waveform peak extraction to the Web Worker.
+   * Transfers the raw audio channel buffer for zero-copy high performance.
+   */
+  calculatePeaksWithWorker(channelData, samples, taskId) {
+    return new Promise((resolve) => {
+      if (!this.waveformWorker) {
+        return resolve(this.fastCalculatePeaks(channelData, samples));
+      }
+
+      const onMessage = (e) => {
+        if (e.data && e.data.taskId === taskId && e.data.type === 'PEAKS_COMPLETED') {
+          this.waveformWorker.removeEventListener('message', onMessage);
+          this.waveformWorker.removeEventListener('error', onError);
+          const peaks = new Float32Array(e.data.peaksBuffer);
+          resolve(peaks);
+        }
+      };
+
+      const onError = (err) => {
+        console.warn('[WaveformWorker] Peak calculation error, falling back:', err);
+        this.waveformWorker.removeEventListener('message', onMessage);
+        this.waveformWorker.removeEventListener('error', onError);
+        resolve(this.fastCalculatePeaks(channelData, samples));
+      };
+
+      this.waveformWorker.addEventListener('message', onMessage);
+      this.waveformWorker.addEventListener('error', onError);
+
+      // Attempt zero-copy transfer of the channel buffer
+      try {
+        this.waveformWorker.postMessage({
+          type: 'CALCULATE_PEAKS',
+          buffer: channelData.buffer,
+          samples,
+          taskId
+        }, [channelData.buffer]);
+      } catch (transferErr) {
+        try {
+          this.waveformWorker.postMessage({
+            type: 'CALCULATE_PEAKS',
+            buffer: channelData.buffer,
+            samples,
+            taskId
+          });
+        } catch (postErr) {
+          resolve(this.fastCalculatePeaks(channelData, samples));
+        }
+      }
+    });
+  }
+
+  /**
+   * Offloads WebM/MKV EBML audio demuxing to the Web Worker.
+   */
+  demuxWebMWithWorker(arrayBuffer, taskId) {
+    return new Promise((resolve) => {
+      if (!this.waveformWorker) {
+        return resolve(extractAudioFromWebM(arrayBuffer));
+      }
+
+      const onMessage = (e) => {
+        if (e.data && e.data.taskId === taskId) {
+          if (e.data.type === 'DEMUX_COMPLETED') {
+            this.waveformWorker.removeEventListener('message', onMessage);
+            this.waveformWorker.removeEventListener('error', onError);
+            if (e.data.noAudioTrack) {
+              resolve({ noAudioTrack: true });
+            } else {
+              resolve(e.data.audioBuffer);
+            }
+          } else if (e.data.type === 'DEMUX_FAILED') {
+            this.waveformWorker.removeEventListener('message', onMessage);
+            this.waveformWorker.removeEventListener('error', onError);
+            resolve(null);
+          }
+        }
+      };
+
+      const onError = (err) => {
+        console.warn('[WaveformWorker] Demux worker error, falling back to main-thread:', err);
+        this.waveformWorker.removeEventListener('message', onMessage);
+        this.waveformWorker.removeEventListener('error', onError);
+        resolve(extractAudioFromWebM(arrayBuffer));
+      };
+
+      this.waveformWorker.addEventListener('message', onMessage);
+      this.waveformWorker.addEventListener('error', onError);
+
+      try {
+        this.waveformWorker.postMessage({
+          type: 'DEMUX_WEBM',
+          arrayBuffer,
+          taskId
+        }, [arrayBuffer]);
+      } catch (transferErr) {
+        try {
+          this.waveformWorker.postMessage({
+            type: 'DEMUX_WEBM',
+            arrayBuffer,
+            taskId
+          });
+        } catch (postErr) {
+          resolve(extractAudioFromWebM(arrayBuffer));
+        }
+      }
+    });
+  }
+
+  /**
+   * Optimized in-thread peak calculation fallback using adaptive striding.
+   */
+  fastCalculatePeaks(channelData, sampleCount = 1600) {
+    const len = channelData.length;
+    if (!len) return new Float32Array(sampleCount);
+
+    const peaks = new Float32Array(sampleCount);
+    const blockSize = len / sampleCount;
+    const maxSamplesPerBlock = 128;
+    const stride = blockSize > maxSamplesPerBlock
+      ? Math.max(1, Math.floor(blockSize / maxSamplesPerBlock))
+      : 1;
+
+    let globalMax = 0;
+
+    for (let i = 0; i < sampleCount; i++) {
+      const start = Math.floor(i * blockSize);
+      const end = Math.min(len, Math.floor((i + 1) * blockSize));
+      let peak = 0;
+      let sum = 0;
+      let count = 0;
+
+      for (let j = start; j < end; j += stride) {
+        const val = Math.abs(channelData[j]);
+        if (val > peak) peak = val;
+        sum += val;
+        count++;
+      }
+
+      const avg = count > 0 ? (sum / count) : 0;
+      const combined = (peak * 0.7) + (avg * 0.3);
+      peaks[i] = combined;
+
+      if (combined > globalMax) {
+        globalMax = combined;
+      }
+    }
+
+    if (globalMax > 0.0001) {
+      const invMax = 1 / globalMax;
+      for (let i = 0; i < sampleCount; i++) {
+        peaks[i] = Math.min(1, peaks[i] * invMax);
+      }
+    }
+
+    return peaks;
+  }
+
   async generateWaveformPeaks(file) {
     const statusText = document.getElementById('waveform-status-text');
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const maxDecodeSize = isMobile ? APP_CONFIG.maxDecodeSizeMobile : APP_CONFIG.maxDecodeSizeDesktop;
+
+    const taskId = ++this.waveformTaskId;
 
     if (file.size > maxDecodeSize) {
       if (statusText) statusText.textContent = 'Synthetic (Large File)';
@@ -529,6 +706,8 @@ export class PlayerController {
     if (statusText) statusText.textContent = 'Analyzing…';
     try {
       const arrayBuffer = await file.arrayBuffer();
+      if (taskId !== this.waveformTaskId) return;
+
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) throw new Error('Web Audio not supported');
       const audioCtx = new AudioCtx();
@@ -552,9 +731,25 @@ export class PlayerController {
         }
       }
 
-      // Demux Path 2: For WebM/MKV containers, isolate pure audio stream from video clusters
+      if (taskId !== this.waveformTaskId) {
+        audioCtx.close();
+        return;
+      }
+
+      // Demux Path 2: For WebM/MKV containers, isolate pure audio stream via Web Worker
       if (!audioBuffer && isWebMOrMkv) {
-        const demuxResult = extractAudioFromWebM(arrayBuffer);
+        let demuxResult = null;
+        try {
+          demuxResult = await this.demuxWebMWithWorker(arrayBuffer.slice(0), taskId);
+        } catch (workerDemuxErr) {
+          demuxResult = extractAudioFromWebM(arrayBuffer);
+        }
+
+        if (taskId !== this.waveformTaskId) {
+          audioCtx.close();
+          return;
+        }
+
         if (demuxResult && demuxResult.noAudioTrack) {
           // File is a video with no audio track (e.g. screen recording or muted clip)
           if (statusText) statusText.textContent = 'Synthetic (No Audio Track)';
@@ -579,29 +774,21 @@ export class PlayerController {
         }
       }
 
+      if (taskId !== this.waveformTaskId) {
+        audioCtx.close();
+        return;
+      }
+
       if (audioBuffer) {
         const rawData = audioBuffer.getChannelData(0);
         const samples = APP_CONFIG.waveformSampleCount || 1600;
-        const blockSize = Math.floor(rawData.length / samples);
-        const peaks = new Float32Array(samples);
 
-        for (let i = 0; i < samples; i++) {
-          const blockStart = blockSize * i;
-          let sum = 0;
-          for (let j = 0; j < blockSize; j++) {
-            sum += Math.abs(rawData[blockStart + j] || 0);
-          }
-          peaks[i] = sum / Math.max(1, blockSize);
-        }
+        // Offload waveform peak extraction to Web Worker (0ms main-thread cost)
+        const peaks = await this.calculatePeaksWithWorker(rawData, samples, taskId);
 
-        let maxPeak = 0;
-        for (let i = 0; i < samples; i++) {
-          if (peaks[i] > maxPeak) maxPeak = peaks[i];
-        }
-        if (maxPeak > 0) {
-          for (let i = 0; i < samples; i++) {
-            peaks[i] = peaks[i] / maxPeak;
-          }
+        if (taskId !== this.waveformTaskId) {
+          audioCtx.close();
+          return;
         }
 
         state.waveformPeaks = peaks;
