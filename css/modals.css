@@ -248,6 +248,13 @@ modal-dialog[open],
 .session-file-info {
   display: flex;
   align-items: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.session-title-static {
+  display: flex;
+  align-items: center;
   gap: 8px;
   min-width: 0;
   flex: 1;
@@ -298,11 +305,19 @@ modal-dialog[open],
 }
 
 .session-rename-form {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 6px;
   min-width: 0;
   flex: 1;
+}
+
+.session-card.is-editing-name .session-title-static {
+  display: none;
+}
+
+.session-card.is-editing-name .session-rename-form {
+  display: flex;
 }
 
 .session-rename-input {
