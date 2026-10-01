@@ -592,6 +592,7 @@ export class LinedNotesApp {
     const nameText = document.getElementById('file-name-text');
     if (badge) badge.classList.remove('active');
     if (nameText) nameText.textContent = 'No media loaded';
+    document.title = 'Lined Notes — Audio & Video Annotation';
 
     const dropZone = document.getElementById('drop-zone');
     if (dropZone) dropZone.classList.remove('hidden');

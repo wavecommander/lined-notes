@@ -264,6 +264,9 @@ export class PlayerController {
       nameText.textContent = file.name;
       nameText.title = `${file.name} (${formatBytes(file.size)})`;
     }
+    if (file && file.name) {
+      document.title = `${file.name} — Lined Notes`;
+    }
 
     this.videoEl.src = state.mediaUrl;
     this.videoEl.volume = state.volume;
@@ -606,6 +609,23 @@ export class PlayerController {
     state.mediaFile = null;
     state.isAudio = false;
 
+    // Eagerly resolve YouTube title via public oEmbed API if title is placeholder
+    if (!options.title || options.title.startsWith('YouTube:')) {
+      fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${parsed.videoId}&format=json`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.title && state.mediaSourceType === 'youtube' && state.youtubeVideoId === parsed.videoId) {
+            state.mediaTitle = data.title;
+            this.updateMediaBadgeForUrl({
+              type: 'youtube',
+              title: data.title,
+              url: parsed.url
+            });
+          }
+        })
+        .catch(() => {});
+    }
+
     if (state.mediaUrl && state.mediaUrl.startsWith('blob:')) {
       URL.revokeObjectURL(state.mediaUrl);
     }
@@ -908,6 +928,9 @@ export class PlayerController {
       const prefix = info.type === 'youtube' ? '▶ YouTube: ' : '🔗 ';
       nameText.textContent = `${prefix}${info.title}`;
       nameText.title = `${info.title} (${info.url})`;
+    }
+    if (info.title) {
+      document.title = `${info.title} — Lined Notes`;
     }
   }
 
