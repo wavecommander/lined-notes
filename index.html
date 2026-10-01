@@ -390,13 +390,13 @@
 
           <!-- Primary Playback Controls -->
           <div class="playback-controls-group">
-            <button class="btn-icon skip-btn" onclick="app.skip(-10)" title="Back 10s (J)" aria-label="Skip back 10s">
+            <button class="btn-icon note-nav-btn" onclick="app.jumpPrevNote()" title="Previous Note (, or [)" aria-label="Previous Note">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M3 4v6h6" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M4.5 15a8 8 0 1 0 1.9-8.2L3 10" stroke-linecap="round" stroke-linejoin="round" />
+                <line x1="6" y1="5" x2="6" y2="19" stroke-linecap="round" />
+                <polyline points="18 6 10 12 18 18" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
-            <button class="btn-icon desktop-transport-btn" onclick="app.skip(-5)" title="Back 5s (←)">
+            <button class="btn-icon skip-btn" onclick="app.skip(-5)" title="Back 5s (←)" aria-label="Skip back 5s">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <polyline points="10 18 4 12 10 6" stroke-linecap="round" stroke-linejoin="round" />
                 <polyline points="18 18 12 12 18 6" stroke-linecap="round" stroke-linejoin="round" />
@@ -408,17 +408,16 @@
                 <polygon points="7 4 19 12 7 20 7 4" />
               </svg>
             </button>
-            <button class="btn-icon desktop-transport-btn" onclick="app.skip(5)" title="Forward 5s (→)">
+            <button class="btn-icon skip-btn" onclick="app.skip(5)" title="Forward 5s (→)" aria-label="Skip forward 5s">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <polyline points="6 18 12 12 6 6" stroke-linecap="round" stroke-linejoin="round" />
                 <polyline points="14 18 20 12 14 6" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
-            <button class="btn-icon skip-btn" onclick="app.skip(10)" title="Forward 10s (L)"
-              aria-label="Skip forward 10s">
+            <button class="btn-icon note-nav-btn" onclick="app.jumpNextNote()" title="Next Note (. or ])" aria-label="Next Note">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M21 4v6h-6" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M19.5 15a8 8 0 1 1-1.9-8.2L21 10" stroke-linecap="round" stroke-linejoin="round" />
+                <line x1="18" y1="5" x2="18" y2="19" stroke-linecap="round" />
+                <polyline points="6 6 14 12 6 18" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
             <button class="mobile-speed-btn" id="mobile-speed-btn" onclick="app.cycleSpeed()"
@@ -444,20 +443,6 @@
 
           <!-- Secondary / Expandable Tools Group -->
           <div class="secondary-tools-group" id="secondary-tools-group">
-            <!-- Previous / Next Note Navigation -->
-            <button class="btn-icon" onclick="app.jumpPrevNote()" title="Previous Note (, or [)" aria-label="Previous Note">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <line x1="6" y1="5" x2="6" y2="19" stroke-linecap="round" />
-                <polyline points="18 6 10 12 18 18" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </button>
-            <button class="btn-icon" onclick="app.jumpNextNote()" title="Next Note (. or ])" aria-label="Next Note">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <line x1="18" y1="5" x2="18" y2="19" stroke-linecap="round" />
-                <polyline points="6 6 14 12 6 18" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </button>
-
             <!-- In/Out Points for range notes: Bracket Buttons -->
             <button class="bracket-btn" id="A-point-btn" onclick="app.setInPoint()" title="Set A Point (A)">
               <span class="bracket-char">[</span> A
@@ -900,7 +885,7 @@
 
   <toast-notification id="toast"></toast-notification>
   <!-- APPLICATION ENTRY POINT -->
-  <script type="module" src="js/app.js?v=40"></script>
+  <script type="module" src="js/app.js?v=43"></script>
 </body>
 
 </html>

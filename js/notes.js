@@ -23,6 +23,7 @@ export class NotesManager {
     this.currentTagDot = document.getElementById('current-tag-dot');
     this.currentTagLabel = document.getElementById('current-tag-label');
     this.tagPicker = document.querySelector('tag-picker');
+    this._autoStamped = false;
 
     this.init();
   }
@@ -51,6 +52,7 @@ export class NotesManager {
   resetRangeAndInputState() {
     this.clearRange();
     state.isTimeStamped = false;
+    this._autoStamped = false;
     state.stampTime = 0;
     if (this.stampBadge) this.stampBadge.classList.remove('locked');
     if (this.stampBadgeVal) this.stampBadgeVal.textContent = '00:00';
@@ -77,6 +79,20 @@ export class NotesManager {
       this.notesList.addEventListener('note-cancel', (e) => this.cancelEditNote(e.detail.id));
       this.notesList.addEventListener('note-copy', (e) => this.copyNoteText(e.detail.id));
       this.notesList.addEventListener('note-delete', (e) => this.deleteNote(e.detail.id));
+    }
+
+    // Auto-capture timestamp on start typing (behaves like 'N')
+    if (this.noteInput) {
+      this.noteInput.addEventListener('input', () => {
+        if (!state.isTimeStamped && this.noteInput.value.length > 0) {
+          this.captureCurrentTime();
+          this._autoStamped = true;
+        } else if (this._autoStamped && this.noteInput.value.trim() === '') {
+          state.isTimeStamped = false;
+          this._autoStamped = false;
+          if (this.stampBadge) this.stampBadge.classList.remove('locked');
+        }
+      });
     }
 
     // Close tag menu on outside click if legacy dropdown is used
@@ -110,6 +126,7 @@ export class NotesManager {
 
   captureCurrentTime() {
     state.isTimeStamped = true;
+    this._autoStamped = false;
     state.stampTime = state.currentTime;
     if (this.stampBadge) this.stampBadge.classList.add('locked');
     if (this.stampBadgeVal) this.stampBadgeVal.textContent = formatTime(state.currentTime);
@@ -230,6 +247,7 @@ export class NotesManager {
     this.noteInput.value = '';
     this.clearRange();
     state.isTimeStamped = false;
+    this._autoStamped = false;
     if (this.stampBadge) this.stampBadge.classList.remove('locked');
     state.stampTime = state.currentTime;
     if (this.stampBadgeVal) this.stampBadgeVal.textContent = formatTime(state.currentTime);

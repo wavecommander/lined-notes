@@ -321,7 +321,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 6px;
     width: 100%;
   }
 
@@ -336,14 +336,11 @@
     height: 18px;
   }
 
-  .skip-btn {
-    width: 38px;
-    height: 38px;
+  .skip-btn,
+  .note-nav-btn {
+    width: 36px;
+    height: 36px;
     border-radius: 8px;
-  }
-
-  .desktop-transport-btn {
-    display: none !important;
   }
 
   .mobile-speed-btn {

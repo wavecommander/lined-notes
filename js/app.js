@@ -148,6 +148,57 @@ export class LinedNotesApp {
   }
 
   setupWindowEvents() {
+    const keyActions = {
+      ' ': (e) => {
+        e.preventDefault();
+        this.player.togglePlay();
+      },
+      'arrowleft': (e) => {
+        e.preventDefault();
+        this.player.skip(e.shiftKey ? -1 : -5);
+      },
+      'arrowright': (e) => {
+        e.preventDefault();
+        this.player.skip(e.shiftKey ? 1 : 5);
+      },
+      'j': () => this.player.skip(-10),
+      'k': () => this.player.togglePlay(),
+      'l': (e) => {
+        if (e.shiftKey) {
+          e.preventDefault();
+          this.player.toggleLoop();
+        } else {
+          this.player.skip(10);
+        }
+      },
+      '+': (e) => {
+        e.preventDefault();
+        this.zoomIn();
+      },
+      '-': (e) => {
+        e.preventDefault();
+        this.zoomOut();
+      },
+      'n': (e) => {
+        e.preventDefault();
+        this.notes.captureCurrentTime();
+      },
+      'a': () => this.notes.setAPoint(),
+      'b': () => this.notes.setBPoint(),
+      ',': () => this.jumpPrevNote(),
+      '.': () => this.jumpNextNote(),
+      'm': () => this.player.toggleMute(),
+      'f': () => this.player.toggleFullscreen(),
+      'p': () => this.player.togglePiP(),
+      't': () => this.toggleTheme(),
+      '?': () => this.openShortcutsModal(),
+      'escape': () => this.closeAllModals()
+    };
+    keyActions['='] = keyActions['+'];
+    keyActions['_'] = keyActions['-'];
+    keyActions['['] = keyActions[','];
+    keyActions[']'] = keyActions['.'];
+
     document.addEventListener('keydown', (e) => {
       const tag = document.activeElement ? document.activeElement.tagName : '';
       const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
@@ -166,89 +217,10 @@ export class LinedNotesApp {
         return;
       }
 
-      switch (e.key) {
-        case ' ':
-          e.preventDefault();
-          this.player.togglePlay();
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          this.player.skip(e.shiftKey ? -1 : -5);
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          this.player.skip(e.shiftKey ? 1 : 5);
-          break;
-        case 'j':
-        case 'J':
-          this.player.skip(-10);
-          break;
-        case 'k':
-        case 'K':
-          this.player.togglePlay();
-          break;
-        case 'l':
-        case 'L':
-          if (e.shiftKey) {
-            e.preventDefault();
-            this.player.toggleLoop();
-          } else {
-            this.player.skip(10);
-          }
-          break;
-        case '+':
-        case '=':
-          e.preventDefault();
-          this.zoomIn();
-          break;
-        case '-':
-        case '_':
-          e.preventDefault();
-          this.zoomOut();
-          break;
-        case 'n':
-        case 'N':
-          e.preventDefault();
-          this.notes.captureCurrentTime();
-          break;
-        case 'a':
-        case 'A':
-          this.notes.setAPoint();
-          break;
-        case 'b':
-        case 'B':
-          this.notes.setBPoint();
-          break;
-        case ',':
-        case '[':
-          this.jumpPrevNote();
-          break;
-        case '.':
-        case ']':
-          this.jumpNextNote();
-          break;
-        case 'm':
-        case 'M':
-          this.player.toggleMute();
-          break;
-        case 'f':
-        case 'F':
-          this.player.toggleFullscreen();
-          break;
-        case 'p':
-        case 'P':
-          this.player.togglePiP();
-          break;
-        case 't':
-        case 'T':
-          this.toggleTheme();
-          break;
-        case '?':
-          this.openShortcutsModal();
-          break;
-        case 'Escape':
-          this.closeAllModals();
-          break;
+      const key = (e.key || '').toLowerCase();
+      const action = keyActions[key];
+      if (action) {
+        action(e);
       }
     });
 
