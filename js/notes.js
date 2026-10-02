@@ -5,7 +5,7 @@
 
 import { state } from './state.js';
 import { APP_CONFIG } from './config.js';
-import { formatTime, parseTimeToSeconds, escapeHtml, copyText, showToast } from './utils.js';
+import { formatTime, parseTimeToSeconds, escapeHtml, copyText, showToast, getYouTubeThumbnailUrl, createCompositeThumbnail } from './utils.js';
 import './components/note-card.js';
 
 export class NotesManager {
@@ -186,12 +186,31 @@ export class NotesManager {
     if (clearBtn) clearBtn.style.display = state.APoint !== null ? 'inline-flex' : 'none';
   }
 
-  async takeSnapshot() {
-    if (state.isAudio || !state.mediaFile) {
+  async takeSnapshot(noteTime = null) {
+    if (state.isAudio) {
       return null;
     }
+
+    // YouTube Video Snapshot (HQ thumbnail with composite timecode overlay)
+    if (state.mediaSourceType === 'youtube' && state.youtubeVideoId) {
+      try {
+        const thumbUrl = getYouTubeThumbnailUrl(state.youtubeVideoId);
+        const timecode = noteTime !== null ? noteTime : (state.APoint !== null ? state.APoint : (state.isTimeStamped ? state.stampTime : state.currentTime));
+        this.flashCapture();
+        return await createCompositeThumbnail(thumbUrl, timecode);
+      } catch (err) {
+        console.warn('YouTube thumbnail capture error:', err);
+        return getYouTubeThumbnailUrl(state.youtubeVideoId);
+      }
+    }
+
+    if (!state.mediaFile && state.mediaSourceType !== 'url') {
+      return null;
+    }
+
     try {
       const v = this.player.videoEl;
+      if (!v || !v.videoWidth) return null;
       const maxW = APP_CONFIG.snapshotMaxWidth || 480;
       const scale = Math.min(1, maxW / (v.videoWidth || 640));
       const offCanvas = document.createElement('canvas');
@@ -203,7 +222,7 @@ export class NotesManager {
       this.flashCapture();
       return dataUrl;
     } catch (e) {
-      console.warn('Snapshot capture error:', e);
+      console.warn('Snapshot capture error (CORS or video access):', e);
       return null;
     }
   }
@@ -214,9 +233,9 @@ export class NotesManager {
       this.noteInput.focus();
       return;
     }
-    const hasMedia = Boolean(state.mediaFile || state.detachedMode);
+    const hasMedia = Boolean(state.mediaFile || state.mediaSourceType === 'youtube' || state.mediaSourceType === 'url' || state.detachedMode);
     if (!hasMedia) {
-      showToast('Open a media file first');
+      showToast('Open a media file or URL first');
       return;
     }
 
@@ -226,8 +245,8 @@ export class NotesManager {
     const noteEnd = state.BPoint !== null ? state.BPoint : null;
 
     let thumb = null;
-    if (!state.isAudio && state.mediaFile) {
-      thumb = await this.takeSnapshot();
+    if (!state.isAudio && (state.mediaFile || state.mediaSourceType === 'youtube' || state.mediaSourceType === 'url')) {
+      thumb = await this.takeSnapshot(noteStart);
     }
 
     const note = {
@@ -573,6 +592,10 @@ export class NotesManager {
   }
 
   async captureFullResFrame(timecode) {
+    if (state.mediaSourceType === 'youtube' && state.youtubeVideoId) {
+      return getYouTubeThumbnailUrl(state.youtubeVideoId, 'maxresdefault') || getYouTubeThumbnailUrl(state.youtubeVideoId, 'hqdefault');
+    }
+
     if (!state.mediaUrl || state.isAudio) return null;
 
     // 1. Try offscreen video element to avoid disrupting playback
@@ -715,7 +738,7 @@ export class NotesManager {
       return;
     }
 
-    const baseName = (state.mediaFile?.name || 'snapshot').replace(/\.[^/.]+$/, '');
+    const baseName = (state.mediaTitle || state.mediaFile?.name || 'snapshot').replace(/\.[^/.]+$/, '');
     const timeStr = timecode !== null ? formatTime(timecode).replace(/[:.]/g, '-') : 'frame';
     const isPng = Boolean(fullResUrl);
     const filename = `${baseName}_${timeStr}.png`;

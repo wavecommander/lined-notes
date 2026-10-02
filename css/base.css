@@ -24,6 +24,11 @@ body {
 }
 
 /* Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-bright) transparent;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

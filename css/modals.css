@@ -248,6 +248,13 @@ modal-dialog[open],
 .session-file-info {
   display: flex;
   align-items: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.session-title-static {
+  display: flex;
+  align-items: center;
   gap: 8px;
   min-width: 0;
   flex: 1;
@@ -267,6 +274,98 @@ modal-dialog[open],
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.session-rename-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0.65;
+  transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.session-card:hover .session-rename-btn,
+.session-rename-btn:focus-visible {
+  opacity: 1;
+}
+
+.session-rename-btn:hover {
+  color: var(--accent-primary);
+  background: rgba(217, 119, 66, 0.12);
+  opacity: 1;
+}
+
+.session-rename-form {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.session-card.is-editing-name .session-title-static {
+  display: none;
+}
+
+.session-card.is-editing-name .session-rename-form {
+  display: flex;
+}
+
+.session-rename-input {
+  flex: 1;
+  min-width: 120px;
+  background: var(--bg-input);
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  font-family: inherit;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+.session-rename-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.session-rename-action-btn.check {
+  color: #709775;
+}
+
+.session-rename-action-btn.check:hover {
+  background: rgba(112, 151, 117, 0.2);
+  border-color: rgba(112, 151, 117, 0.45);
+}
+
+.session-rename-action-btn.cancel {
+  color: #c85a54;
+}
+
+.session-rename-action-btn.cancel:hover {
+  background: rgba(200, 90, 84, 0.2);
+  border-color: rgba(200, 90, 84, 0.45);
 }
 
 .session-badge-current {
@@ -524,4 +623,57 @@ toast-notification .toast-btn,
 
 .toggle-switch input:focus-visible+.toggle-slider {
   box-shadow: 0 0 0 2px var(--accent-dim), 0 0 0 4px var(--accent-primary);
+}
+
+/* Open URL Modal Styles */
+.url-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.url-input-wrap:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+.url-input-icon {
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.url-input-wrap input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  width: 100%;
+}
+
+.url-input-wrap input::placeholder {
+  color: var(--text-muted);
+}
+
+.url-format-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.url-hint-pill {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
 }

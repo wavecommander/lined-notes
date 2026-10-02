@@ -11,6 +11,10 @@ class StateStore {
     // Media & Playback State
     this.mediaFile = null;
     this.mediaUrl = null;
+    this.mediaSourceType = null; // 'file' | 'youtube' | 'url' | null
+    this.externalUrl = null;
+    this.youtubeVideoId = null;
+    this.mediaTitle = null;
     this.isAudio = false;
     this.currentTime = 0;
     this.duration = 0;
@@ -24,6 +28,7 @@ class StateStore {
     this.detachedMode = false;
     this.detachedSessionKey = null;
     this.detachedSessionName = null;
+    this.detachedOriginalFileName = null;
     this.detachedSessionSize = 0;
 
     // Timeline Zoom & Pan
@@ -90,6 +95,13 @@ class StateStore {
   }
 
   getStorageKey() {
+    if (this.mediaSourceType === 'youtube' && this.youtubeVideoId) {
+      return `ln_session_yt_${this.youtubeVideoId}`;
+    }
+    if (this.mediaSourceType === 'url' && this.externalUrl) {
+      const sanitized = encodeURIComponent(this.externalUrl).replace(/%/g, '_').slice(0, 120);
+      return `ln_session_url_${sanitized}`;
+    }
     if (this.mediaFile) {
       return `ln_session_${this.mediaFile.name}_${this.mediaFile.size}`;
     }

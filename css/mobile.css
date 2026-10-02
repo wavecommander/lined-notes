@@ -52,18 +52,21 @@
   /* Compact button styling on tablets & phones (<= 1024px) */
   .btn-new-project,
   .btn-open-media,
+  .btn-open-url,
   .btn-projects {
     padding: 6px 8px;
   }
 
   .btn-new-project .btn-text,
   .btn-open-media .btn-text,
+  .btn-open-url .btn-text,
   .btn-projects .btn-text {
     display: none;
   }
 
   .btn-new-project,
-  .btn-open-media {
+  .btn-open-media,
+  .btn-open-url {
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
@@ -75,7 +78,8 @@
   }
 
   .btn-new-project svg,
-  .btn-open-media svg {
+  .btn-open-media svg,
+  .btn-open-url svg {
     width: 16px;
     height: 16px;
   }

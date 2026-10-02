@@ -3,7 +3,18 @@
    Offline support, asset caching & PWA installation foundation
    ========================================================================== */
 
-const CACHE_VERSION = 'lined-notes-v45';
+/* ==========================================================================
+   IMPORTANT ARCHITECTURAL NOTICE:
+   - All application assets "live at HEAD" and update dynamically via Network-First
+     fetching with Cache Fallback.
+   - DO NOT increment or bump CACHE_VERSION on regular updates or code changes.
+   - DO NOT add or append version query strings (?v=...) to HTML tags or CSS @imports.
+   - Online clients immediately fetch and execute latest HEAD code while refreshing
+     the offline cache dynamically in the background. Offline functionality is
+     preserved via fallback to cache.
+   - Installed PWAs check for service worker updates at HEAD via updateViaCache: 'none'.
+   ========================================================================== */
+const CACHE_VERSION = 'v1';
 const CACHE_NAME = `lined-notes-cache-${CACHE_VERSION}`;
 
 // Core assets required for 100% offline functionality
@@ -106,44 +117,46 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle navigation requests (loading pages)
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
-          }
-          return networkResponse;
-        })
-        .catch(async () => {
-          // Offline fallback
-          const cachedResponse = await caches.match(request, { ignoreSearch: true });
-          if (cachedResponse) return cachedResponse;
-          return caches.match('./index.html');
-        })
-    );
+  // Bypass Service Worker for Range requests (audio/video streaming)
+  // Firefox Cache API does not support 206 Partial Content
+  if (request.headers.has('range')) {
     return;
   }
 
-  // For static assets: Stale-While-Revalidate
-  event.respondWith(
-    caches.match(request, { ignoreSearch: true }).then((cachedResponse) => {
-      const fetchPromise = fetch(request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          // Network failed, cache is our only hope
-        });
+  // Bypass Service Worker for cross-origin resources (YouTube, external video URLs, CDN)
+  // to avoid opaque response caching issues and ETP blocking in Firefox
+  const reqUrl = new URL(request.url);
+  if (reqUrl.origin !== self.location.origin) {
+    return;
+  }
 
-      return cachedResponse || fetchPromise;
-    })
+  // Network-First with Cache Fallback for all same-origin resources.
+  // When online, requests fetch directly from HEAD and update the cache dynamically.
+  // When offline, requests fall back to the cached responses.
+  event.respondWith(
+    fetch(request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+        }
+        return networkResponse;
+      })
+      .catch(async () => {
+        const cachedResponse = await caches.match(request, { ignoreSearch: true });
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        // Fallback to cached index.html for navigation requests when offline
+        if (request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+        return new Response('Network error and asset not found in offline cache', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain' }
+        });
+      })
   );
 });
 
