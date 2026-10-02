@@ -95,11 +95,13 @@ export class PlayerController {
     v.addEventListener('play', () => {
       state.isPlaying = true;
       this.updatePlayStateUI();
-      this.initAudioContext();
-      if (this.audioCtx && this.audioCtx.state === 'suspended') {
-        this.audioCtx.resume();
+      if (state.isAudio) {
+        this.initAudioContext();
+        if (this.audioCtx && this.audioCtx.state === 'suspended') {
+          this.audioCtx.resume().catch(() => { });
+        }
+        this.startAudioBarsAnimation();
       }
-      this.startAudioBarsAnimation();
       state.emit('playstatechange', true);
     });
 
@@ -121,6 +123,31 @@ export class PlayerController {
       state.isPlaying = false;
       this.updatePlayStateUI();
       this.resetAudioBars();
+      state.emit('playstatechange', false);
+    });
+
+    v.addEventListener('error', () => {
+      const err = v.error;
+      console.warn('[Player] Media playback error:', err);
+      let message = 'Could not play media file.';
+      if (err) {
+        if (err.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
+          const isMkv = state.mediaFile && /\.mkv$/i.test(state.mediaFile.name);
+          const isFirefox = /Firefox/i.test(navigator.userAgent);
+          if (isMkv && isFirefox) {
+            message = 'Firefox cannot play this MKV (unsupported codec like AC3, DTS, or HEVC). Convert container with: ffmpeg -i input.mkv -c copy output.mp4';
+          } else {
+            message = 'Media format or codec is not supported by this browser.';
+          }
+        } else if (err.code === MediaError.MEDIA_ERR_DECODE) {
+          message = 'Media playback aborted due to a decoding error.';
+        } else if (err.code === MediaError.MEDIA_ERR_NETWORK) {
+          message = 'A network error caused the media download to fail.';
+        }
+      }
+      showToast(message, 7000);
+      state.isPlaying = false;
+      this.updatePlayStateUI();
       state.emit('playstatechange', false);
     });
   }
@@ -779,17 +806,26 @@ export class PlayerController {
         this.youtubeStage.innerHTML = '<div id="youtube-player"></div>';
       }
 
+      const isLocalOrigin = !window.location.origin ||
+        window.location.origin === 'null' ||
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1';
+
+      const playerVars = {
+        autoplay: 0,
+        controls: 0,
+        modestbranding: 1,
+        rel: 0,
+        playsinline: 1,
+        enablejsapi: 1
+      };
+      if (!isLocalOrigin) {
+        playerVars.origin = window.location.origin;
+      }
+
       this.ytPlayer = new window.YT.Player('youtube-player', {
         videoId: parsed.videoId,
-        playerVars: {
-          autoplay: 0,
-          controls: 0,
-          modestbranding: 1,
-          rel: 0,
-          playsinline: 1,
-          enablejsapi: 1,
-          origin: window.location.origin
-        },
+        playerVars,
         events: {
           onReady: () => onReady(),
           onStateChange: (e) => this.onYouTubeStateChange(e),
@@ -1100,10 +1136,18 @@ export class PlayerController {
       showToast('Picture-in-Picture for YouTube is available via YouTube player menu');
       return;
     }
+    const hasPipSupport = Boolean(
+      (document.pictureInPictureEnabled !== false) &&
+      (this.videoEl && typeof this.videoEl.requestPictureInPicture === 'function')
+    );
+    if (!hasPipSupport) {
+      showToast('Picture-in-Picture in Firefox is available via the browser video overlay toggle');
+      return;
+    }
     if (!document.pictureInPictureElement) {
-      if (this.videoEl && this.videoEl.requestPictureInPicture) {
-        this.videoEl.requestPictureInPicture().catch(() => { });
-      }
+      this.videoEl.requestPictureInPicture().catch(() => {
+        showToast('Could not enter Picture-in-Picture');
+      });
     } else {
       document.exitPictureInPicture().catch(() => { });
     }
@@ -1214,6 +1258,7 @@ export class PlayerController {
 
   initAudioContext() {
     if (this.audioSourceNode) return;
+    if (!state.isAudio) return; // Only route through Web Audio when playing audio files to avoid muting videos in Firefox
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;

@@ -252,6 +252,26 @@ export class LinedNotesApp {
   }
 
   setupDragAndDrop() {
+    // Prevent Firefox and other browsers from navigating the entire window to the dropped file
+    window.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      // If dropped outside the initial dropZone, seamlessly load the dropped file or URL
+      if (!this.dropZone || this.dropZone.classList.contains('hidden') || !this.dropZone.contains(e.target)) {
+        const text = e.dataTransfer?.getData('text/plain') || e.dataTransfer?.getData('text/uri-list');
+        if (text && text.trim().startsWith('http')) {
+          this.player.loadExternalUrl(text.trim());
+          return;
+        }
+        const files = e.dataTransfer?.files;
+        if (files && files.length > 0) {
+          this.player.loadFile(files[0]);
+        }
+      }
+    });
+
     if (!this.dropZone) return;
     this.dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -446,13 +466,24 @@ export class LinedNotesApp {
   initPwa() {
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
+        navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
           .then((reg) => {
             console.log('[PWA] Service Worker registered with scope:', reg.scope);
+            // Proactively check for Service Worker updates at HEAD
+            reg.update().catch(() => {});
           })
           .catch((err) => {
             console.warn('[PWA] Service Worker registration failed:', err);
           });
+      });
+
+      // Proactively check for updates when returning to the PWA window or tab
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          navigator.serviceWorker.getRegistration().then((reg) => {
+            reg?.update().catch(() => {});
+          });
+        }
       });
     }
 
