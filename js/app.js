@@ -203,8 +203,16 @@ export class LinedNotesApp {
       const tag = document.activeElement ? document.activeElement.tagName : '';
       const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 
-      // Enter in note input adds note
+      // Enter in note input adds note (Shift+Enter or mobile/touch keyboards allow paragraph newlines)
       if (e.key === 'Enter' && document.activeElement === this.notes.noteInput) {
+        const isMobileOrTablet = window.matchMedia && (
+          window.matchMedia('(max-width: 1024px)').matches ||
+          window.matchMedia('(pointer: coarse)').matches
+        );
+        if (e.shiftKey || (isMobileOrTablet && !e.ctrlKey && !e.metaKey)) {
+          // Allow multiline paragraph formatting
+          return;
+        }
         e.preventDefault();
         this.notes.saveNote();
         return;
@@ -470,7 +478,7 @@ export class LinedNotesApp {
           .then((reg) => {
             console.log('[PWA] Service Worker registered with scope:', reg.scope);
             // Proactively check for Service Worker updates at HEAD
-            reg.update().catch(() => {});
+            reg.update().catch(() => { });
           })
           .catch((err) => {
             console.warn('[PWA] Service Worker registration failed:', err);
@@ -481,7 +489,7 @@ export class LinedNotesApp {
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
           navigator.serviceWorker.getRegistration().then((reg) => {
-            reg?.update().catch(() => {});
+            reg?.update().catch(() => { });
           });
         }
       });

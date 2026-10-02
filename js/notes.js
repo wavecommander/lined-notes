@@ -81,7 +81,7 @@ export class NotesManager {
       this.notesList.addEventListener('note-delete', (e) => this.deleteNote(e.detail.id));
     }
 
-    // Auto-capture timestamp on start typing (behaves like 'N')
+    // Auto-capture timestamp on start typing and handle multi-line auto-expand
     if (this.noteInput) {
       this.noteInput.addEventListener('input', () => {
         if (!state.isTimeStamped && this.noteInput.value.length > 0) {
@@ -91,6 +91,19 @@ export class NotesManager {
           state.isTimeStamped = false;
           this._autoStamped = false;
           if (this.stampBadge) this.stampBadge.classList.remove('locked');
+        }
+        this.adjustInputHeight();
+      });
+
+      this.noteInput.addEventListener('focus', () => {
+        this.noteInput.classList.add('expanded');
+        this.adjustInputHeight();
+      });
+
+      this.noteInput.addEventListener('blur', () => {
+        if (!this.noteInput.value.trim()) {
+          this.noteInput.classList.remove('expanded');
+          this.resetInputHeight();
         }
       });
     }
@@ -105,7 +118,7 @@ export class NotesManager {
     if (!this.noteInput) return;
 
     const desktopPlaceholder = this.noteInput.dataset.placeholderDesktop ||
-      'Type annotation note here… (Press Enter to save, N to capture timestamp)';
+      'Type annotation note here…\n(Press Enter to save, N to capture timestamp)';
     const mobilePlaceholder = this.noteInput.dataset.placeholderMobile ||
       'Type annotation note here…';
 
@@ -122,6 +135,25 @@ export class NotesManager {
     window.addEventListener('resize', updatePlaceholder, { passive: true });
 
     updatePlaceholder();
+  }
+
+  adjustInputHeight() {
+    if (!this.noteInput) return;
+    const isMobile = window.matchMedia && window.matchMedia('(max-width: 1024px)').matches;
+    const isFocused = document.activeElement === this.noteInput || this.noteInput.classList.contains('expanded');
+    if (!isFocused && !this.noteInput.value) {
+      this.resetInputHeight();
+      return;
+    }
+    const minH = isMobile ? 140 : 96;
+    this.noteInput.style.height = 'auto';
+    const targetH = Math.min(Math.max(this.noteInput.scrollHeight, minH), 280);
+    this.noteInput.style.height = `${targetH}px`;
+  }
+
+  resetInputHeight() {
+    if (!this.noteInput) return;
+    this.noteInput.style.height = '';
   }
 
   captureCurrentTime() {
@@ -264,6 +296,8 @@ export class NotesManager {
 
     // Reset input
     this.noteInput.value = '';
+    this.noteInput.classList.remove('expanded');
+    this.resetInputHeight();
     this.clearRange();
     state.isTimeStamped = false;
     this._autoStamped = false;

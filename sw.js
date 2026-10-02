@@ -133,8 +133,9 @@ self.addEventListener('fetch', (event) => {
   // Network-First with Cache Fallback for all same-origin resources.
   // When online, requests fetch directly from HEAD and update the cache dynamically.
   // When offline, requests fall back to the cached responses.
+  const fetchRequest = new Request(request, { cache: 'no-cache' });
   event.respondWith(
-    fetch(request)
+    fetch(fetchRequest)
       .then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const responseClone = networkResponse.clone();

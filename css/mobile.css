@@ -99,6 +99,36 @@
     .btn-new-project {
       display: none !important;
     }
+
+    .annotation-input-box {
+      padding: 8px 10px;
+      gap: 8px 6px;
+    }
+
+    .stamp-button {
+      padding: 0 6px;
+      font-size: 11px;
+      height: 32px;
+      min-height: 32px;
+    }
+
+    .tag-badge-btn {
+      padding: 0 6px;
+      font-size: 11px;
+      height: 32px;
+      min-height: 32px;
+    }
+
+    .tag-label-text {
+      max-width: 55px;
+    }
+
+    .annotation-input-box .btn-primary {
+      padding: 0 10px;
+      font-size: 11px;
+      height: 32px;
+      min-height: 32px;
+    }
   }
 
   /* Segmented View Tabs */
@@ -501,51 +531,133 @@
   /* Annotation Input Box Grid */
   .annotation-input-box {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto auto 1fr;
     grid-template-areas:
-      "stamp tag"
-      "input save";
-    gap: 6px;
-    padding: 8px;
+      "stamp tag   save"
+      "input input input";
+    gap: 10px 8px;
+    padding: 10px 12px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .annotation-input-box:focus-within {
+    border-color: var(--border-bright);
   }
 
   .stamp-button {
     grid-area: stamp;
-    font-size: var(--text-2xs);
-    padding: 5px 8px;
-    min-height: 36px;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: var(--fw-semibold);
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-primary);
+    background: var(--accent-dim);
+    border: 1px solid rgba(217, 119, 66, 0.35);
+    border-radius: 6px;
+    padding: 0 10px;
+    min-height: 34px;
+    height: 34px;
+    width: auto;
+    max-width: 140px;
+    flex-shrink: 0;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    user-select: none;
+    cursor: pointer;
+    box-sizing: border-box;
   }
 
   tag-picker,
   .tag-picker-wrap {
     grid-area: tag;
+    width: auto;
+    max-width: 150px;
+    flex-shrink: 0;
+    align-self: center;
   }
 
   .tag-badge-btn {
-    min-height: 36px;
-    padding: 4px 8px;
-    font-size: var(--text-2xs);
-    width: 100%;
-    justify-content: space-between;
+    min-height: 34px;
+    height: 34px;
+    padding: 0 10px;
+    font-size: var(--text-xs);
+    font-weight: var(--fw-medium);
+    border-radius: 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    width: auto;
+    max-width: 150px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+    box-sizing: border-box;
+  }
+
+  .tag-label-text {
+    max-width: 85px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   #note-text-input {
     grid-area: input;
-    font-size: 16px;
-    /* Prevents iOS auto-zoom on focus */
-    min-height: 38px;
-    padding: 6px 10px;
+    width: 100%;
+    font-size: 14px;
+    min-height: 44px;
+    height: 44px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    line-height: var(--lh-normal, 1.45);
+    outline: none;
+    resize: none;
+    box-sizing: border-box;
+    overflow-y: hidden;
+    transition: min-height 0.25s cubic-bezier(0.16, 1, 0.3, 1), height 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  #note-text-input:focus,
+  #note-text-input.expanded {
+    min-height: 140px;
+    background: var(--bg-input);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-dim);
+    overflow-y: auto;
   }
 
   .annotation-input-box .btn-primary {
     grid-area: save;
-    min-height: 38px;
-    padding: 6px 12px;
+    justify-self: end;
+    min-height: 34px;
+    height: 34px;
+    padding: 0 14px;
     font-size: var(--text-xs);
+    font-weight: var(--fw-semibold);
     white-space: nowrap;
+    width: auto;
+    max-width: 130px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-sizing: border-box;
+    align-self: center;
   }
 
   .sub-controls-row {

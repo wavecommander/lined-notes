@@ -77,8 +77,9 @@
         </svg>
         <span class="btn-text">New Project</span>
       </button>
-      <button class="btn btn-ghost btn-sm btn-open-media" id="open-media-btn" onclick="document.getElementById('file-picker').click()"
-        title="Open Audio or Video File" aria-label="Open Audio or Video File">
+      <button class="btn btn-ghost btn-sm btn-open-media" id="open-media-btn"
+        onclick="document.getElementById('file-picker').click()" title="Open Audio or Video File"
+        aria-label="Open Audio or Video File">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
           <polyline points="17 8 12 3 7 8" />
@@ -324,7 +325,8 @@
               <span class="drop-pill">OGG</span>
             </div>
             <div class="drop-url-bar" onclick="event.stopPropagation()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" class="drop-url-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"
+                class="drop-url-icon">
                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
               </svg>
@@ -428,7 +430,8 @@
 
           <!-- Primary Playback Controls -->
           <div class="playback-controls-group">
-            <button class="btn-icon note-nav-btn" onclick="app.jumpPrevNote()" title="Previous Note (, or [)" aria-label="Previous Note">
+            <button class="btn-icon note-nav-btn" onclick="app.jumpPrevNote()" title="Previous Note (, or [)"
+              aria-label="Previous Note">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <line x1="6" y1="5" x2="6" y2="19" stroke-linecap="round" />
                 <polyline points="18 6 10 12 18 18" stroke-linecap="round" stroke-linejoin="round" />
@@ -452,7 +455,8 @@
                 <polyline points="14 18 20 12 14 6" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
-            <button class="btn-icon note-nav-btn" onclick="app.jumpNextNote()" title="Next Note (. or ])" aria-label="Next Note">
+            <button class="btn-icon note-nav-btn" onclick="app.jumpNextNote()" title="Next Note (. or ])"
+              aria-label="Next Note">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <line x1="18" y1="5" x2="18" y2="19" stroke-linecap="round" />
                 <polyline points="6 6 14 12 6 18" stroke-linecap="round" stroke-linejoin="round" />
@@ -548,13 +552,15 @@
 
             <div class="timeline-separator mobile-tray-sep"></div>
 
-            <button class="btn-icon mobile-tray-btn" onclick="app.newProject()" title="New Project" aria-label="New Project">
+            <button class="btn-icon mobile-tray-btn" onclick="app.newProject()" title="New Project"
+              aria-label="New Project">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <line x1="12" y1="5" x2="12" y2="19" stroke-linecap="round" />
                 <line x1="5" y1="12" x2="19" y2="12" stroke-linecap="round" />
               </svg>
             </button>
-            <button class="btn-icon mobile-tray-btn" onclick="document.getElementById('file-picker').click()" title="Select Media…" aria-label="Select Media…">
+            <button class="btn-icon mobile-tray-btn" onclick="document.getElementById('file-picker').click()"
+              title="Select Media…" aria-label="Select Media…">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke-linecap="round" stroke-linejoin="round" />
                 <polyline points="17 8 12 3 7 8" stroke-linecap="round" stroke-linejoin="round" />
@@ -578,10 +584,11 @@
           <!-- Tag Selection -->
           <tag-picker id="tag-picker"></tag-picker>
 
-          <input type="text" id="note-text-input"
-            data-placeholder-desktop="Type annotation note here… (Press Enter to save, N to capture timestamp)"
+          <textarea id="note-text-input" rows="2"
+            data-placeholder-desktop="Type annotation note here…&#10;(Press Enter to save, N to capture timestamp)"
             data-placeholder-mobile="Type annotation note here…"
-            placeholder="Type annotation note here… (Press Enter to save, N to capture timestamp)" maxlength="1000">
+            placeholder="Type annotation note here…&#10;(Press Enter to save, N to capture timestamp)"
+            maxlength="1000"></textarea>
           <script>
             (function () {
               if (window.matchMedia && window.matchMedia('(max-width: 1024px)').matches) {
@@ -789,6 +796,18 @@
       </div>
 
       <div class="settings-list">
+        <!-- Setting Item: Pause on Type -->
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Pause while typing</div>
+            <div class="settings-item-desc">Automatically pause media playback when typing an annotation note</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="setting-pause-on-type" onchange="app.togglePauseOnType(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
         <!-- Setting Item: Copy with Timestamp -->
         <div class="settings-item">
           <div class="settings-item-info">
@@ -798,18 +817,6 @@
           </div>
           <label class="toggle-switch">
             <input type="checkbox" id="setting-copy-timestamp" onchange="app.toggleCopyIncludeTimestamp(this.checked)">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-
-        <!-- Setting Item: Pause on Type -->
-        <div class="settings-item">
-          <div class="settings-item-info">
-            <div class="settings-item-title">Pause while typing</div>
-            <div class="settings-item-desc">Automatically pause media playback when typing an annotation note</div>
-          </div>
-          <label class="toggle-switch">
-            <input type="checkbox" id="setting-pause-on-type" onchange="app.togglePauseOnType(this.checked)">
             <span class="toggle-slider"></span>
           </label>
         </div>
@@ -915,8 +922,10 @@
       </div>
 
       <div class="modal-footer" style="justify-content:space-between;margin-top:14px;">
-        <button class="btn btn-primary btn-sm" onclick="app.newProject(); app.closeSessionsModal();" title="Start a fresh project">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="margin-right:4px;">
+        <button class="btn btn-primary btn-sm" onclick="app.newProject(); app.closeSessionsModal();"
+          title="Start a fresh project">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"
+            style="margin-right:4px;">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
@@ -960,12 +969,14 @@
 
       <div class="url-input-container" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
         <div class="url-input-wrap">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="url-input-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"
+            class="url-input-icon">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
           </svg>
-          <input type="url" id="url-modal-input" placeholder="https://www.youtube.com/watch?v=... or https://example.com/video.mp4"
-            autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter') app.loadFromUrlModal()">
+          <input type="url" id="url-modal-input"
+            placeholder="https://www.youtube.com/watch?v=... or https://example.com/video.mp4" autocomplete="off"
+            spellcheck="false" onkeydown="if(event.key==='Enter') app.loadFromUrlModal()">
         </div>
         <div class="url-format-hints">
           <span class="url-hint-pill">YouTube (watch, embed, shorts)</span>
