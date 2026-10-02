@@ -19,8 +19,9 @@
 .transport-row {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 8px 10px;
+  gap: 10px 14px;
 }
 
 time-display,
@@ -44,12 +45,14 @@ time-display,
 .playback-controls-group {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
 }
 
 .secondary-tools-group {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
 }
 
@@ -64,6 +67,12 @@ time-display,
   background: var(--border-subtle);
   margin: 0 4px;
   flex-shrink: 0;
+}
+
+@media (max-width: 1180px) {
+  .transport-group-sep {
+    display: none;
+  }
 }
 
 /* Unified 32x32 Squircle Buttons across the entire transport bar */
