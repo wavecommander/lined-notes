@@ -179,6 +179,22 @@
     color: #ffffff;
   }
 
+  @media (max-width: 410px) {
+    .mobile-tab-text,
+    .mobile-tab-btn > span:not(.mobile-tab-badge) {
+      display: none;
+    }
+
+    .mobile-tab-btn {
+      padding: 5px 8px;
+      gap: 4px;
+    }
+
+    #tab-btn-media {
+      padding: 5px 9px;
+    }
+  }
+
   /* Mobile Overflow Menu */
   .mobile-menu-wrap {
     display: block;

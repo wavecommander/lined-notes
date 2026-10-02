@@ -73,20 +73,20 @@ export class MobileTabs extends HTMLElement {
     const count = state.notes ? state.notes.length : 0;
 
     this.innerHTML = `
-      <button class="mobile-tab-btn ${!isNotes ? 'active' : ''}" id="tab-btn-media" data-tab="media" role="tab" aria-selected="${!isNotes}">
+      <button class="mobile-tab-btn ${!isNotes ? 'active' : ''}" id="tab-btn-media" data-tab="media" role="tab" aria-selected="${!isNotes}" aria-label="Media" title="Media">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
           <polygon points="5 3 19 12 5 21 5 3" />
         </svg>
-        <span>Media</span>
+        <span class="mobile-tab-text">Media</span>
       </button>
-      <button class="mobile-tab-btn ${isNotes ? 'active' : ''}" id="tab-btn-notes" data-tab="notes" role="tab" aria-selected="${isNotes}">
+      <button class="mobile-tab-btn ${isNotes ? 'active' : ''}" id="tab-btn-notes" data-tab="notes" role="tab" aria-selected="${isNotes}" aria-label="Notes" title="Notes">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <polyline points="14 2 14 8 20 8" />
           <line x1="16" y1="13" x2="8" y2="13" />
           <line x1="16" y1="17" x2="8" y2="17" />
         </svg>
-        <span>Notes</span>
+        <span class="mobile-tab-text">Notes</span>
         <span class="mobile-tab-badge" id="mobile-tab-count">${count}</span>
       </button>
     `;
