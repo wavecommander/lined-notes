@@ -7,7 +7,7 @@
 **Professional Timeline Audio & Video Annotation Application**  
 *100% Client-Side • Zero Dependencies • Offline-First Progressive Web App (PWA)*
 
-Created using Gemini 3.8 Flash
+Created using Google Gemini 3.8 Flash & Claude Opus 5.5
 
 [**Features**](#-key-features) •
 [**Quick Start**](#-quick-start) •
