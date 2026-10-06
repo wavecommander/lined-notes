@@ -244,12 +244,21 @@ export class NotesManager {
       const v = this.player.videoEl;
       if (!v || !v.videoWidth) return null;
       const maxW = APP_CONFIG.snapshotMaxWidth || 480;
-      const scale = Math.min(1, maxW / (v.videoWidth || 640));
+
+      // The playhead may have moved on since the timestamp was stamped (e.g. typing while playing):
+      // grab the frame at the note's time from an offscreen element rather than the current frame.
+      let source = v;
+      if (noteTime !== null && isFinite(noteTime) && Math.abs(v.currentTime - noteTime) > 0.25) {
+        source = (await this.renderFrameOffscreen(noteTime)) || v;
+      }
+      const srcW = source.videoWidth || source.width || 640;
+      const srcH = source.videoHeight || source.height || 360;
+      const scale = Math.min(1, maxW / srcW);
       const offCanvas = document.createElement('canvas');
-      offCanvas.width = Math.round((v.videoWidth || 640) * scale);
-      offCanvas.height = Math.round((v.videoHeight || 360) * scale);
+      offCanvas.width = Math.round(srcW * scale);
+      offCanvas.height = Math.round(srcH * scale);
       const offCtx = offCanvas.getContext('2d');
-      offCtx.drawImage(v, 0, 0, offCanvas.width, offCanvas.height);
+      offCtx.drawImage(source, 0, 0, offCanvas.width, offCanvas.height);
       const dataUrl = offCanvas.toDataURL('image/jpeg', APP_CONFIG.snapshotQuality || 0.72);
       this.flashCapture();
       return dataUrl;
@@ -265,7 +274,7 @@ export class NotesManager {
       this.noteInput.focus();
       return;
     }
-    const hasMedia = Boolean(state.mediaFile || state.mediaSourceType === 'youtube' || state.mediaSourceType === 'url' || state.detachedMode);
+    const hasMedia = state.hasMedia();
     if (!hasMedia) {
       showToast('Open a media file or URL first');
       return;
@@ -625,6 +634,58 @@ export class NotesManager {
     this.currentLightboxTimecode = null;
   }
 
+  /**
+   * Seeks a hidden copy of the current media to `timecode` and returns a full-resolution
+   * canvas of that frame, or null (timeout, decode error, or cross-origin tainting).
+   */
+  renderFrameOffscreen(timecode) {
+    if (!state.mediaUrl || state.isAudio || state.mediaSourceType === 'youtube') return Promise.resolve(null);
+    return new Promise((resolve) => {
+      const offVideo = document.createElement('video');
+      offVideo.muted = true;
+      offVideo.playsInline = true;
+      offVideo.preload = 'auto';
+      offVideo.src = state.mediaUrl;
+
+      let done = false;
+      const finish = (result) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        offVideo.removeAttribute('src');
+        offVideo.load();
+        resolve(result);
+      };
+      const timer = setTimeout(() => finish(null), 3000);
+
+      const onSeeked = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = offVideo.videoWidth || 640;
+          canvas.height = offVideo.videoHeight || 360;
+          canvas.getContext('2d').drawImage(offVideo, 0, 0, canvas.width, canvas.height);
+          canvas.toDataURL('image/png', 0); // throws early if the canvas is cross-origin tainted
+          finish(canvas);
+        } catch (err) {
+          finish(null);
+        }
+      };
+
+      offVideo.addEventListener('loadedmetadata', () => {
+        const targetTime = Math.max(0, Math.min(timecode, offVideo.duration || timecode));
+        if (Math.abs(offVideo.currentTime - targetTime) < 0.05) {
+          // Wait for frame data at the start position before drawing
+          if (offVideo.readyState >= 2) onSeeked();
+          else offVideo.addEventListener('loadeddata', onSeeked, { once: true });
+        } else {
+          offVideo.addEventListener('seeked', onSeeked, { once: true });
+          offVideo.currentTime = targetTime;
+        }
+      }, { once: true });
+      offVideo.addEventListener('error', () => finish(null), { once: true });
+    });
+  }
+
   async captureFullResFrame(timecode) {
     if (state.mediaSourceType === 'youtube' && state.youtubeVideoId) {
       return getYouTubeThumbnailUrl(state.youtubeVideoId, 'maxresdefault') || getYouTubeThumbnailUrl(state.youtubeVideoId, 'hqdefault');
@@ -634,62 +695,13 @@ export class NotesManager {
 
     // 1. Try offscreen video element to avoid disrupting playback
     try {
-      const offscreenResult = await new Promise((resolve) => {
-        const offVideo = document.createElement('video');
-        offVideo.muted = true;
-        offVideo.playsInline = true;
-        offVideo.preload = 'auto';
-        offVideo.src = state.mediaUrl;
-
-        let resolved = false;
-        const cleanup = () => {
-          if (resolved) return;
-          resolved = true;
-          offVideo.removeAttribute('src');
-          offVideo.load();
-        };
-
-        const timer = setTimeout(() => {
-          cleanup();
-          resolve(null);
-        }, 3000);
-
-        const onSeeked = () => {
-          clearTimeout(timer);
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = offVideo.videoWidth || 640;
-            canvas.height = offVideo.videoHeight || 360;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(offVideo, 0, 0, canvas.width, canvas.height);
-            cleanup();
-            canvas.toBlob((blob) => {
-              resolve(blob ? URL.createObjectURL(blob) : null);
-            }, 'image/png');
-          } catch (err) {
-            cleanup();
-            resolve(null);
-          }
-        };
-
-        offVideo.addEventListener('loadedmetadata', () => {
-          const targetTime = Math.max(0, Math.min(timecode, offVideo.duration || timecode));
-          if (Math.abs(offVideo.currentTime - targetTime) < 0.05) {
-            onSeeked();
-          } else {
-            offVideo.currentTime = targetTime;
-          }
-        }, { once: true });
-
-        offVideo.addEventListener('seeked', onSeeked, { once: true });
-        offVideo.addEventListener('error', () => {
-          clearTimeout(timer);
-          cleanup();
-          resolve(null);
-        }, { once: true });
-      });
-
-      if (offscreenResult) return offscreenResult;
+      const canvas = await this.renderFrameOffscreen(timecode);
+      if (canvas) {
+        const blobUrl = await new Promise((resolve) => {
+          canvas.toBlob((blob) => resolve(blob ? URL.createObjectURL(blob) : null), 'image/png');
+        });
+        if (blobUrl) return blobUrl;
+      }
     } catch (e) {
       console.warn('Offscreen full-res capture failed, trying primary video element:', e);
     }
@@ -774,8 +786,8 @@ export class NotesManager {
 
     const baseName = (state.mediaTitle || state.mediaFile?.name || 'snapshot').replace(/\.[^/.]+$/, '');
     const timeStr = timecode !== null ? formatTime(timecode).replace(/[:.]/g, '-') : 'frame';
-    const isPng = Boolean(fullResUrl);
-    const filename = `${baseName}_${timeStr}.png`;
+    const isPng = finalUrl.startsWith('blob:') || finalUrl.startsWith('data:image/png');
+    const filename = `${baseName}_${timeStr}.${isPng ? 'png' : 'jpg'}`;
 
     const a = document.createElement('a');
     a.style.display = 'none';

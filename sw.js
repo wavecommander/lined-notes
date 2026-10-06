@@ -16,6 +16,8 @@
    ========================================================================== */
 const CACHE_VERSION = 'v1';
 const CACHE_NAME = `lined-notes-cache-${CACHE_VERSION}`;
+const NETWORK_TIMEOUT_MS = 4000;
+const TIMEOUT = Symbol('timeout');
 
 // Core assets required for 100% offline functionality
 const PRECACHE_ASSETS = [
@@ -133,32 +135,49 @@ self.addEventListener('fetch', (event) => {
   // Network-First with Cache Fallback for all same-origin resources.
   // When online, requests fetch directly from HEAD and update the cache dynamically.
   // When offline, requests fall back to the cached responses.
+  // A slow network (rather than none) falls back to the cache after NETWORK_TIMEOUT_MS; the network
+  // response still refreshes the cache in the background when it eventually arrives.
   const fetchRequest = new Request(request, { cache: 'no-cache' });
-  event.respondWith(
-    fetch(fetchRequest)
-      .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
-        }
-        return networkResponse;
-      })
-      .catch(async () => {
-        const cachedResponse = await caches.match(request, { ignoreSearch: true });
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        // Fallback to cached index.html for navigation requests when offline
-        if (request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-        return new Response('Network error and asset not found in offline cache', {
-          status: 503,
-          statusText: 'Service Unavailable',
-          headers: { 'Content-Type': 'text/plain' }
-        });
-      })
-  );
+  const networkFetch = fetch(fetchRequest).then((networkResponse) => {
+    if (networkResponse && networkResponse.status === 200) {
+      const responseClone = networkResponse.clone();
+      return caches.open(CACHE_NAME)
+        .then((cache) => cache.put(request, responseClone))
+        .then(() => networkResponse, () => networkResponse);
+    }
+    return networkResponse;
+  });
+  event.waitUntil(networkFetch.catch(() => { }));
+
+  const offlineFallback = async () => {
+    const cachedResponse = await caches.match(request, { ignoreSearch: true });
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    // Fallback to cached index.html for navigation requests when offline
+    if (request.mode === 'navigate') {
+      const shell = await caches.match('./index.html');
+      if (shell) return shell;
+    }
+    return new Response('Network error and asset not found in offline cache', {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: { 'Content-Type': 'text/plain' }
+    });
+  };
+
+  event.respondWith((async () => {
+    const timedOut = new Promise((resolve) => setTimeout(resolve, NETWORK_TIMEOUT_MS, TIMEOUT));
+    try {
+      const winner = await Promise.race([networkFetch, timedOut]);
+      if (winner !== TIMEOUT) return winner;
+      const cachedResponse = await caches.match(request, { ignoreSearch: true });
+      // Nothing cached: keep waiting on the network
+      return cachedResponse || await networkFetch;
+    } catch (err) {
+      return offlineFallback();
+    }
+  })());
 });
 
 // Listen for messages from client

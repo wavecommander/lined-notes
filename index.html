@@ -303,8 +303,7 @@
       <!-- PLAYER AREA -->
       <div id="player-area">
         <!-- Drag & Drop Overlay -->
-        <div id="drop-zone" ondrop="app.onDrop(event)" ondragover="app.onDragOver(event)"
-          ondragleave="app.onDragLeave(event)" onclick="document.getElementById('file-picker').click()">
+        <div id="drop-zone" onclick="document.getElementById('file-picker').click()">
           <div class="drop-box">
             <div class="drop-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -416,8 +415,7 @@
 
       <!-- TIMELINE AREA -->
       <div id="timeline-container">
-        <div id="timeline-canvas-wrap" onpointerdown="app.startScrub(event)" onpointermove="app.onTimelineHover(event)"
-          onpointerleave="app.clearHover()" onwheel="app.onTimelineWheel(event)">
+        <div id="timeline-canvas-wrap">
           <canvas id="timeline-canvas"></canvas>
         </div>
       </div>
@@ -486,10 +484,10 @@
           <!-- Secondary / Expandable Tools Group -->
           <div class="secondary-tools-group" id="secondary-tools-group">
             <!-- In/Out Points for range notes: Bracket Buttons -->
-            <button class="bracket-btn" id="A-point-btn" onclick="app.setInPoint()" title="Set A Point (A)">
+            <button class="bracket-btn" id="A-point-btn" onclick="app.setInPoint()" title="Set In Point (I or A)">
               <span class="bracket-char">[</span> A
             </button>
-            <button class="bracket-btn" id="B-point-btn" onclick="app.setOutPoint()" title="Set B Point (B)">
+            <button class="bracket-btn" id="B-point-btn" onclick="app.setOutPoint()" title="Set Out Point (O or B)">
               B <span class="bracket-char">]</span>
             </button>
             <button class="btn-icon" id="loop-range-btn" onclick="app.toggleLoop()"

@@ -4,7 +4,7 @@
 
 export const APP_CONFIG = {
   name: 'Lined Notes',
-  version: '1.1.0',
+  version: '1.2.0',
   storageDbName: 'LinedNotesDB',
   storageStoreName: 'sessions',
   storageDbVersion: 1,

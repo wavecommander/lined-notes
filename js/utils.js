@@ -16,11 +16,13 @@ export function formatTime(secs, includeDecimals = true) {
 }
 
 export function formatSRTTime(secs) {
-  if (!isFinite(secs) || isNaN(secs)) secs = 0;
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = Math.floor(secs % 60);
-  const ms = Math.round((secs % 1) * 1000);
+  if (!isFinite(secs) || isNaN(secs) || secs < 0) secs = 0;
+  // Round to whole milliseconds first so 1.9996 becomes 00:00:02,000 (not 00:00:01,1000)
+  const totalMs = Math.round(secs * 1000);
+  const h = Math.floor(totalMs / 3600000);
+  const m = Math.floor((totalMs % 3600000) / 60000);
+  const s = Math.floor((totalMs % 60000) / 1000);
+  const ms = totalMs % 1000;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
 }
 
@@ -70,6 +72,21 @@ export function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+/**
+ * Returns the value only if it is a safe image source for note thumbnails
+ * (a data:image URL or an http(s) URL); otherwise null.
+ */
+export function sanitizeImageSrc(src) {
+  if (typeof src !== 'string') return null;
+  const trimmed = src.trim();
+  if (/^data:image\/(png|jpe?g|webp|gif);base64,[a-z0-9+/=\s]+$/i.test(trimmed)) return trimmed;
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol === 'https:' || url.protocol === 'http:') return url.href;
+  } catch (e) { }
+  return null;
 }
 
 export function timeAgo(dateStr) {
@@ -169,7 +186,7 @@ export function interpolateColor(c1, c2, t) {
   return a >= 0.999 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
-export function showToast(msg, showUndo = false, onUndo = null) {
+export function showToast(msg, showUndo = false, onUndo = null, duration = 2800) {
   const toastEl = document.querySelector('toast-notification') || document.getElementById('toast');
   if (toastEl) {
     const isNotesTab = window.innerWidth <= 1024 && document.getElementById('app')?.getAttribute('data-mobile-view') === 'notes';
@@ -182,7 +199,7 @@ export function showToast(msg, showUndo = false, onUndo = null) {
   }
 
   if (toastEl && typeof toastEl.show === 'function') {
-    toastEl.show(msg, showUndo, onUndo);
+    toastEl.show(msg, showUndo, onUndo, duration);
     return;
   }
 
@@ -209,7 +226,7 @@ export function showToast(msg, showUndo = false, onUndo = null) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
     toast.classList.remove('show');
-  }, 2800);
+  }, duration);
 }
 
 /**

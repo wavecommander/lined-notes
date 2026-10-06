@@ -4,6 +4,7 @@
    ========================================================================== */
 
 import { state } from './state.js';
+import { APP_CONFIG } from './config.js';
 import { formatTime, formatSRTTime, formatVTTTime, calculateSubtitleCueEnd, escapeHtml, copyText, showToast } from './utils.js';
 
 export class ExportManager {
@@ -54,7 +55,7 @@ export class ExportManager {
       case 'json':
         content = JSON.stringify({
           app: 'Lined Notes',
-          version: '1.2.0',
+          version: APP_CONFIG.version,
           fileName: fileName,
           sourceType: state.mediaSourceType || (state.mediaFile ? 'file' : 'detached'),
           url: state.externalUrl || null,

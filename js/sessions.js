@@ -65,7 +65,11 @@ export class SessionsManager {
 
   async saveSession() {
     const key = state.getStorageKey();
-    if (!key) return;
+    if (!key) {
+      // Notes without a session (imported before any media was opened) are not persisted yet
+      state.isDirty = state.notes.length > 0;
+      return;
+    }
 
     const usedTags = Array.from(new Set(state.notes.map(n => n.tag).filter(Boolean)));
     const fileName = state.mediaTitle || (state.mediaFile ? state.mediaFile.name : (state.detachedSessionName || 'Untitled Media'));
@@ -87,6 +91,7 @@ export class SessionsManager {
     };
 
     try {
+      state.isDirty = true;
       await this.db.set(key, payload);
       state.isDirty = false; // Reset dirty state on auto-save
       this.updateProjectsCountBadge();
@@ -98,6 +103,8 @@ export class SessionsManager {
   async autoRestoreSession() {
     const key = state.getStorageKey();
     if (!key) return;
+    // Notes already in memory when media finishes loading (e.g. imported first) must be persisted
+    const hadInMemoryNotes = state.notes.length > 0;
     try {
       const data = await this.db.get(key);
       if (data) {
@@ -126,13 +133,26 @@ export class SessionsManager {
           document.title = `${data.fileName} — Lined Notes`;
         }
 
-        if (Array.isArray(data.notes) && data.notes.length > 0 && state.notes.length === 0) {
-          state.notes = data.notes;
-          state.emit('noteschange');
-          state.emit('timelinechanged');
-          showToast(`Restored ${state.notes.length} notes for ${state.mediaTitle || 'session'}`);
+        if (Array.isArray(data.notes) && data.notes.length > 0) {
+          if (state.notes.length === 0) {
+            state.notes = data.notes;
+            state.emit('noteschange');
+            state.emit('timelinechanged');
+            showToast(`Restored ${state.notes.length} notes for ${state.mediaTitle || 'session'}`);
+          } else {
+            // Notes already in memory (e.g. imported before the media was opened): merge, don't discard either side
+            const knownIds = new Set(state.notes.map(n => String(n.id)));
+            const added = data.notes.filter(n => !knownIds.has(String(n.id)));
+            if (added.length > 0) {
+              state.notes = [...state.notes, ...added].sort((a, b) => a.start - b.start);
+              state.emit('noteschange');
+              state.emit('timelinechanged');
+              showToast(`Merged ${added.length} saved notes for ${state.mediaTitle || 'session'}`);
+            }
+          }
         }
       }
+      if (hadInMemoryNotes) this.saveSession();
     } catch (e) {
       console.warn('Persistence restore error:', e);
     }
@@ -563,9 +583,15 @@ export class SessionsManager {
     state.detachedSessionSize = fileSize;
     state.mediaTitle = fileName;
     state.mediaFile = null;
+    // Clear the previous source so getStorageKey() resolves to the detached session key
+    // (otherwise edits would be saved over the previously active YouTube/URL project)
+    state.mediaSourceType = null;
+    state.externalUrl = null;
+    state.youtubeVideoId = null;
+    if (this.player.youtubeStage) this.player.youtubeStage.classList.remove('active');
 
     if (state.mediaUrl) {
-      URL.revokeObjectURL(state.mediaUrl);
+      if (state.mediaUrl.startsWith('blob:')) URL.revokeObjectURL(state.mediaUrl);
       state.mediaUrl = null;
     }
 
@@ -606,12 +632,9 @@ export class SessionsManager {
     state.isAudio = !!data.isAudio;
     state.activeNoteId = null;
     state.editingNoteId = null;
-    if (this.player && typeof this.player.generateSyntheticWaveform === 'function') {
-      this.player.generateSyntheticWaveform({ name: fileName, size: data.fileSize || 0 }, state.duration);
-    } else {
-      state.waveformPeaks = null;
-      state.isSyntheticWaveform = true;
-    }
+    // No media attached: the timeline shows a plain flat track
+    state.waveformPeaks = null;
+    state.isWaveformPending = false;
 
     this.player.updateTimeDisplay();
     state.emit('noteschange');

@@ -154,7 +154,7 @@ export class TimelineEngine {
   }
 
   setZoom(val, centerTime = null) {
-    const hasMedia = Boolean(state.mediaFile || state.detachedMode);
+    const hasMedia = state.hasMedia();
     if (!hasMedia || !state.duration) {
       state.zoom = 1;
       state.scrollOffset = 0;
@@ -188,7 +188,7 @@ export class TimelineEngine {
   }
 
   startScrub(e) {
-    const hasMedia = Boolean(state.mediaFile || state.detachedMode);
+    const hasMedia = state.hasMedia();
     if (!hasMedia || state.duration === 0) return;
     this.canvas.setPointerCapture(e.pointerId);
 
@@ -235,7 +235,7 @@ export class TimelineEngine {
   }
 
   onTimelineHover(e) {
-    const hasMedia = Boolean(state.mediaFile || state.detachedMode);
+    const hasMedia = state.hasMedia();
     if (!hasMedia || state.duration === 0) return;
     const rect = this.canvas.getBoundingClientRect();
     state.hoverX = e.clientX - rect.left;
@@ -244,7 +244,7 @@ export class TimelineEngine {
   }
 
   onTimelineWheel(e) {
-    const hasMedia = Boolean(state.mediaFile || state.detachedMode);
+    const hasMedia = state.hasMedia();
     if (!hasMedia || state.duration === 0) return;
     e.preventDefault();
     const rect = this.canvas.getBoundingClientRect();
@@ -400,7 +400,7 @@ export class TimelineEngine {
     c.clearRect(0, 0, W, H);
 
     // Support both active media and Detached Review Mode (ISSUE-02 fix)
-    const hasMedia = Boolean(state.mediaFile || state.detachedMode);
+    const hasMedia = state.hasMedia();
     if (!hasMedia || state.duration === 0) {
       c.fillStyle = tc.trackBg;
       c.fillRect(0, H / 2 - 1, W, 2);
@@ -437,7 +437,7 @@ export class TimelineEngine {
       }
     }
 
-    // 2. Waveform Visualization (HD Decoded or Realistic Synthetic)
+    // 2. Waveform Visualization (decoded peaks, otherwise a plain flat track)
     const midY = H / 2 + 6;
     if (state.waveformPeaks && state.waveformPeaks.length > 0) {
       const peaks = state.waveformPeaks;
@@ -469,8 +469,8 @@ export class TimelineEngine {
         c.fillRect(clampStart, midY - 1, clampEnd - clampStart, 2);
       }
 
-      // If media file is loaded and still analyzing, render subtle animated placeholder wave
-      if (state.mediaFile) {
+      // While a local file is still being decoded, render a subtle placeholder wave
+      if (state.isWaveformPending) {
         const barStep = 5;
         const barCount = Math.floor(W / barStep);
         c.fillStyle = tc.waveUnplayed;

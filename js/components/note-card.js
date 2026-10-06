@@ -4,7 +4,7 @@
    and inline editing.
    ========================================================================== */
 
-import { formatTime, escapeHtml, copyText } from '../utils.js';
+import { formatTime, escapeHtml, sanitizeImageSrc } from '../utils.js';
 import { state } from '../state.js';
 
 export class NoteCard extends HTMLElement {
@@ -96,8 +96,9 @@ export class NoteCard extends HTMLElement {
     }
 
     const rangeText = note.end ? ` → ${formatTime(note.end)}` : '';
-    const thumbHtml = note.thumb
-      ? `<img class="note-card-thumb" src="${note.thumb}" data-time="${note.start}" alt="Snapshot">`
+    const thumbSrc = sanitizeImageSrc(note.thumb);
+    const thumbHtml = thumbSrc
+      ? `<img class="note-card-thumb" src="${escapeHtml(thumbSrc)}" data-time="${escapeHtml(note.start)}" alt="Snapshot">`
       : '';
 
     this.innerHTML = `

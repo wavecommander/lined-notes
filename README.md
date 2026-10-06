@@ -99,6 +99,14 @@ Because **Lined Notes** is built purely with vanilla web standards, **no build s
 3. **Open in your browser:**  
    Navigate to `http://localhost:8080`.
 
+### Running Tests
+
+Unit tests for the parsers and formatters use Node's built-in runner (no install needed):
+
+```bash
+node --test tests/*.test.mjs
+```
+
 > **Note:** Serving via a local HTTP server (rather than opening `index.html` via `file://`) is required for Service Workers, Web Workers, and Web Components to function correctly.
 
 ---

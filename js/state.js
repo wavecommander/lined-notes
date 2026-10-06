@@ -37,7 +37,7 @@ class StateStore {
     this.hoverTime = null;
     this.hoverX = null;
     this.waveformPeaks = null;
-    this.isSyntheticWaveform = false;
+    this.isWaveformPending = false; // true only while a local file's audio is being decoded
     this.isPanning = false;
     this.panStartX = 0;
     this.panStartOffset = 0;
@@ -92,6 +92,15 @@ class StateStore {
         }
       }
     }
+  }
+
+  hasMedia() {
+    return Boolean(
+      this.mediaFile ||
+      this.mediaSourceType === 'youtube' ||
+      this.mediaSourceType === 'url' ||
+      this.detachedMode
+    );
   }
 
   getStorageKey() {

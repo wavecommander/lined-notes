@@ -183,6 +183,8 @@ export class LinedNotesApp {
         e.preventDefault();
         this.notes.captureCurrentTime();
       },
+      'i': () => this.notes.setAPoint(),
+      'o': () => this.notes.setBPoint(),
       'a': () => this.notes.setAPoint(),
       'b': () => this.notes.setBPoint(),
       ',': () => this.jumpPrevNote(),
@@ -225,6 +227,14 @@ export class LinedNotesApp {
         return;
       }
 
+      // Leave browser/OS shortcuts (Ctrl/Cmd+A, Ctrl+−, Ctrl+P, Alt+←, …) alone
+      // (AltGr reports as Ctrl+Alt on some layouts and is needed to type [ ] on e.g. German keyboards)
+      const isAltGraph = typeof e.getModifierState === 'function' && e.getModifierState('AltGraph');
+      if ((e.ctrlKey || e.metaKey || e.altKey) && !isAltGraph) return;
+
+      // While a dialog is open only Escape applies (modal-dialog handles its own close)
+      if (document.querySelector('modal-dialog.open') && e.key !== 'Escape') return;
+
       const key = (e.key || '').toLowerCase();
       const action = keyActions[key];
       if (action) {
@@ -252,7 +262,8 @@ export class LinedNotesApp {
 
     // Only warn on unload if there are genuine unsaved edits (ISSUE-08 fix)
     window.addEventListener('beforeunload', (e) => {
-      if (state.isDirty) {
+      const hasDraft = Boolean(this.notes.noteInput && this.notes.noteInput.value.trim());
+      if (state.isDirty || hasDraft) {
         e.preventDefault();
         e.returnValue = '';
       }
@@ -265,6 +276,8 @@ export class LinedNotesApp {
       e.preventDefault();
     });
     window.addEventListener('drop', (e) => {
+      // Already handled by the drop zone's own listener
+      if (e.defaultPrevented) return;
       e.preventDefault();
       // If dropped outside the initial dropZone, seamlessly load the dropped file or URL
       if (!this.dropZone || this.dropZone.classList.contains('hidden') || !this.dropZone.contains(e.target)) {
@@ -311,10 +324,15 @@ export class LinedNotesApp {
       const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
       if (isInput) return;
 
-      const pastedText = (e.clipboardData || window.clipboardData)?.getData('text');
-      if (pastedText && (pastedText.includes('youtube.com') || pastedText.includes('youtu.be') || pastedText.trim().startsWith('http'))) {
-        e.preventDefault();
-        this.player.loadExternalUrl(pastedText.trim());
+      const pastedText = ((e.clipboardData || window.clipboardData)?.getData('text') || '').trim();
+      const looksLikeUrl = /^https?:\/\/\S+$/i.test(pastedText) || /^(www\.|m\.)?(youtube\.com|youtu\.be)\/\S+$/i.test(pastedText);
+      if (!looksLikeUrl) return;
+      e.preventDefault();
+      if (state.hasMedia() || state.notes.length > 0) {
+        // A project is open: let the user confirm instead of switching immediately
+        this.openUrlModal(pastedText);
+      } else {
+        this.player.loadExternalUrl(pastedText);
       }
     });
   }
@@ -423,10 +441,10 @@ export class LinedNotesApp {
   }
 
   // ─── URL MODAL CONTROLS ───────────────────────────────────────────
-  openUrlModal() {
+  openUrlModal(prefill = '') {
     const modal = document.getElementById('url-modal');
     const input = document.getElementById('url-modal-input');
-    if (input) input.value = '';
+    if (input) input.value = typeof prefill === 'string' ? prefill : '';
     if (modal) {
       if (typeof modal.open === 'function') modal.open();
       else modal.classList.add('open');
@@ -559,7 +577,7 @@ export class LinedNotesApp {
   }
 
   newProject() {
-    const hasMedia = state.mediaFile || state.detachedMode || state.mediaSourceType === 'youtube' || state.mediaSourceType === 'url';
+    const hasMedia = state.hasMedia();
     if (!hasMedia && state.notes.length === 0) {
       showToast('Already on a new project');
       return;
@@ -613,6 +631,7 @@ export class LinedNotesApp {
     state.detachedSessionName = null;
     state.detachedSessionSize = 0;
     state.notes = [];
+    state.isDirty = false;
     state.activeNoteId = null;
     state.editingNoteId = null;
     state.APoint = null;
@@ -620,7 +639,7 @@ export class LinedNotesApp {
     state.isLooping = false;
     state.isTimeStamped = false;
     state.waveformPeaks = null;
-    state.isSyntheticWaveform = false;
+    state.isWaveformPending = false;
     state.duration = 0;
     state.currentTime = 0;
     state.zoom = 1;
@@ -648,24 +667,6 @@ export class LinedNotesApp {
     showToast('Started new project');
   }
 
-  onDrop(e) {
-    e.preventDefault();
-    if (this.dropZone) this.dropZone.classList.remove('dragging');
-    const files = e.dataTransfer ? e.dataTransfer.files : null;
-    if (files && files.length > 0) {
-      this.player.loadFile(files[0]);
-    }
-  }
-
-  onDragOver(e) {
-    e.preventDefault();
-    if (this.dropZone) this.dropZone.classList.add('dragging');
-  }
-
-  onDragLeave(e) {
-    if (this.dropZone) this.dropZone.classList.remove('dragging');
-  }
-
   setZoom(zoom) {
     this.timeline.setZoom(zoom);
   }
@@ -690,22 +691,6 @@ export class LinedNotesApp {
     } else if (this.timeline && typeof this.timeline.setZoom === 'function') {
       this.timeline.setZoom(nextZoom);
     }
-  }
-
-  startScrub(e) {
-    this.timeline.startScrub(e);
-  }
-
-  onTimelineHover(e) {
-    this.timeline.onTimelineHover(e);
-  }
-
-  clearHover() {
-    this.timeline.clearHover();
-  }
-
-  onTimelineWheel(e) {
-    this.timeline.onTimelineWheel(e);
   }
 
   togglePlay() {
