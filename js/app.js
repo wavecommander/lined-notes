@@ -12,7 +12,7 @@ import { NotesManager } from './notes.js';
 import { SessionsManager } from './sessions.js';
 import { ExportManager } from './export.js';
 import { ImportManager } from './import.js';
-import { showToast } from './utils.js';
+import { showToast, parseLaunchParams, formatBytes } from './utils.js';
 
 export class LinedNotesApp {
   constructor() {
@@ -42,6 +42,33 @@ export class LinedNotesApp {
 
     // Listen for mobile tab requests from notes manager
     state.on('requestmobiletab', (tab) => this.setMobileTab(tab));
+
+    this.handleLaunchParams();
+  }
+
+  /**
+   * Handles how the app was launched: manifest shortcut (?action=open), deep links
+   * (?v=…&t=…) and shared links from the Web Share Target (?url=… / ?text=…).
+   */
+  handleLaunchParams() {
+    const { action, mediaInput } = parseLaunchParams(window.location.search, window.location.hash);
+    if (!action && !mediaInput) return;
+    // Strip the params so a reload doesn't re-trigger them
+    try {
+      history.replaceState(null, '', window.location.pathname);
+    } catch (e) { }
+
+    if (mediaInput) {
+      this.player.loadExternalUrl(mediaInput);
+      return;
+    }
+    if (action === 'open' && this.dropZone) {
+      // A file picker can't be opened without a user gesture: point at the drop zone instead
+      this.dropZone.classList.remove('hidden');
+      this.dropZone.classList.add('dragging');
+      setTimeout(() => this.dropZone.classList.remove('dragging'), 1600);
+      showToast('Click here or drop a file to open media', false, null, 5000);
+    }
   }
 
   initTheme() {
@@ -106,8 +133,55 @@ export class LinedNotesApp {
       const copyKey = (APP_CONFIG && APP_CONFIG.copyIncludeTimestampKey) || 'ln_copy_include_timestamp';
       const savedCopyTimestamp = localStorage.getItem(copyKey);
       state.copyIncludeTimestamp = savedCopyTimestamp === 'true';
+
+      const savedOffset = parseFloat(localStorage.getItem(APP_CONFIG.stampOffsetKey));
+      state.stampOffset = isFinite(savedOffset) && savedOffset >= 0 ? savedOffset : 0;
       this.updateSettingsUI();
     } catch (e) { }
+  }
+
+  setStampOffset(val) {
+    const secs = parseFloat(val);
+    state.stampOffset = isFinite(secs) && secs >= 0 ? secs : 0;
+    try {
+      localStorage.setItem(APP_CONFIG.stampOffsetKey, String(state.stampOffset));
+    } catch (e) { }
+    this.updateSettingsUI();
+    showToast(state.stampOffset ? `Timestamps captured while playing move back ${state.stampOffset}s` : 'Stamp offset off');
+  }
+
+  async updateStorageInfo() {
+    const infoEl = document.getElementById('storage-info');
+    const btn = document.getElementById('storage-persist-btn');
+    const storage = navigator.storage;
+    if (!infoEl) return;
+    if (!storage || typeof storage.estimate !== 'function') {
+      infoEl.textContent = 'Storage details are not available in this browser. Use "Back Up All" in Projects to keep a copy.';
+      return;
+    }
+    try {
+      const [{ usage = 0, quota = 0 }, persisted] = await Promise.all([
+        storage.estimate(),
+        typeof storage.persisted === 'function' ? storage.persisted() : Promise.resolve(false)
+      ]);
+      const protection = persisted
+        ? 'Protected from automatic clean-up.'
+        : 'Not protected: the browser may delete projects when disk space is low.';
+      infoEl.textContent = `${formatBytes(usage)} used of ${formatBytes(quota)}. ${protection}`;
+      if (btn) btn.style.display = persisted || typeof storage.persist !== 'function' ? 'none' : 'inline-flex';
+    } catch (e) {
+      infoEl.textContent = 'Could not read storage usage.';
+    }
+  }
+
+  async requestPersistentStorage() {
+    try {
+      const granted = await navigator.storage.persist();
+      showToast(granted ? 'Projects are now protected from automatic clean-up' : 'The browser declined; back up projects regularly', false, null, 5000);
+    } catch (e) {
+      showToast('Persistent storage is not supported here');
+    }
+    this.updateStorageInfo();
   }
 
   togglePauseOnType(enabled) {
@@ -144,6 +218,10 @@ export class LinedNotesApp {
     const pauseToggle = document.getElementById('setting-pause-on-type');
     if (pauseToggle) {
       pauseToggle.checked = !!state.pauseOnType;
+    }
+    const offsetSelect = document.getElementById('setting-stamp-offset');
+    if (offsetSelect) {
+      offsetSelect.value = String(state.stampOffset || 0);
     }
   }
 
@@ -200,6 +278,15 @@ export class LinedNotesApp {
     keyActions['_'] = keyActions['-'];
     keyActions['['] = keyActions[','];
     keyActions[']'] = keyActions['.'];
+    // Shift+, / Shift+. (US layout: < and >) nudge the active note
+    keyActions['<'] = (e) => {
+      e.preventDefault();
+      this.notes.nudgeActiveNote(-0.1);
+    };
+    keyActions['>'] = (e) => {
+      e.preventDefault();
+      this.notes.nudgeActiveNote(0.1);
+    };
 
     document.addEventListener('keydown', (e) => {
       const tag = document.activeElement ? document.activeElement.tagName : '';
@@ -227,13 +314,21 @@ export class LinedNotesApp {
         return;
       }
 
+      // Ctrl/Cmd+Z outside text fields undoes the last note change
+      const modalOpen = Boolean(document.querySelector('modal-dialog.open'));
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (e.key || '').toLowerCase() === 'z' && !modalOpen) {
+        e.preventDefault();
+        this.notes.undo();
+        return;
+      }
+
       // Leave browser/OS shortcuts (Ctrl/Cmd+A, Ctrl+−, Ctrl+P, Alt+←, …) alone
       // (AltGr reports as Ctrl+Alt on some layouts and is needed to type [ ] on e.g. German keyboards)
       const isAltGraph = typeof e.getModifierState === 'function' && e.getModifierState('AltGraph');
       if ((e.ctrlKey || e.metaKey || e.altKey) && !isAltGraph) return;
 
       // While a dialog is open only Escape applies (modal-dialog handles its own close)
-      if (document.querySelector('modal-dialog.open') && e.key !== 'Escape') return;
+      if (modalOpen && e.key !== 'Escape') return;
 
       const key = (e.key || '').toLowerCase();
       const action = keyActions[key];
@@ -251,13 +346,31 @@ export class LinedNotesApp {
       });
     });
 
-    // Auto-pause when user starts typing if enabled
+    // Pause while typing a note (if enabled) and resume once it's saved or abandoned
     if (this.notes.noteInput) {
-      this.notes.noteInput.addEventListener('focus', () => {
+      const input = this.notes.noteInput;
+      const pauseForTyping = () => {
         if (state.pauseOnType && state.isPlaying) {
-          this.player.videoEl.pause();
+          this.pausedForTyping = true;
+          this.player.pause();
         }
+      };
+      const resumeAfterTyping = () => {
+        if (!this.pausedForTyping) return;
+        this.pausedForTyping = false;
+        if (!state.isPlaying) this.player.play();
+      };
+      input.addEventListener('focus', pauseForTyping);
+      // Focus may stay in the box after Enter saves a note, so also catch the next keystroke
+      input.addEventListener('input', () => {
+        if (input.value) pauseForTyping();
       });
+      input.addEventListener('blur', () => {
+        if (!input.value.trim()) resumeAfterTyping();
+      });
+      state.on('notesaved', resumeAfterTyping);
+      // Switching media must not resume the new source
+      state.on('filereset', () => { this.pausedForTyping = false; });
     }
 
     // Only warn on unload if there are genuine unsaved edits (ISSUE-08 fix)
@@ -417,6 +530,7 @@ export class LinedNotesApp {
 
   openSettingsModal() {
     this.updateSettingsUI();
+    this.updateStorageInfo();
     const modal = this.settingsModal || document.getElementById('settings-modal');
     if (modal) {
       if (typeof modal.open === 'function') modal.open();
@@ -490,6 +604,20 @@ export class LinedNotesApp {
 
   // ─── PWA & INSTALLATION ────────────────────────────────────────────
   initPwa() {
+    // OS "Open with Lined Notes" (manifest file_handlers)
+    if ('launchQueue' in window && typeof window.launchQueue.setConsumer === 'function') {
+      window.launchQueue.setConsumer(async (launchParams) => {
+        const handle = launchParams && launchParams.files && launchParams.files[0];
+        if (!handle) return;
+        try {
+          this.player.loadFile(await handle.getFile());
+        } catch (err) {
+          console.warn('[PWA] Could not open launched file:', err);
+          showToast('Could not open that file');
+        }
+      });
+    }
+
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })

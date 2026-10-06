@@ -8,6 +8,25 @@ import { showToast, parseTimeToSeconds, sanitizeImageSrc } from './utils.js';
 
 const newNoteId = () => Date.now() + Math.random().toString(36).substring(2, 6);
 
+/**
+ * Validates and normalises one note from an imported/backup JSON file; returns null if unusable.
+ */
+export function normalizeNote(n) {
+  const start = parseFloat(n.start !== undefined ? n.start : n.time);
+  if (!isFinite(start) || start < 0) return null;
+  const end = parseFloat(n.end);
+  const tag = state.tags.some(t => t.id === n.tag) ? n.tag : 'note';
+  return {
+    id: (typeof n.id === 'string' || typeof n.id === 'number') && String(n.id) ? String(n.id) : newNoteId(),
+    start,
+    end: isFinite(end) && end > start ? end : null,
+    text: typeof n.text === 'string' ? n.text : String(n.text ?? ''),
+    tag,
+    thumb: sanitizeImageSrc(n.thumb),
+    createdAt: typeof n.createdAt === 'string' ? n.createdAt : new Date().toISOString()
+  };
+}
+
 export class ImportManager {
   constructor() {
     this.importModal = document.getElementById('import-modal');
@@ -68,6 +87,7 @@ export class ImportManager {
         return;
       }
 
+      state.undoHistory.push('import', state.notes);
       if (mode === 'replace') {
         state.notes = importedNotes;
       } else {
@@ -86,7 +106,7 @@ export class ImportManager {
       state.emit('timelinechanged');
       state.emit('requestsave');
       if (state.getStorageKey()) {
-        showToast(`Imported ${importedNotes.length} annotations`);
+        showToast(`Imported ${importedNotes.length} annotations`, true, () => state.emit('requestundo'));
       } else {
         // No active project yet: notes are kept in memory and attached to the next media opened
         showToast(`Imported ${importedNotes.length} annotations — open the matching media to save them`, false, null, 6000);
@@ -98,19 +118,7 @@ export class ImportManager {
   }
 
   normalizeJsonNote(n) {
-    const start = parseFloat(n.start !== undefined ? n.start : n.time);
-    if (!isFinite(start) || start < 0) return null;
-    const end = parseFloat(n.end);
-    const tag = state.tags.some(t => t.id === n.tag) ? n.tag : 'note';
-    return {
-      id: (typeof n.id === 'string' || typeof n.id === 'number') && String(n.id) ? String(n.id) : newNoteId(),
-      start,
-      end: isFinite(end) && end > start ? end : null,
-      text: typeof n.text === 'string' ? n.text : String(n.text ?? ''),
-      tag,
-      thumb: sanitizeImageSrc(n.thumb),
-      createdAt: typeof n.createdAt === 'string' ? n.createdAt : new Date().toISOString()
-    };
+    return normalizeNote(n);
   }
 
   parseSubtitleCues(text) {

@@ -58,6 +58,7 @@ const PRECACHE_ASSETS = [
   './js/sessions.js',
   './js/export.js',
   './js/import.js',
+  './js/history.js',
   './js/waveform-utils.js',
   './js/waveform-worker.js',
   // Web Components

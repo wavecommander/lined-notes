@@ -77,3 +77,75 @@ test('subtitle import parses cues', () => {
   assert.equal(notes[0].end, 3.5);
   assert.equal(notes[1].text, 'Second');
 });
+
+// ─── UX round: launch params, note editing, undo, backups ─────────────
+
+import { parseLaunchParams, resolveNoteTimes } from '../js/utils.js';
+import { UndoHistory } from '../js/history.js';
+import { parseBackup, mergeSessionData } from '../js/sessions.js';
+
+test('parseLaunchParams reads deep links, share targets and shortcuts', () => {
+  assert.deepEqual(parseLaunchParams('?action=open', ''), { action: 'open', mediaInput: null });
+  assert.equal(parseLaunchParams('?v=dQw4w9WgXcQ&t=90').mediaInput, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=90');
+  assert.equal(parseLaunchParams('?v=dQw4w9WgXcQ', '#t=1m30s').mediaInput, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=1m30s');
+  // a URL that already carries its own start time is left alone
+  assert.equal(parseLaunchParams('?url=' + encodeURIComponent('https://youtu.be/dQw4w9WgXcQ?t=5') + '&t=90').mediaInput, 'https://youtu.be/dQw4w9WgXcQ?t=5');
+  // Android share sheets often put the link inside free text
+  assert.equal(parseLaunchParams('?text=' + encodeURIComponent('Watch this https://youtu.be/dQw4w9WgXcQ !')).mediaInput, 'https://youtu.be/dQw4w9WgXcQ');
+  assert.deepEqual(parseLaunchParams('', ''), { action: null, mediaInput: null });
+});
+
+test('resolveNoteTimes validates edited start/end', () => {
+  const note = { start: 10.04, end: null };
+  assert.deepEqual(resolveNoteTimes(note, null, null, 60), { start: 10.04, end: null }); // unchanged keeps precision
+  assert.deepEqual(resolveNoteTimes(note, '00:00:05.0', '00:00:08', 60), { start: 5, end: 8 });
+  assert.deepEqual(resolveNoteTimes({ start: 5, end: 8 }, null, '', 60), { start: 5, end: null });
+  assert.equal(resolveNoteTimes(note, 'abc', null, 60).error, 'Invalid start time');
+  assert.equal(resolveNoteTimes(note, null, '00:00:09', 60).error, 'End time must be after the start time');
+  assert.equal(resolveNoteTimes(note, '02:00', null, 60).error, 'Start is past the end of the media');
+  assert.deepEqual(resolveNoteTimes(note, null, '99', 60), { start: 10.04, end: 60 }); // end clamped to duration
+});
+
+test('UndoHistory caps size, snapshots shallowly and merges repeated keys', () => {
+  const h = new UndoHistory(3);
+  const notes = [{ id: 'a', start: 1 }];
+  for (let i = 0; i < 5; i++) h.push(`op${i}`, notes);
+  assert.equal(h.size, 3);
+  assert.equal(h.pop().label, 'op4');
+
+  const h2 = new UndoHistory();
+  h2.push('nudge', [{ id: 'a', start: 1 }], 'nudge:a');
+  h2.push('nudge', [{ id: 'a', start: 1.1 }], 'nudge:a');
+  assert.equal(h2.size, 1);
+  assert.equal(h2.pop().notes[0].start, 1); // the run reverts to before the first nudge
+
+  const live = [{ id: 'b', start: 2 }];
+  h2.push('edit', live);
+  live[0].start = 99;
+  assert.equal(h2.pop().notes[0].start, 2); // later mutation doesn't leak into the snapshot
+});
+
+test('parseBackup validates the file and sanitises notes', () => {
+  assert.throws(() => parseBackup('not json'), /not valid JSON/);
+  assert.throws(() => parseBackup('{"notes":[]}'), /Not a Lined Notes backup/);
+  const entries = parseBackup(JSON.stringify({
+    type: 'backup',
+    sessions: [
+      { key: 'ln_session_a.mp4_1', data: { fileName: 'a.mp4', notes: [{ id: 1, start: 2, text: 'ok', thumb: 'x" onerror="y' }, { start: 'bad' }] } },
+      { key: 'other_key', data: { notes: [] } }
+    ]
+  }));
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].data.notes.length, 1);
+  assert.equal(entries[0].data.notes[0].thumb, null);
+});
+
+test('mergeSessionData keeps existing metadata and unions notes by id', () => {
+  const existing = { fileName: 'Renamed', updatedAt: '2026-01-02T00:00:00Z', notes: [{ id: '1', start: 5 }] };
+  const incoming = { fileName: 'orig.mp4', updatedAt: '2026-03-01T00:00:00Z', notes: [{ id: '1', start: 5 }, { id: '2', start: 1 }] };
+  const merged = mergeSessionData(existing, incoming);
+  assert.equal(merged.fileName, 'Renamed');
+  assert.deepEqual(merged.notes.map(n => n.id), ['2', '1']);
+  assert.equal(merged.updatedAt, '2026-03-01T00:00:00Z');
+  assert.equal(mergeSessionData(null, incoming), incoming);
+});

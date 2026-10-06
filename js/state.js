@@ -3,6 +3,7 @@
    ========================================================================== */
 
 import { DEFAULT_TAGS, APP_CONFIG } from './config.js';
+import { UndoHistory } from './history.js';
 
 class StateStore {
   constructor() {
@@ -63,7 +64,8 @@ class StateStore {
     this.pauseOnType = false;
     this.copyIncludeTimestamp = false;
     this.selectedExportFmt = 'json';
-    this.deletedHistory = [];
+    this.undoHistory = new UndoHistory(20);
+    this.stampOffset = 0; // seconds subtracted from timestamps captured during playback
     this.mobileTab = 'media';
     this.isDirty = false; // Only warns on exit when actually unsaved (ISSUE-08 fix)
   }

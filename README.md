@@ -50,13 +50,18 @@ No media files or notes are ever uploaded to an external server or cloud service
 - **Color-Coded Categorization:** Tag annotations with curated categories (**Note**, **Action**, **Highlight**, **Issue**, **Quote**) and filter notes by tag.
 - **Automatic Frame Snapshots:** Captures video thumbnail snapshots for every timestamped note.
 - **Snapshot Lightbox:** Click any thumbnail to view full-resolution video frames and download snapshot images.
-- **Pause While Typing:** Optional setting to automatically pause playback while typing notes and resume when done.
+- **Pause While Typing:** Optional setting to automatically pause playback while typing notes and resume once the note is saved.
+- **Editable Notes:** Change a saved note's text, start/end time (with "Now" buttons) and tag; nudge timing with <kbd>Shift</kbd> + <kbd>,</kbd>/<kbd>.</kbd>.
+- **Reaction-Time Offset:** Optionally stamp 1–3 s earlier when capturing during playback.
+- **Undo:** <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Z</kbd> (or the toast's Undo button) reverts adds, edits, deletes, imports and clear-all.
 - **Instant Search:** Real-time text filtering across all annotations in the sidebar.
 
 ### 💾 Local Projects & Session Management
 - **IndexedDB Auto-Save:** Changes are persisted locally across reloads and media changes in `LinedNotesDB`.
 - **Project Switcher & Manager:** Browse all past sessions, search by media title or tags, restore projects, and manage stored sessions.
 - **Inline Project Renaming:** Rename session titles directly from the project manager with confirm/cancel controls.
+- **Back Up & Restore:** Download every project as one JSON file and restore it later (restores merge with existing projects).
+- **Persistent Storage:** Asks the browser to protect saved projects from automatic clean-up; usage is shown in Settings.
 
 ### 📱 Responsive PWA & Mobile Support
 - **Installable PWA:** Install as a standalone native app on macOS, Windows, Linux, Android, and iOS.
@@ -64,6 +69,7 @@ No media files or notes are ever uploaded to an external server or cloud service
 - **Mobile Segmented Tabs:** Dedicated responsive mobile tabs (`Player`, `Timeline`, `Notes`) for compact screens.
 - **PWA File Handling:** Open media files directly into Lined Notes from your operating system file manager.
 - **Web Share API:** Share exported notes directly to native apps (Google Drive, Slack, Messages, Files) on mobile devices.
+- **Share Target & Deep Links:** Share a YouTube or video link to Lined Notes on Android, or open `index.html?v=<YouTube ID or URL>&t=90` to load media at a time.
 - **Dark & Light Themes:** Instant toggle (<kbd>T</kbd>) with automatic system `prefers-color-scheme` detection.
 
 ---
@@ -122,6 +128,8 @@ node --test tests/*.test.mjs
 | <kbd>,</kbd> / <kbd>.</kbd> or <kbd>[</kbd> / <kbd>]</kbd> | Jump to previous / next annotation note |
 | <kbd>I</kbd> / <kbd>O</kbd> | Set **In Point** / **Out Point** for range annotations |
 | <kbd>Shift</kbd> + <kbd>L</kbd> | Toggle A-B range loop playback |
+| <kbd>Shift</kbd> + <kbd>,</kbd> / <kbd>.</kbd> | Nudge the active note 0.1 s earlier / later |
+| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Z</kbd> | Undo the last note change (add, edit, delete, import, clear all) |
 | <kbd>+</kbd> / <kbd>−</kbd> | Zoom timeline in / out (or <kbd>Ctrl</kbd> + Scroll) |
 | <kbd>M</kbd> | Mute / unmute audio |
 | <kbd>F</kbd> | Toggle fullscreen video mode |

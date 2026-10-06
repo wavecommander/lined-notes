@@ -780,7 +780,7 @@
         <div class="settings-item">
           <div class="settings-item-info">
             <div class="settings-item-title">Pause while typing</div>
-            <div class="settings-item-desc">Automatically pause media playback when typing an annotation note</div>
+            <div class="settings-item-desc">Pause playback while you type a note, and resume once it's saved</div>
           </div>
           <label class="toggle-switch">
             <input type="checkbox" id="setting-pause-on-type" onchange="app.togglePauseOnType(this.checked)">
@@ -799,6 +799,31 @@
             <input type="checkbox" id="setting-copy-timestamp" onchange="app.toggleCopyIncludeTimestamp(this.checked)">
             <span class="toggle-slider"></span>
           </label>
+        </div>
+
+        <!-- Setting Item: Reaction-time offset -->
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Stamp earlier while playing</div>
+            <div class="settings-item-desc">Compensates for reaction time: timestamps captured during playback are moved back</div>
+          </div>
+          <select class="speed-select" id="setting-stamp-offset" onchange="app.setStampOffset(this.value)"
+            aria-label="Stamp offset">
+            <option value="0">Off</option>
+            <option value="1">1 s</option>
+            <option value="2">2 s</option>
+            <option value="3">3 s</option>
+          </select>
+        </div>
+
+        <!-- Setting Item: Storage -->
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Storage</div>
+            <div class="settings-item-desc" id="storage-info">Checking storage…</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="storage-persist-btn" style="display:none;"
+            onclick="app.requestPersistentStorage()">Protect data</button>
         </div>
       </div>
 
@@ -838,6 +863,12 @@
 
         <div class="shortcut-keys"><kbd>Shift</kbd> + <kbd>L</kbd></div>
         <div class="shortcut-desc">Toggle A-B range loop playback</div>
+
+        <div class="shortcut-keys"><kbd>Shift</kbd> + <kbd>,</kbd> / <kbd>.</kbd></div>
+        <div class="shortcut-desc">Nudge the active note 0.1s earlier / later</div>
+
+        <div class="shortcut-keys"><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>Z</kbd></div>
+        <div class="shortcut-desc">Undo the last note change (add, edit, delete, import, clear)</div>
 
         <div class="shortcut-keys"><kbd>+</kbd> / <kbd>−</kbd></div>
         <div class="shortcut-desc">Zoom timeline in / out (or Ctrl + Scroll)</div>
@@ -911,6 +942,12 @@
           </svg>
           New Project
         </button>
+        <button class="btn btn-ghost btn-sm" onclick="app.sessions.backupAllSessions()"
+          title="Download every saved project as one JSON file">Back Up All</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('restore-file-input').click()"
+          title="Restore projects from a backup file (merges with existing projects)">Restore…</button>
+        <input type="file" id="restore-file-input" accept=".json,application/json" style="display:none"
+          onchange="app.sessions.restoreFromFile(this.files[0]); this.value = '';">
         <button class="btn btn-ghost" data-modal-close onclick="app.closeSessionsModal()">Close</button>
       </div>
     </div>
@@ -972,8 +1009,23 @@
     </div>
   </modal-dialog>
 
+  <!-- CONFIRMATION DIALOG (see confirmDialog() in js/utils.js) -->
+  <modal-dialog id="confirm-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title" id="confirm-modal-title">Are you sure?</div>
+        <button class="modal-close-btn" data-modal-close aria-label="Cancel">✕</button>
+      </div>
+      <div class="confirm-modal-message" id="confirm-modal-message"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-modal-close>Cancel</button>
+        <button class="btn btn-primary" id="confirm-modal-ok">Confirm</button>
+      </div>
+    </div>
+  </modal-dialog>
+
   <!-- APPLICATION ENTRY POINT -->
-  <script type="module" src="js/app.js"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 
 </html>

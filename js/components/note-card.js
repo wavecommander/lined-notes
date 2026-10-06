@@ -83,8 +83,28 @@ export class NoteCard extends HTMLElement {
     this.style.borderLeftColor = tagObj.color;
 
     if (this._isEditing) {
+      const tagOptions = state.tags.map(t =>
+        `<option value="${escapeHtml(t.id)}"${t.id === note.tag ? ' selected' : ''}>${escapeHtml(t.label)}</option>`
+      ).join('');
       this.innerHTML = `
         <div class="note-edit-box">
+          <div class="note-edit-fields">
+            <label class="note-edit-field">
+              <span>Start</span>
+              <input type="text" class="note-edit-time" data-field="start" value="${formatTime(note.start)}"
+                spellcheck="false" autocomplete="off" aria-label="Start time">
+              <button type="button" class="note-edit-now" data-action="set-now" data-target="start"
+                title="Use current playback time">Now</button>
+            </label>
+            <label class="note-edit-field">
+              <span>End</span>
+              <input type="text" class="note-edit-time" data-field="end" value="${note.end ? formatTime(note.end) : ''}"
+                placeholder="none" spellcheck="false" autocomplete="off" aria-label="End time (optional)">
+              <button type="button" class="note-edit-now" data-action="set-now" data-target="end"
+                title="Use current playback time">Now</button>
+            </label>
+            <select class="note-edit-tag" aria-label="Tag">${tagOptions}</select>
+          </div>
           <textarea class="note-edit-textarea">${escapeHtml(note.text)}</textarea>
           <div class="note-edit-btns">
             <button class="btn btn-ghost btn-sm" data-action="cancel-edit">Cancel</button>
@@ -165,12 +185,27 @@ export class NoteCard extends HTMLElement {
           bubbles: true,
           detail: { id: this._note.id }
         }));
+      } else if (action === 'set-now') {
+        const input = this.querySelector(`.note-edit-time[data-field="${actBtn.dataset.target}"]`);
+        if (input) input.value = formatTime(state.currentTime);
       } else if (action === 'save-edit') {
         const textarea = this.querySelector('textarea');
         const text = textarea ? textarea.value.trim() : this._note.text;
+        // Only send times the user changed, so unchanged values keep full precision
+        const changed = (field) => {
+          const input = this.querySelector(`.note-edit-time[data-field="${field}"]`);
+          return input && input.value.trim() !== input.defaultValue ? input.value.trim() : null;
+        };
+        const tagSelect = this.querySelector('.note-edit-tag');
         this.dispatchEvent(new CustomEvent('note-save', {
           bubbles: true,
-          detail: { id: this._note.id, text }
+          detail: {
+            id: this._note.id,
+            text,
+            startStr: changed('start'),
+            endStr: changed('end'),
+            tag: tagSelect ? tagSelect.value : this._note.tag
+          }
         }));
       } else if (action === 'cancel-edit') {
         this.dispatchEvent(new CustomEvent('note-cancel', {

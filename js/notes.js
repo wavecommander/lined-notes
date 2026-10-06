@@ -5,7 +5,7 @@
 
 import { state } from './state.js';
 import { APP_CONFIG } from './config.js';
-import { formatTime, parseTimeToSeconds, escapeHtml, copyText, showToast, getYouTubeThumbnailUrl, createCompositeThumbnail } from './utils.js';
+import { formatTime, parseTimeToSeconds, escapeHtml, copyText, showToast, getYouTubeThumbnailUrl, createCompositeThumbnail, confirmDialog, resolveNoteTimes } from './utils.js';
 import './components/note-card.js';
 
 export class NotesManager {
@@ -46,7 +46,31 @@ export class NotesManager {
       this.renderNotes();
       this.renderTagFilters();
     });
-    state.on('filereset', () => this.resetRangeAndInputState());
+    state.on('filereset', () => {
+      // Undo history is per project
+      state.undoHistory.clear();
+      this.resetRangeAndInputState();
+    });
+    state.on('requestundo', () => this.undo());
+  }
+
+  /** Snapshot the notes before a change so it can be undone (Ctrl/Cmd+Z or a toast's Undo). */
+  recordUndo(label, mergeKey = null) {
+    state.undoHistory.push(label, state.notes, mergeKey);
+  }
+
+  undo() {
+    const entry = state.undoHistory.pop();
+    if (!entry) {
+      showToast('Nothing to undo');
+      return;
+    }
+    state.notes = entry.notes;
+    state.editingNoteId = null;
+    state.emit('noteschange');
+    state.emit('timelinechanged');
+    state.emit('requestsave');
+    showToast(`Undid ${entry.label}`);
   }
 
   resetRangeAndInputState() {
@@ -59,7 +83,6 @@ export class NotesManager {
     if (this.noteInput) this.noteInput.value = '';
     state.editingNoteId = null;
     state.activeNoteId = null;
-    state.deletedHistory = [];
     state.searchQuery = '';
     state.filterTag = 'all';
     const searchInput = document.getElementById('search-notes-input');
@@ -75,7 +98,7 @@ export class NotesManager {
       this.notesList.addEventListener('note-seek', (e) => this.seekToTimeStr(e.detail.timeStr));
       this.notesList.addEventListener('note-lightbox', (e) => this.openLightbox(e.detail.src, e.detail.time));
       this.notesList.addEventListener('note-edit', (e) => this.startEditNote(e.detail.id));
-      this.notesList.addEventListener('note-save', (e) => this.saveEditNote(e.detail.id, e.detail.text));
+      this.notesList.addEventListener('note-save', (e) => this.saveEditNote(e.detail.id, e.detail.text, e.detail));
       this.notesList.addEventListener('note-cancel', (e) => this.cancelEditNote(e.detail.id));
       this.notesList.addEventListener('note-copy', (e) => this.copyNoteText(e.detail.id));
       this.notesList.addEventListener('note-delete', (e) => this.deleteNote(e.detail.id));
@@ -159,9 +182,11 @@ export class NotesManager {
   captureCurrentTime() {
     state.isTimeStamped = true;
     this._autoStamped = false;
-    state.stampTime = state.currentTime;
+    // Reaction-time compensation only applies while playing; a paused playhead was placed deliberately
+    const offset = state.isPlaying ? (state.stampOffset || 0) : 0;
+    state.stampTime = Math.max(0, state.currentTime - offset);
     if (this.stampBadge) this.stampBadge.classList.add('locked');
-    if (this.stampBadgeVal) this.stampBadgeVal.textContent = formatTime(state.currentTime);
+    if (this.stampBadgeVal) this.stampBadgeVal.textContent = formatTime(state.stampTime);
     if (this.noteInput) this.noteInput.focus();
     this.flashCapture();
   }
@@ -300,6 +325,7 @@ export class NotesManager {
       createdAt: new Date().toISOString()
     };
 
+    this.recordUndo('add note');
     state.notes.push(note);
     state.notes.sort((a, b) => a.start - b.start);
 
@@ -316,28 +342,19 @@ export class NotesManager {
 
     state.emit('noteschange');
     state.emit('requestsave');
+    state.emit('notesaved', note);
     showToast(`Note saved at ${formatTime(note.start)}`);
   }
 
   deleteNote(id) {
     const idx = state.notes.findIndex(n => n.id === id);
     if (idx !== -1) {
-      const removed = state.notes.splice(idx, 1)[0];
-      state.deletedHistory.push(removed);
+      this.recordUndo('delete');
+      state.notes.splice(idx, 1);
       state.emit('noteschange');
+      state.emit('timelinechanged');
       state.emit('requestsave');
-      showToast('Note deleted', true, () => this.restoreLastDeleted());
-    }
-  }
-
-  restoreLastDeleted() {
-    if (state.deletedHistory.length > 0) {
-      const restored = state.deletedHistory.pop();
-      state.notes.push(restored);
-      state.notes.sort((a, b) => a.start - b.start);
-      state.emit('noteschange');
-      state.emit('requestsave');
-      showToast('Note restored');
+      showToast('Note deleted', true, () => this.undo());
     }
   }
 
@@ -351,21 +368,71 @@ export class NotesManager {
     this.renderNotes();
   }
 
-  saveEditNote(id, text = null) {
+  /**
+   * Applies an edit from <note-card>. `fields` may carry startStr / endStr (null = unchanged,
+   * '' end = no range) and tag. Invalid times keep the card in edit mode.
+   */
+  saveEditNote(id, text = null, fields = {}) {
     const note = state.notes.find(n => n.id === id);
-    if (note) {
-      if (typeof text === 'string') {
-        note.text = text.trim() || note.text;
-      } else {
-        const editArea = this.notesList ? this.notesList.querySelector(`textarea`) : null;
-        if (editArea) note.text = editArea.value.trim() || note.text;
-      }
-      note.updatedAt = new Date().toISOString();
+    if (!note) {
+      state.editingNoteId = null;
+      this.renderNotes();
+      return;
     }
+
+    const times = resolveNoteTimes(note, fields.startStr ?? null, fields.endStr ?? null, state.duration);
+    if (times.error) {
+      showToast(times.error);
+      return;
+    }
+
+    this.recordUndo('edit');
+    if (typeof text === 'string') {
+      note.text = text.trim() || note.text;
+    } else {
+      const editArea = this.notesList ? this.notesList.querySelector('textarea') : null;
+      if (editArea) note.text = editArea.value.trim() || note.text;
+    }
+    note.start = times.start;
+    note.end = times.end;
+    if (fields.tag && state.tags.some(t => t.id === fields.tag)) note.tag = fields.tag;
+    note.updatedAt = new Date().toISOString();
+    state.notes.sort((a, b) => a.start - b.start);
+
     state.editingNoteId = null;
     state.emit('noteschange');
+    state.emit('timelinechanged');
     state.emit('requestsave');
-    showToast('Note updated');
+    showToast('Note updated', true, () => this.undo());
+  }
+
+  /**
+   * Moves the active note (and its range end) by `delta` seconds. Repeated nudges of the
+   * same note collapse into one undo step.
+   */
+  nudgeActiveNote(delta) {
+    const note = state.notes.find(n => n.id === state.activeNoteId);
+    if (!note) {
+      showToast('Jump to a note first ( , / . ) to nudge it');
+      return;
+    }
+    const maxStart = state.duration > 0 ? state.duration : Infinity;
+    const newStart = Math.min(maxStart, Math.max(0, note.start + delta));
+    const shift = newStart - note.start;
+    if (shift === 0) return;
+
+    this.recordUndo('nudge', `nudge:${note.id}`);
+    note.start = Math.round(newStart * 1000) / 1000;
+    if (note.end) note.end = Math.round((note.end + shift) * 1000) / 1000;
+    note.updatedAt = new Date().toISOString();
+    state.notes.sort((a, b) => a.start - b.start);
+
+    state.emit('noteschange');
+    state.emit('requestsave');
+    // Follow the note so the active highlight and the timeline marker stay on it
+    this.player.seekTo(note.start);
+    state.activeNoteId = note.id;
+    showToast(`Note moved to ${formatTime(note.start)}`);
   }
 
   jumpToNote(start) {
@@ -443,14 +510,22 @@ export class NotesManager {
     }
   }
 
-  clearAllNotes() {
+  async clearAllNotes() {
     if (state.notes.length === 0) return;
-    if (!confirm(`Delete all ${state.notes.length} annotations? This action cannot be undone.`)) return;
+    const ok = await confirmDialog({
+      title: 'Clear all annotations?',
+      message: `All ${state.notes.length} annotations in this project will be removed. You can undo this right afterwards.`,
+      confirmLabel: 'Clear All',
+      danger: true
+    });
+    if (!ok) return;
+    this.recordUndo('clear all');
     state.notes = [];
     this.resetRangeAndInputState();
     state.emit('noteschange');
+    state.emit('timelinechanged');
     state.emit('requestsave');
-    showToast('All notes cleared');
+    showToast('All notes cleared', true, () => this.undo(), 6000);
   }
 
   copyNoteText(id) {

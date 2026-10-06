@@ -134,3 +134,20 @@ replaced by a plain flat track whenever no decoded audio is available, 4 s servi
 Still open: C8 is only partly addressed (one full-file copy removed; long files are still decoded fully to PCM),
 the duplicated reset routine across loaders, the remaining inline `onclick` proxies, and the duplicate
 `manifest.json`.
+
+---
+
+## UX round (C → B → A)
+
+Plan: `~/.claude/plans/vectorized-tumbling-rainbow.md`. Verified in Chrome via page JS plus `node --test`.
+
+- **PWA**: `launchQueue` consumer (OS "Open with" now works); `?action=open` shortcut highlights the drop zone;
+  deep links `?v=<id|url>&t=…` / `#t=…`; Android `share_target` (`?url=` / `?text=`). Params are stripped after use.
+- **Data safety**: `navigator.storage.persist()` after the first save + usage/protection row in Settings;
+  Projects → *Back Up All* / *Restore…* (restore merges by note id, including into the open project);
+  thumbnails 320 px @ 0.6; in-app `confirmDialog()` replaces `window.confirm()` for clear-all and delete-project.
+- **Note editing**: edit start/end ("Now" buttons) and tag of saved notes; `Shift+,`/`Shift+.` nudge ±0.1 s;
+  "Stamp earlier while playing" (0–3 s); pause-while-typing now resumes after saving (works for YouTube too via
+  `player.pause()/play()`); `UndoHistory` (`js/history.js`) with `Ctrl/Cmd+Z` for add/edit/delete/nudge/import/clear.
+- Not verifiable in the background test tab: real OS file launch, the Android share sheet, actual playback
+  resume, and how the new edit fields look at narrow widths.

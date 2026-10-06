@@ -5,7 +5,7 @@
 
 import { state } from './state.js';
 import { APP_CONFIG } from './config.js';
-import { formatTime, formatSRTTime, formatVTTTime, calculateSubtitleCueEnd, escapeHtml, copyText, showToast } from './utils.js';
+import { formatTime, formatSRTTime, formatVTTTime, calculateSubtitleCueEnd, escapeHtml, copyText, showToast, downloadText } from './utils.js';
 
 export class ExportManager {
   constructor() {
@@ -195,26 +195,7 @@ export class ExportManager {
       exportMime = (ext === 'html' || ext === 'json' || ext === 'csv') ? mime : 'application/octet-stream';
     }
 
-    const blob = new Blob([content], { type: exportMime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = `${baseName}_annotations.${ext}`;
-
-    document.body.appendChild(a);
-    try {
-      a.click();
-    } catch (err) {
-      window.open(url, '_blank');
-    }
-
-    setTimeout(() => {
-      try {
-        if (a.parentNode) a.parentNode.removeChild(a);
-        URL.revokeObjectURL(url);
-      } catch (e) { }
-    }, 4000);
+    downloadText(`${baseName}_annotations.${ext}`, content, exportMime);
 
     this.closeExportModal();
     showToast(`Exported as .${ext}`);

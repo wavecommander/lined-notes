@@ -1042,6 +1042,25 @@ export class PlayerController {
     }
   }
 
+  /** Pauses whichever source is active (local/URL media element or YouTube). */
+  pause() {
+    if (state.mediaSourceType === 'youtube') {
+      if (this.ytPlayer && typeof this.ytPlayer.pauseVideo === 'function') this.ytPlayer.pauseVideo();
+    } else if (this.videoEl && !this.videoEl.paused) {
+      this.videoEl.pause();
+    }
+  }
+
+  /** Resumes whichever source is active; no-op in detached review mode. */
+  play() {
+    if (state.detachedMode || !state.hasMedia()) return;
+    if (state.mediaSourceType === 'youtube') {
+      if (this.ytPlayer && typeof this.ytPlayer.playVideo === 'function') this.ytPlayer.playVideo();
+    } else if (this.videoEl && this.videoEl.paused) {
+      this.videoEl.play().catch(() => { });
+    }
+  }
+
   toggleLoop() {
     if (state.APoint === null || state.BPoint === null) {
       showToast('Set both In and Out points to loop');
