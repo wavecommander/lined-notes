@@ -4,7 +4,7 @@
 
 export const APP_CONFIG = {
   name: 'Lined Notes',
-  version: '1.1.0',
+  version: '1.2.0',
   storageDbName: 'LinedNotesDB',
   storageStoreName: 'sessions',
   storageDbVersion: 1,
@@ -14,6 +14,8 @@ export const APP_CONFIG = {
   themeStorageKey: 'ln_theme',
   pauseOnTypeKey: 'ln_pause_on_type',
   copyIncludeTimestampKey: 'ln_copy_include_timestamp',
+  stampOffsetKey: 'ln_stamp_offset',
+  onboardingSeenKey: 'ln_onboarding_seen',
 
   // Audio waveform decoding limits (memory safe for desktop and mobile)
   maxDecodeSizeDesktop: 500 * 1024 * 1024, // 500MB
@@ -21,8 +23,9 @@ export const APP_CONFIG = {
   waveformSampleCount: 1600,
 
   // Snapshot configuration
-  snapshotMaxWidth: 480,
-  snapshotQuality: 0.72
+  // Thumbnails are stored inline with each note; full-resolution frames are re-captured on download
+  snapshotMaxWidth: 320,
+  snapshotQuality: 0.6
 };
 
 export const DEFAULT_TAGS = [

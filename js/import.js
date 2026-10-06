@@ -4,7 +4,28 @@
    ========================================================================== */
 
 import { state } from './state.js';
-import { showToast, parseTimeToSeconds } from './utils.js';
+import { showToast, parseTimeToSeconds, sanitizeImageSrc } from './utils.js';
+
+const newNoteId = () => Date.now() + Math.random().toString(36).substring(2, 6);
+
+/**
+ * Validates and normalises one note from an imported/backup JSON file; returns null if unusable.
+ */
+export function normalizeNote(n) {
+  const start = parseFloat(n.start !== undefined ? n.start : n.time);
+  if (!isFinite(start) || start < 0) return null;
+  const end = parseFloat(n.end);
+  const tag = state.tags.some(t => t.id === n.tag) ? n.tag : 'note';
+  return {
+    id: (typeof n.id === 'string' || typeof n.id === 'number') && String(n.id) ? String(n.id) : newNoteId(),
+    start,
+    end: isFinite(end) && end > start ? end : null,
+    text: typeof n.text === 'string' ? n.text : String(n.text ?? ''),
+    tag,
+    thumb: sanitizeImageSrc(n.thumb),
+    createdAt: typeof n.createdAt === 'string' ? n.createdAt : new Date().toISOString()
+  };
+}
 
 export class ImportManager {
   constructor() {
@@ -46,15 +67,10 @@ export class ImportManager {
       if (fileName.endsWith('.json') || content.trim().startsWith('{')) {
         const data = JSON.parse(content);
         if (Array.isArray(data.notes)) {
-          importedNotes = data.notes.map(n => ({
-            id: n.id || (Date.now() + Math.random().toString(36).substring(2, 6)),
-            start: parseFloat(n.start !== undefined ? n.start : n.time),
-            end: n.end ? parseFloat(n.end) : null,
-            text: n.text || '',
-            tag: n.tag || 'note',
-            thumb: n.thumb || null,
-            createdAt: n.createdAt || new Date().toISOString()
-          }));
+          importedNotes = data.notes
+            .filter(n => n && typeof n === 'object')
+            .map(n => this.normalizeJsonNote(n))
+            .filter(Boolean);
         }
       }
       // 2. SRT / WebVTT
@@ -71,9 +87,16 @@ export class ImportManager {
         return;
       }
 
+      state.undoHistory.push('import', state.notes);
       if (mode === 'replace') {
         state.notes = importedNotes;
       } else {
+        // Re-key imported notes whose ids collide with existing ones (e.g. merging the same file twice)
+        const existingIds = new Set(state.notes.map(n => String(n.id)));
+        importedNotes.forEach(n => {
+          if (existingIds.has(String(n.id))) n.id = newNoteId();
+          existingIds.add(String(n.id));
+        });
         state.notes = [...state.notes, ...importedNotes];
       }
 
@@ -82,11 +105,20 @@ export class ImportManager {
       state.emit('noteschange');
       state.emit('timelinechanged');
       state.emit('requestsave');
-      showToast(`Imported ${importedNotes.length} annotations`);
+      if (state.getStorageKey()) {
+        showToast(`Imported ${importedNotes.length} annotations`, true, () => state.emit('requestundo'));
+      } else {
+        // No active project yet: notes are kept in memory and attached to the next media opened
+        showToast(`Imported ${importedNotes.length} annotations — open the matching media to save them`, false, null, 6000);
+      }
     } catch (err) {
       console.error('Import parse error:', err);
       showToast('Failed to parse annotations file');
     }
+  }
+
+  normalizeJsonNote(n) {
+    return normalizeNote(n);
   }
 
   parseSubtitleCues(text) {
@@ -102,7 +134,7 @@ export class ImportManager {
         const textLines = lines.slice(lines.indexOf(timeLine) + 1).join('\n');
         if (!isNaN(start) && textLines) {
           list.push({
-            id: Date.now() + Math.random().toString(36).substring(2, 6),
+            id: newNoteId(),
             start: start,
             end: isNaN(end) ? null : end,
             text: textLines.trim(),
@@ -209,7 +241,7 @@ export class ImportManager {
       if (!noteText) continue;
 
       result.push({
-        id: Date.now() + Math.random().toString(36).substring(2, 6),
+        id: newNoteId(),
         start,
         end: (end && end > start) ? end : null,
         text: noteText,

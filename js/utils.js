@@ -16,11 +16,13 @@ export function formatTime(secs, includeDecimals = true) {
 }
 
 export function formatSRTTime(secs) {
-  if (!isFinite(secs) || isNaN(secs)) secs = 0;
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = Math.floor(secs % 60);
-  const ms = Math.round((secs % 1) * 1000);
+  if (!isFinite(secs) || isNaN(secs) || secs < 0) secs = 0;
+  // Round to whole milliseconds first so 1.9996 becomes 00:00:02,000 (not 00:00:01,1000)
+  const totalMs = Math.round(secs * 1000);
+  const h = Math.floor(totalMs / 3600000);
+  const m = Math.floor((totalMs % 3600000) / 60000);
+  const s = Math.floor((totalMs % 60000) / 1000);
+  const ms = totalMs % 1000;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
 }
 
@@ -54,7 +56,7 @@ export function calculateSubtitleCueEnd(note, nextNote) {
 export function formatBytes(bytes) {
   if (!bytes || bytes === 0) return '0 B';
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
@@ -70,6 +72,106 @@ export function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+/**
+ * Returns the value only if it is a safe image source for note thumbnails
+ * (a data:image URL or an http(s) URL); otherwise null.
+ */
+export function sanitizeImageSrc(src) {
+  if (typeof src !== 'string') return null;
+  const trimmed = src.trim();
+  if (/^data:image\/(png|jpe?g|webp|gif);base64,[a-z0-9+/=\s]+$/i.test(trimmed)) return trimmed;
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol === 'https:' || url.protocol === 'http:') return url.href;
+  } catch (e) { }
+  return null;
+}
+
+/**
+ * Validates edited start/end time strings for a note.
+ * `startStr`/`endStr` of null mean "unchanged"; an empty `endStr` clears the range.
+ * Returns { start, end } or { error }.
+ */
+export function resolveNoteTimes(note, startStr, endStr, duration = 0) {
+  let start = note.start;
+  let end = note.end || null;
+
+  if (startStr !== null && startStr !== undefined) {
+    start = parseTimeToSeconds(startStr);
+    if (!isFinite(start) || start < 0) return { error: 'Invalid start time' };
+  }
+  if (endStr !== null && endStr !== undefined) {
+    if (String(endStr).trim() === '') {
+      end = null;
+    } else {
+      end = parseTimeToSeconds(endStr);
+      if (!isFinite(end) || end < 0) return { error: 'Invalid end time' };
+    }
+  }
+  if (duration > 0 && start > duration) return { error: 'Start is past the end of the media' };
+  if (end !== null && end <= start) return { error: 'End time must be after the start time' };
+  if (end !== null && duration > 0) end = Math.min(end, duration);
+  return { start, end };
+}
+
+/**
+ * Triggers a download of in-memory text content.
+ */
+export function downloadText(fileName, content, mime = 'text/plain') {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  try {
+    a.click();
+  } catch (err) {
+    window.open(url, '_blank');
+  }
+  setTimeout(() => {
+    try {
+      if (a.parentNode) a.parentNode.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) { }
+  }, 4000);
+}
+
+/**
+ * In-app replacement for window.confirm() using the #confirm-modal <modal-dialog>.
+ * Resolves true only when the confirm button is pressed; closing in any other way resolves false.
+ */
+export function confirmDialog({ title = 'Are you sure?', message = '', confirmLabel = 'Confirm', danger = false } = {}) {
+  const modal = document.getElementById('confirm-modal');
+  if (!modal || typeof modal.open !== 'function') {
+    return Promise.resolve(window.confirm(message || title));
+  }
+  const titleEl = modal.querySelector('#confirm-modal-title');
+  const messageEl = modal.querySelector('#confirm-modal-message');
+  const okBtn = modal.querySelector('#confirm-modal-ok');
+  if (titleEl) titleEl.textContent = title;
+  if (messageEl) messageEl.textContent = message;
+  okBtn.textContent = confirmLabel;
+  okBtn.className = `btn ${danger ? 'btn-danger' : 'btn-primary'}`;
+
+  return new Promise((resolve) => {
+    let confirmed = false;
+    const onOk = () => {
+      confirmed = true;
+      modal.close();
+    };
+    const onClose = () => {
+      okBtn.removeEventListener('click', onOk);
+      modal.removeEventListener('modal-close', onClose);
+      resolve(confirmed);
+    };
+    okBtn.addEventListener('click', onOk);
+    modal.addEventListener('modal-close', onClose);
+    modal.open();
+  });
 }
 
 export function timeAgo(dateStr) {
@@ -169,7 +271,7 @@ export function interpolateColor(c1, c2, t) {
   return a >= 0.999 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
-export function showToast(msg, showUndo = false, onUndo = null) {
+export function showToast(msg, showUndo = false, onUndo = null, duration = 2800, actionLabel = 'Undo') {
   const toastEl = document.querySelector('toast-notification') || document.getElementById('toast');
   if (toastEl) {
     const isNotesTab = window.innerWidth <= 1024 && document.getElementById('app')?.getAttribute('data-mobile-view') === 'notes';
@@ -182,7 +284,7 @@ export function showToast(msg, showUndo = false, onUndo = null) {
   }
 
   if (toastEl && typeof toastEl.show === 'function') {
-    toastEl.show(msg, showUndo, onUndo);
+    toastEl.show(msg, showUndo, onUndo, duration, actionLabel);
     return;
   }
 
@@ -196,6 +298,7 @@ export function showToast(msg, showUndo = false, onUndo = null) {
 
   if (undoBtn) {
     undoBtn.style.display = showUndo ? 'inline-block' : 'none';
+    undoBtn.textContent = actionLabel;
     undoBtn.onclick = () => {
       if (typeof currentUndoHandler === 'function') {
         currentUndoHandler();
@@ -209,7 +312,7 @@ export function showToast(msg, showUndo = false, onUndo = null) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
     toast.classList.remove('show');
-  }, 2800);
+  }, duration);
 }
 
 /**
@@ -295,6 +398,40 @@ export function parseMediaUrl(inputStr) {
   }
 
   return null;
+}
+
+/**
+ * Reads launch parameters from the page URL: manifest shortcuts (?action=open),
+ * deep links (?v=<YouTube id or URL>&t=90, #t=90) and the Web Share Target (?url=… / ?text=…).
+ * Returns { action, mediaInput } where mediaInput is ready for PlayerController.loadExternalUrl.
+ */
+export function parseLaunchParams(search = '', hash = '') {
+  const params = new URLSearchParams(search);
+  const hashParams = new URLSearchParams(String(hash).replace(/^#/, ''));
+  const action = params.get('action') || null;
+
+  const findUrl = (text) => {
+    const m = String(text || '').match(/https?:\/\/\S+/i);
+    return m ? m[0] : null;
+  };
+
+  let mediaInput = null;
+  const v = (params.get('v') || '').trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(v)) {
+    mediaInput = `https://www.youtube.com/watch?v=${v}`;
+  } else {
+    mediaInput = findUrl(v) || findUrl(params.get('url')) || findUrl(params.get('text'));
+  }
+
+  const t = params.get('t') || hashParams.get('t');
+  if (mediaInput && t && /^[0-9hms]+$/i.test(t)) {
+    const parsed = parseMediaUrl(mediaInput);
+    if (parsed && parsed.type === 'youtube' && parsed.startTime === null) {
+      mediaInput += `${mediaInput.includes('?') ? '&' : '?'}t=${t}`;
+    }
+  }
+
+  return { action, mediaInput };
 }
 
 export function getYouTubeThumbnailUrl(videoId, quality = 'hqdefault') {

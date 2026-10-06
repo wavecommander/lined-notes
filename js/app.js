@@ -12,7 +12,8 @@ import { NotesManager } from './notes.js';
 import { SessionsManager } from './sessions.js';
 import { ExportManager } from './export.js';
 import { ImportManager } from './import.js';
-import { showToast } from './utils.js';
+import { OnboardingGuide } from './onboarding.js';
+import { showToast, parseLaunchParams, formatBytes } from './utils.js';
 
 export class LinedNotesApp {
   constructor() {
@@ -24,6 +25,11 @@ export class LinedNotesApp {
     this.sessions = new SessionsManager(this.db, this.player);
     this.export = new ExportManager();
     this.import = new ImportManager();
+    this.onboarding = new OnboardingGuide({
+      storageKey: APP_CONFIG.onboardingSeenKey,
+      hasSavedProjects: async () => (await this.db.getAllSessions()).length > 0,
+      notify: (msg) => showToast(msg, false, null, 5000)
+    });
 
     this.shortcutsModal = document.getElementById('shortcuts-modal');
     this.settingsModal = document.getElementById('settings-modal');
@@ -42,6 +48,41 @@ export class LinedNotesApp {
 
     // Listen for mobile tab requests from notes manager
     state.on('requestmobiletab', (tab) => this.setMobileTab(tab));
+
+    const launchedWithMedia = this.handleLaunchParams();
+    // First visit only; deferred if the app was opened straight into media
+    this.onboarding.maybeAutoShow({ launchedWithMedia, shouldDefer: () => state.hasMedia() });
+  }
+
+  openOnboarding() {
+    this.closeAllModals();
+    this.onboarding.open(0);
+  }
+
+  /**
+   * Handles how the app was launched: manifest shortcut (?action=open), deep links
+   * (?v=…&t=…) and shared links from the Web Share Target (?url=… / ?text=…).
+   */
+  handleLaunchParams() {
+    const { action, mediaInput } = parseLaunchParams(window.location.search, window.location.hash);
+    if (!action && !mediaInput) return false;
+    // Strip the params so a reload doesn't re-trigger them
+    try {
+      history.replaceState(null, '', window.location.pathname);
+    } catch (e) { }
+
+    if (mediaInput) {
+      this.player.loadExternalUrl(mediaInput);
+      return true;
+    }
+    if (action === 'open' && this.dropZone) {
+      // A file picker can't be opened without a user gesture: point at the drop zone instead
+      this.dropZone.classList.remove('hidden');
+      this.dropZone.classList.add('dragging');
+      setTimeout(() => this.dropZone.classList.remove('dragging'), 1600);
+      showToast('Click here or drop a file to open media', false, null, 5000);
+    }
+    return false;
   }
 
   initTheme() {
@@ -106,8 +147,55 @@ export class LinedNotesApp {
       const copyKey = (APP_CONFIG && APP_CONFIG.copyIncludeTimestampKey) || 'ln_copy_include_timestamp';
       const savedCopyTimestamp = localStorage.getItem(copyKey);
       state.copyIncludeTimestamp = savedCopyTimestamp === 'true';
+
+      const savedOffset = parseFloat(localStorage.getItem(APP_CONFIG.stampOffsetKey));
+      state.stampOffset = isFinite(savedOffset) && savedOffset >= 0 ? savedOffset : 0;
       this.updateSettingsUI();
     } catch (e) { }
+  }
+
+  setStampOffset(val) {
+    const secs = parseFloat(val);
+    state.stampOffset = isFinite(secs) && secs >= 0 ? secs : 0;
+    try {
+      localStorage.setItem(APP_CONFIG.stampOffsetKey, String(state.stampOffset));
+    } catch (e) { }
+    this.updateSettingsUI();
+    showToast(state.stampOffset ? `Timestamps captured while playing move back ${state.stampOffset}s` : 'Stamp offset off');
+  }
+
+  async updateStorageInfo() {
+    const infoEl = document.getElementById('storage-info');
+    const btn = document.getElementById('storage-persist-btn');
+    const storage = navigator.storage;
+    if (!infoEl) return;
+    if (!storage || typeof storage.estimate !== 'function') {
+      infoEl.textContent = 'Storage details are not available in this browser. Use "Back Up All" in Projects to keep a copy.';
+      return;
+    }
+    try {
+      const [{ usage = 0, quota = 0 }, persisted] = await Promise.all([
+        storage.estimate(),
+        typeof storage.persisted === 'function' ? storage.persisted() : Promise.resolve(false)
+      ]);
+      const protection = persisted
+        ? 'Protected from automatic clean-up.'
+        : 'Not protected: the browser may delete projects when disk space is low.';
+      infoEl.textContent = `${formatBytes(usage)} used of ${formatBytes(quota)}. ${protection}`;
+      if (btn) btn.style.display = persisted || typeof storage.persist !== 'function' ? 'none' : 'inline-flex';
+    } catch (e) {
+      infoEl.textContent = 'Could not read storage usage.';
+    }
+  }
+
+  async requestPersistentStorage() {
+    try {
+      const granted = await navigator.storage.persist();
+      showToast(granted ? 'Projects are now protected from automatic clean-up' : 'The browser declined; back up projects regularly', false, null, 5000);
+    } catch (e) {
+      showToast('Persistent storage is not supported here');
+    }
+    this.updateStorageInfo();
   }
 
   togglePauseOnType(enabled) {
@@ -144,6 +232,10 @@ export class LinedNotesApp {
     const pauseToggle = document.getElementById('setting-pause-on-type');
     if (pauseToggle) {
       pauseToggle.checked = !!state.pauseOnType;
+    }
+    const offsetSelect = document.getElementById('setting-stamp-offset');
+    if (offsetSelect) {
+      offsetSelect.value = String(state.stampOffset || 0);
     }
   }
 
@@ -183,6 +275,8 @@ export class LinedNotesApp {
         e.preventDefault();
         this.notes.captureCurrentTime();
       },
+      'i': () => this.notes.setAPoint(),
+      'o': () => this.notes.setBPoint(),
       'a': () => this.notes.setAPoint(),
       'b': () => this.notes.setBPoint(),
       ',': () => this.jumpPrevNote(),
@@ -198,6 +292,15 @@ export class LinedNotesApp {
     keyActions['_'] = keyActions['-'];
     keyActions['['] = keyActions[','];
     keyActions[']'] = keyActions['.'];
+    // Shift+, / Shift+. (US layout: < and >) nudge the active note
+    keyActions['<'] = (e) => {
+      e.preventDefault();
+      this.notes.nudgeActiveNote(-0.1);
+    };
+    keyActions['>'] = (e) => {
+      e.preventDefault();
+      this.notes.nudgeActiveNote(0.1);
+    };
 
     document.addEventListener('keydown', (e) => {
       const tag = document.activeElement ? document.activeElement.tagName : '';
@@ -225,6 +328,31 @@ export class LinedNotesApp {
         return;
       }
 
+      // Outside text fields: Ctrl/Cmd+Z undoes the last note change;
+      // Ctrl/Cmd+Shift+Z or Ctrl+Y redoes it
+      const modalOpen = Boolean(document.querySelector('modal-dialog.open'));
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !modalOpen) {
+        const k = (e.key || '').toLowerCase();
+        if (k === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          this.notes.undo();
+          return;
+        }
+        if ((k === 'z' && e.shiftKey) || (k === 'y' && !e.shiftKey)) {
+          e.preventDefault();
+          this.notes.redo();
+          return;
+        }
+      }
+
+      // Leave browser/OS shortcuts (Ctrl/Cmd+A, Ctrl+−, Ctrl+P, Alt+←, …) alone
+      // (AltGr reports as Ctrl+Alt on some layouts and is needed to type [ ] on e.g. German keyboards)
+      const isAltGraph = typeof e.getModifierState === 'function' && e.getModifierState('AltGraph');
+      if ((e.ctrlKey || e.metaKey || e.altKey) && !isAltGraph) return;
+
+      // While a dialog is open only Escape applies (modal-dialog handles its own close)
+      if (modalOpen && e.key !== 'Escape') return;
+
       const key = (e.key || '').toLowerCase();
       const action = keyActions[key];
       if (action) {
@@ -241,18 +369,37 @@ export class LinedNotesApp {
       });
     });
 
-    // Auto-pause when user starts typing if enabled
+    // Pause while typing a note (if enabled) and resume once it's saved or abandoned
     if (this.notes.noteInput) {
-      this.notes.noteInput.addEventListener('focus', () => {
+      const input = this.notes.noteInput;
+      const pauseForTyping = () => {
         if (state.pauseOnType && state.isPlaying) {
-          this.player.videoEl.pause();
+          this.pausedForTyping = true;
+          this.player.pause();
         }
+      };
+      const resumeAfterTyping = () => {
+        if (!this.pausedForTyping) return;
+        this.pausedForTyping = false;
+        if (!state.isPlaying) this.player.play();
+      };
+      input.addEventListener('focus', pauseForTyping);
+      // Focus may stay in the box after Enter saves a note, so also catch the next keystroke
+      input.addEventListener('input', () => {
+        if (input.value) pauseForTyping();
       });
+      input.addEventListener('blur', () => {
+        if (!input.value.trim()) resumeAfterTyping();
+      });
+      state.on('notesaved', resumeAfterTyping);
+      // Switching media must not resume the new source
+      state.on('filereset', () => { this.pausedForTyping = false; });
     }
 
     // Only warn on unload if there are genuine unsaved edits (ISSUE-08 fix)
     window.addEventListener('beforeunload', (e) => {
-      if (state.isDirty) {
+      const hasDraft = Boolean(this.notes.noteInput && this.notes.noteInput.value.trim());
+      if (state.isDirty || hasDraft) {
         e.preventDefault();
         e.returnValue = '';
       }
@@ -265,6 +412,8 @@ export class LinedNotesApp {
       e.preventDefault();
     });
     window.addEventListener('drop', (e) => {
+      // Already handled by the drop zone's own listener
+      if (e.defaultPrevented) return;
       e.preventDefault();
       // If dropped outside the initial dropZone, seamlessly load the dropped file or URL
       if (!this.dropZone || this.dropZone.classList.contains('hidden') || !this.dropZone.contains(e.target)) {
@@ -311,10 +460,15 @@ export class LinedNotesApp {
       const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
       if (isInput) return;
 
-      const pastedText = (e.clipboardData || window.clipboardData)?.getData('text');
-      if (pastedText && (pastedText.includes('youtube.com') || pastedText.includes('youtu.be') || pastedText.trim().startsWith('http'))) {
-        e.preventDefault();
-        this.player.loadExternalUrl(pastedText.trim());
+      const pastedText = ((e.clipboardData || window.clipboardData)?.getData('text') || '').trim();
+      const looksLikeUrl = /^https?:\/\/\S+$/i.test(pastedText) || /^(www\.|m\.)?(youtube\.com|youtu\.be)\/\S+$/i.test(pastedText);
+      if (!looksLikeUrl) return;
+      e.preventDefault();
+      if (state.hasMedia() || state.notes.length > 0) {
+        // A project is open: let the user confirm instead of switching immediately
+        this.openUrlModal(pastedText);
+      } else {
+        this.player.loadExternalUrl(pastedText);
       }
     });
   }
@@ -399,6 +553,7 @@ export class LinedNotesApp {
 
   openSettingsModal() {
     this.updateSettingsUI();
+    this.updateStorageInfo();
     const modal = this.settingsModal || document.getElementById('settings-modal');
     if (modal) {
       if (typeof modal.open === 'function') modal.open();
@@ -423,10 +578,10 @@ export class LinedNotesApp {
   }
 
   // ─── URL MODAL CONTROLS ───────────────────────────────────────────
-  openUrlModal() {
+  openUrlModal(prefill = '') {
     const modal = document.getElementById('url-modal');
     const input = document.getElementById('url-modal-input');
-    if (input) input.value = '';
+    if (input) input.value = typeof prefill === 'string' ? prefill : '';
     if (modal) {
       if (typeof modal.open === 'function') modal.open();
       else modal.classList.add('open');
@@ -472,6 +627,20 @@ export class LinedNotesApp {
 
   // ─── PWA & INSTALLATION ────────────────────────────────────────────
   initPwa() {
+    // OS "Open with Lined Notes" (manifest file_handlers)
+    if ('launchQueue' in window && typeof window.launchQueue.setConsumer === 'function') {
+      window.launchQueue.setConsumer(async (launchParams) => {
+        const handle = launchParams && launchParams.files && launchParams.files[0];
+        if (!handle) return;
+        try {
+          this.player.loadFile(await handle.getFile());
+        } catch (err) {
+          console.warn('[PWA] Could not open launched file:', err);
+          showToast('Could not open that file');
+        }
+      });
+    }
+
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
@@ -559,7 +728,7 @@ export class LinedNotesApp {
   }
 
   newProject() {
-    const hasMedia = state.mediaFile || state.detachedMode || state.mediaSourceType === 'youtube' || state.mediaSourceType === 'url';
+    const hasMedia = state.hasMedia();
     if (!hasMedia && state.notes.length === 0) {
       showToast('Already on a new project');
       return;
@@ -613,6 +782,7 @@ export class LinedNotesApp {
     state.detachedSessionName = null;
     state.detachedSessionSize = 0;
     state.notes = [];
+    state.isDirty = false;
     state.activeNoteId = null;
     state.editingNoteId = null;
     state.APoint = null;
@@ -620,7 +790,7 @@ export class LinedNotesApp {
     state.isLooping = false;
     state.isTimeStamped = false;
     state.waveformPeaks = null;
-    state.isSyntheticWaveform = false;
+    state.isWaveformPending = false;
     state.duration = 0;
     state.currentTime = 0;
     state.zoom = 1;
@@ -648,24 +818,6 @@ export class LinedNotesApp {
     showToast('Started new project');
   }
 
-  onDrop(e) {
-    e.preventDefault();
-    if (this.dropZone) this.dropZone.classList.remove('dragging');
-    const files = e.dataTransfer ? e.dataTransfer.files : null;
-    if (files && files.length > 0) {
-      this.player.loadFile(files[0]);
-    }
-  }
-
-  onDragOver(e) {
-    e.preventDefault();
-    if (this.dropZone) this.dropZone.classList.add('dragging');
-  }
-
-  onDragLeave(e) {
-    if (this.dropZone) this.dropZone.classList.remove('dragging');
-  }
-
   setZoom(zoom) {
     this.timeline.setZoom(zoom);
   }
@@ -690,22 +842,6 @@ export class LinedNotesApp {
     } else if (this.timeline && typeof this.timeline.setZoom === 'function') {
       this.timeline.setZoom(nextZoom);
     }
-  }
-
-  startScrub(e) {
-    this.timeline.startScrub(e);
-  }
-
-  onTimelineHover(e) {
-    this.timeline.onTimelineHover(e);
-  }
-
-  clearHover() {
-    this.timeline.clearHover();
-  }
-
-  onTimelineWheel(e) {
-    this.timeline.onTimelineWheel(e);
   }
 
   togglePlay() {

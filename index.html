@@ -261,6 +261,14 @@
             </svg>
             <span>Import Annotations…</span>
           </div>
+          <div class="dropdown-item" onclick="app.openOnboarding(); app.closeMobileMenu();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" width="14" height="14">
+              <circle cx="12" cy="12" r="10" />
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+            </svg>
+            <span>Getting Started</span>
+          </div>
           <div class="dropdown-item" onclick="app.openShortcutsModal(); app.closeMobileMenu();">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round" width="14" height="14">
@@ -303,8 +311,7 @@
       <!-- PLAYER AREA -->
       <div id="player-area">
         <!-- Drag & Drop Overlay -->
-        <div id="drop-zone" ondrop="app.onDrop(event)" ondragover="app.onDragOver(event)"
-          ondragleave="app.onDragLeave(event)" onclick="document.getElementById('file-picker').click()">
+        <div id="drop-zone" onclick="document.getElementById('file-picker').click()">
           <div class="drop-box">
             <div class="drop-icon-wrap">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -416,8 +423,7 @@
 
       <!-- TIMELINE AREA -->
       <div id="timeline-container">
-        <div id="timeline-canvas-wrap" onpointerdown="app.startScrub(event)" onpointermove="app.onTimelineHover(event)"
-          onpointerleave="app.clearHover()" onwheel="app.onTimelineWheel(event)">
+        <div id="timeline-canvas-wrap">
           <canvas id="timeline-canvas"></canvas>
         </div>
       </div>
@@ -486,10 +492,10 @@
           <!-- Secondary / Expandable Tools Group -->
           <div class="secondary-tools-group" id="secondary-tools-group">
             <!-- In/Out Points for range notes: Bracket Buttons -->
-            <button class="bracket-btn" id="A-point-btn" onclick="app.setInPoint()" title="Set A Point (A)">
+            <button class="bracket-btn" id="A-point-btn" onclick="app.setInPoint()" title="Set In Point (I or A)">
               <span class="bracket-char">[</span> A
             </button>
-            <button class="bracket-btn" id="B-point-btn" onclick="app.setOutPoint()" title="Set B Point (B)">
+            <button class="bracket-btn" id="B-point-btn" onclick="app.setOutPoint()" title="Set Out Point (O or B)">
               B <span class="bracket-char">]</span>
             </button>
             <button class="btn-icon" id="loop-range-btn" onclick="app.toggleLoop()"
@@ -782,7 +788,7 @@
         <div class="settings-item">
           <div class="settings-item-info">
             <div class="settings-item-title">Pause while typing</div>
-            <div class="settings-item-desc">Automatically pause media playback when typing an annotation note</div>
+            <div class="settings-item-desc">Pause playback while you type a note, and resume once it's saved</div>
           </div>
           <label class="toggle-switch">
             <input type="checkbox" id="setting-pause-on-type" onchange="app.togglePauseOnType(this.checked)">
@@ -801,6 +807,31 @@
             <input type="checkbox" id="setting-copy-timestamp" onchange="app.toggleCopyIncludeTimestamp(this.checked)">
             <span class="toggle-slider"></span>
           </label>
+        </div>
+
+        <!-- Setting Item: Reaction-time offset -->
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Stamp earlier while playing</div>
+            <div class="settings-item-desc">Compensates for reaction time: timestamps captured during playback are moved back</div>
+          </div>
+          <select class="speed-select" id="setting-stamp-offset" onchange="app.setStampOffset(this.value)"
+            aria-label="Stamp offset">
+            <option value="0">Off</option>
+            <option value="1">1 s</option>
+            <option value="2">2 s</option>
+            <option value="3">3 s</option>
+          </select>
+        </div>
+
+        <!-- Setting Item: Storage -->
+        <div class="settings-item">
+          <div class="settings-item-info">
+            <div class="settings-item-title">Storage</div>
+            <div class="settings-item-desc" id="storage-info">Checking storage…</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="storage-persist-btn" style="display:none;"
+            onclick="app.requestPersistentStorage()">Protect data</button>
         </div>
       </div>
 
@@ -841,6 +872,15 @@
         <div class="shortcut-keys"><kbd>Shift</kbd> + <kbd>L</kbd></div>
         <div class="shortcut-desc">Toggle A-B range loop playback</div>
 
+        <div class="shortcut-keys"><kbd>Shift</kbd> + <kbd>,</kbd> / <kbd>.</kbd></div>
+        <div class="shortcut-desc">Nudge the active note 0.1s earlier / later</div>
+
+        <div class="shortcut-keys"><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>Z</kbd></div>
+        <div class="shortcut-desc">Undo the last note change (add, edit, delete, import, clear)</div>
+
+        <div class="shortcut-keys"><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> or <kbd>Ctrl</kbd> + <kbd>Y</kbd></div>
+        <div class="shortcut-desc">Redo the last undone change</div>
+
         <div class="shortcut-keys"><kbd>+</kbd> / <kbd>−</kbd></div>
         <div class="shortcut-desc">Zoom timeline in / out (or Ctrl + Scroll)</div>
 
@@ -862,6 +902,7 @@
 
       <div class="modal-footer" style="margin-top:16px;">
         <button class="btn btn-primary" data-modal-close onclick="app.closeShortcutsModal()">Got It</button>
+        <button class="btn btn-ghost" onclick="app.openOnboarding()">Take the tour</button>
       </div>
     </div>
   </modal-dialog>
@@ -913,6 +954,12 @@
           </svg>
           New Project
         </button>
+        <button class="btn btn-ghost btn-sm" onclick="app.sessions.backupAllSessions()"
+          title="Download every saved project as one JSON file">Back Up All</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('restore-file-input').click()"
+          title="Restore projects from a backup file (merges with existing projects)">Restore…</button>
+        <input type="file" id="restore-file-input" accept=".json,application/json" style="display:none"
+          onchange="app.sessions.restoreFromFile(this.files[0]); this.value = '';">
         <button class="btn btn-ghost" data-modal-close onclick="app.closeSessionsModal()">Close</button>
       </div>
     </div>
@@ -974,8 +1021,42 @@
     </div>
   </modal-dialog>
 
+  <!-- GETTING STARTED GUIDE (js/onboarding.js) -->
+  <modal-dialog id="onboarding-modal" aria-labelledby="onboarding-title">
+    <div class="modal-card onboarding-card">
+      <div class="onboarding-top">
+        <button class="modal-close-btn" data-modal-close aria-label="Close guide">✕</button>
+      </div>
+      <div id="onboarding-step" class="onboarding-step" aria-live="polite"></div>
+      <div id="onboarding-dots" class="onboarding-dots"></div>
+      <div class="onboarding-footer">
+        <button type="button" class="btn btn-ghost btn-sm" id="onboarding-skip">Skip tour</button>
+        <div class="onboarding-nav">
+          <button type="button" class="btn btn-ghost btn-sm" id="onboarding-back">Back</button>
+          <button type="button" class="btn btn-primary btn-sm" id="onboarding-next">Next →</button>
+        </div>
+      </div>
+      <div class="onboarding-reopen-hint">You can reopen this guide anytime from the ⋮ menu → Getting Started.</div>
+    </div>
+  </modal-dialog>
+
+  <!-- CONFIRMATION DIALOG (see confirmDialog() in js/utils.js) -->
+  <modal-dialog id="confirm-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title" id="confirm-modal-title">Are you sure?</div>
+        <button class="modal-close-btn" data-modal-close aria-label="Cancel">✕</button>
+      </div>
+      <div class="confirm-modal-message" id="confirm-modal-message"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-modal-close>Cancel</button>
+        <button class="btn btn-primary" id="confirm-modal-ok">Confirm</button>
+      </div>
+    </div>
+  </modal-dialog>
+
   <!-- APPLICATION ENTRY POINT -->
-  <script type="module" src="js/app.js"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 
 </html>

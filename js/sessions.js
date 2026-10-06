@@ -4,7 +4,49 @@
    ========================================================================== */
 
 import { state } from './state.js';
-import { escapeHtml, timeAgo, formatTime, formatBytes, showToast } from './utils.js';
+import { APP_CONFIG } from './config.js';
+import { escapeHtml, timeAgo, formatTime, formatBytes, showToast, confirmDialog, downloadText } from './utils.js';
+import { normalizeNote } from './import.js';
+
+/**
+ * Parses and validates a "Back Up All" file. Returns [{ key, data }] or throws with a user-facing message.
+ */
+export function parseBackup(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (e) {
+    throw new Error('Backup file is not valid JSON');
+  }
+  if (!parsed || parsed.type !== 'backup' || !Array.isArray(parsed.sessions)) {
+    throw new Error('Not a Lined Notes backup file');
+  }
+  return parsed.sessions
+    .filter(s => s && typeof s.key === 'string' && s.key.startsWith('ln_session_') && s.data && typeof s.data === 'object')
+    .map(s => ({
+      key: s.key,
+      data: {
+        ...s.data,
+        fileName: typeof s.data.fileName === 'string' ? s.data.fileName : 'Untitled Media',
+        notes: (Array.isArray(s.data.notes) ? s.data.notes : [])
+          .filter(n => n && typeof n === 'object')
+          .map(normalizeNote)
+          .filter(Boolean)
+      }
+    }));
+}
+
+/**
+ * Merges a restored session into an existing one: existing metadata wins, notes are unioned by id.
+ */
+export function mergeSessionData(existing, incoming) {
+  if (!existing) return incoming;
+  const ids = new Set((existing.notes || []).map(n => String(n.id)));
+  const added = (incoming.notes || []).filter(n => !ids.has(String(n.id)));
+  const notes = [...(existing.notes || []), ...added].sort((a, b) => a.start - b.start);
+  const newer = [existing.updatedAt, incoming.updatedAt].filter(Boolean).sort().pop();
+  return { ...incoming, ...existing, notes, updatedAt: newer || new Date().toISOString() };
+}
 
 export class SessionsManager {
   constructor(db, playerController) {
@@ -65,7 +107,11 @@ export class SessionsManager {
 
   async saveSession() {
     const key = state.getStorageKey();
-    if (!key) return;
+    if (!key) {
+      // Notes without a session (imported before any media was opened) are not persisted yet
+      state.isDirty = state.notes.length > 0;
+      return;
+    }
 
     const usedTags = Array.from(new Set(state.notes.map(n => n.tag).filter(Boolean)));
     const fileName = state.mediaTitle || (state.mediaFile ? state.mediaFile.name : (state.detachedSessionName || 'Untitled Media'));
@@ -87,17 +133,87 @@ export class SessionsManager {
     };
 
     try {
+      state.isDirty = true;
       await this.db.set(key, payload);
       state.isDirty = false; // Reset dirty state on auto-save
       this.updateProjectsCountBadge();
+      this.ensurePersistentStorage();
     } catch (e) {
       console.warn('Persistence save error:', e);
     }
   }
 
+  /**
+   * Asks the browser to exempt our IndexedDB from storage-pressure eviction (once per page load).
+   * Chrome decides silently; Firefox may show a permission prompt.
+   */
+  ensurePersistentStorage() {
+    if (this._persistRequested) return;
+    this._persistRequested = true;
+    const storage = navigator.storage;
+    if (!storage || typeof storage.persist !== 'function') return;
+    storage.persisted()
+      .then(isPersisted => isPersisted || storage.persist())
+      .catch(() => { });
+  }
+
+  async backupAllSessions() {
+    const sessions = await this.db.getAllSessions();
+    if (sessions.length === 0) {
+      showToast('No saved projects to back up');
+      return;
+    }
+    const backup = {
+      app: 'Lined Notes',
+      type: 'backup',
+      version: APP_CONFIG.version,
+      exportedAt: new Date().toISOString(),
+      sessions: sessions.map(s => ({ key: s.key, data: s.data }))
+    };
+    const date = new Date().toISOString().slice(0, 10);
+    downloadText(`lined-notes-backup-${date}.json`, JSON.stringify(backup, null, 2), 'application/json');
+    showToast(`Backed up ${sessions.length} project${sessions.length === 1 ? '' : 's'}`);
+  }
+
+  async restoreFromFile(file) {
+    if (!file) return;
+    let entries;
+    try {
+      entries = parseBackup(await file.text());
+    } catch (err) {
+      showToast(err.message || 'Could not read backup file');
+      return;
+    }
+    if (entries.length === 0) {
+      showToast('Backup contains no projects');
+      return;
+    }
+
+    const activeKey = state.getStorageKey();
+    let created = 0, merged = 0;
+    for (const { key, data } of entries) {
+      // The active project's notes live in memory and would overwrite the DB on the next save: merge into both
+      const existing = key === activeKey ? { ...((await this.db.get(key)) || {}), notes: state.notes } : await this.db.get(key);
+      const result = mergeSessionData(existing, data);
+      await this.db.set(key, result);
+      if (existing) merged++; else created++;
+      if (key === activeKey) {
+        state.notes = result.notes;
+        state.emit('noteschange');
+        state.emit('timelinechanged');
+      }
+    }
+
+    await this.updateProjectsCountBadge();
+    await this.renderSessionsList(this.searchInput ? this.searchInput.value : '');
+    showToast(`Restored ${created} new and merged ${merged} existing project${merged === 1 ? '' : 's'}`, false, null, 5000);
+  }
+
   async autoRestoreSession() {
     const key = state.getStorageKey();
     if (!key) return;
+    // Notes already in memory when media finishes loading (e.g. imported first) must be persisted
+    const hadInMemoryNotes = state.notes.length > 0;
     try {
       const data = await this.db.get(key);
       if (data) {
@@ -126,13 +242,26 @@ export class SessionsManager {
           document.title = `${data.fileName} — Lined Notes`;
         }
 
-        if (Array.isArray(data.notes) && data.notes.length > 0 && state.notes.length === 0) {
-          state.notes = data.notes;
-          state.emit('noteschange');
-          state.emit('timelinechanged');
-          showToast(`Restored ${state.notes.length} notes for ${state.mediaTitle || 'session'}`);
+        if (Array.isArray(data.notes) && data.notes.length > 0) {
+          if (state.notes.length === 0) {
+            state.notes = data.notes;
+            state.emit('noteschange');
+            state.emit('timelinechanged');
+            showToast(`Restored ${state.notes.length} notes for ${state.mediaTitle || 'session'}`);
+          } else {
+            // Notes already in memory (e.g. imported before the media was opened): merge, don't discard either side
+            const knownIds = new Set(state.notes.map(n => String(n.id)));
+            const added = data.notes.filter(n => !knownIds.has(String(n.id)));
+            if (added.length > 0) {
+              state.notes = [...state.notes, ...added].sort((a, b) => a.start - b.start);
+              state.emit('noteschange');
+              state.emit('timelinechanged');
+              showToast(`Merged ${added.length} saved notes for ${state.mediaTitle || 'session'}`);
+            }
+          }
         }
       }
+      if (hadInMemoryNotes) this.saveSession();
     } catch (e) {
       console.warn('Persistence restore error:', e);
     }
@@ -563,9 +692,15 @@ export class SessionsManager {
     state.detachedSessionSize = fileSize;
     state.mediaTitle = fileName;
     state.mediaFile = null;
+    // Clear the previous source so getStorageKey() resolves to the detached session key
+    // (otherwise edits would be saved over the previously active YouTube/URL project)
+    state.mediaSourceType = null;
+    state.externalUrl = null;
+    state.youtubeVideoId = null;
+    if (this.player.youtubeStage) this.player.youtubeStage.classList.remove('active');
 
     if (state.mediaUrl) {
-      URL.revokeObjectURL(state.mediaUrl);
+      if (state.mediaUrl.startsWith('blob:')) URL.revokeObjectURL(state.mediaUrl);
       state.mediaUrl = null;
     }
 
@@ -606,12 +741,9 @@ export class SessionsManager {
     state.isAudio = !!data.isAudio;
     state.activeNoteId = null;
     state.editingNoteId = null;
-    if (this.player && typeof this.player.generateSyntheticWaveform === 'function') {
-      this.player.generateSyntheticWaveform({ name: fileName, size: data.fileSize || 0 }, state.duration);
-    } else {
-      state.waveformPeaks = null;
-      state.isSyntheticWaveform = true;
-    }
+    // No media attached: the timeline shows a plain flat track
+    state.waveformPeaks = null;
+    state.isWaveformPending = false;
 
     this.player.updateTimeDisplay();
     state.emit('noteschange');
@@ -628,9 +760,15 @@ export class SessionsManager {
 
   async deleteSessionByKey(key, event) {
     if (event) event.stopPropagation();
-    if (!confirm('Are you sure you want to delete this saved project? This will permanently remove all stored annotations for this file.')) {
-      return;
-    }
+    const data = await this.db.get(key);
+    const name = (data && data.fileName) || 'this project';
+    const ok = await confirmDialog({
+      title: 'Delete saved project?',
+      message: `"${name}" and all of its annotations will be permanently removed from this browser. Consider "Back Up All" first.`,
+      confirmLabel: 'Delete Project',
+      danger: true
+    });
+    if (!ok) return;
 
     await this.db.delete(key);
 

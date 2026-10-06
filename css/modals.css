@@ -677,3 +677,11 @@ toast-notification .toast-btn,
   border: 1px solid var(--border);
   color: var(--text-muted);
 }
+
+/* Confirmation dialog (confirmDialog() in js/utils.js) */
+.confirm-modal-message {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}

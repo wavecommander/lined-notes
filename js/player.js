@@ -5,11 +5,7 @@
 import { state } from './state.js';
 import { APP_CONFIG } from './config.js';
 import { formatTime, formatBytes, showToast, parseMediaUrl } from './utils.js';
-import {
-  extractAudioFromWebM,
-  calculateWaveformPeaks,
-  generateSyntheticWaveform as createSyntheticPeaks
-} from './waveform-utils.js';
+import { extractAudioFromWebM, calculateWaveformPeaks } from './waveform-utils.js';
 
 export class PlayerController {
   constructor() {
@@ -65,9 +61,6 @@ export class PlayerController {
       state.duration = v.duration || 0;
       state.currentTime = v.currentTime || 0;
       this.updateTimeDisplay();
-      if ((state.isSyntheticWaveform || state.mediaSourceType === 'url') && state.duration > 0) {
-        this.generateSyntheticWaveform(state.mediaTitle || (state.mediaFile ? state.mediaFile.name : 'video'), state.duration);
-      }
       state.emit('medialoaded');
     });
 
@@ -145,7 +138,7 @@ export class PlayerController {
           message = 'A network error caused the media download to fail.';
         }
       }
-      showToast(message, 7000);
+      showToast(message, false, null, 7000);
       state.isPlaying = false;
       this.updatePlayStateUI();
       state.emit('playstatechange', false);
@@ -237,7 +230,8 @@ export class PlayerController {
       if (detachedStage) detachedStage.style.display = 'none';
       if (this.youtubeStage) this.youtubeStage.classList.remove('active');
       state.isAudio = file.type.startsWith('audio/');
-      state.isSyntheticWaveform = false;
+      state.waveformPeaks = null;
+      state.isWaveformPending = true;
 
       if (state.mediaUrl && state.mediaUrl.startsWith('blob:')) URL.revokeObjectURL(state.mediaUrl);
       state.mediaUrl = URL.createObjectURL(file);
@@ -249,6 +243,9 @@ export class PlayerController {
       state.emit('filereset');
       return;
     }
+
+    // Notes imported while no media was open have no session yet: carry them over to this file
+    const orphanNotes = this.takeOrphanNotes();
 
     // Auto-save previous active session before switching
     if (state.notes.length > 0) {
@@ -273,7 +270,7 @@ export class PlayerController {
     state.mediaTitle = file.name;
     state.mediaFile = file;
     state.isAudio = file.type.startsWith('audio/');
-    state.notes = [];
+    state.notes = orphanNotes;
     state.activeNoteId = null;
     state.editingNoteId = null;
     state.APoint = null;
@@ -281,7 +278,7 @@ export class PlayerController {
     state.isLooping = false;
     state.isTimeStamped = false;
     state.waveformPeaks = null;
-    state.isSyntheticWaveform = false;
+    state.isWaveformPending = true;
     state.duration = 0;
     state.currentTime = 0;
     state.zoom = 1;
@@ -295,6 +292,14 @@ export class PlayerController {
     this.generateWaveformPeaks(file);
 
     state.emit('filereset');
+  }
+
+  /**
+   * Returns notes that exist without a backing session (e.g. imported before any media
+   * was opened) so a newly opened source can adopt them instead of discarding them.
+   */
+  takeOrphanNotes() {
+    return state.getStorageKey() ? [] : state.notes.slice();
   }
 
   updateMediaUI(file) {
@@ -337,13 +342,14 @@ export class PlayerController {
     if (this.dropZone) this.dropZone.classList.add('hidden');
   }
 
-  generateSyntheticWaveform(file, duration) {
-    const samples = APP_CONFIG.waveformSampleCount || 1600;
-    const peaks = createSyntheticPeaks(file, duration, samples);
-    state.waveformPeaks = peaks;
-    state.isSyntheticWaveform = true;
+  /**
+   * No real audio data is available (oversized file, decode failure, no audio track):
+   * the timeline falls back to a plain flat track.
+   */
+  markWaveformUnavailable() {
+    state.waveformPeaks = null;
+    state.isWaveformPending = false;
     state.emit('timelinechanged');
-    return peaks;
   }
 
   initWaveformWorker() {
@@ -368,20 +374,29 @@ export class PlayerController {
         return resolve(calculateWaveformPeaks(channelData, samples));
       }
 
+      const cleanup = () => {
+        this.waveformWorker.removeEventListener('message', onMessage);
+        this.waveformWorker.removeEventListener('error', onError);
+      };
+      // Once transferred, channelData is detached (length 0) and can't be used for a fallback
+      const fallback = () => (channelData.length ? calculateWaveformPeaks(channelData, samples) : null);
+
       const onMessage = (e) => {
-        if (e.data && e.data.taskId === taskId && e.data.type === 'PEAKS_COMPLETED') {
-          this.waveformWorker.removeEventListener('message', onMessage);
-          this.waveformWorker.removeEventListener('error', onError);
-          const peaks = new Float32Array(e.data.peaksBuffer);
-          resolve(peaks);
+        if (!e.data || e.data.taskId !== taskId) return;
+        if (e.data.type === 'PEAKS_COMPLETED') {
+          cleanup();
+          resolve(new Float32Array(e.data.peaksBuffer));
+        } else if (e.data.type === 'ERROR') {
+          console.warn('[WaveformWorker] Peak calculation failed:', e.data.error);
+          cleanup();
+          resolve(fallback());
         }
       };
 
       const onError = (err) => {
         console.warn('[WaveformWorker] Peak calculation error, falling back:', err);
-        this.waveformWorker.removeEventListener('message', onMessage);
-        this.waveformWorker.removeEventListener('error', onError);
-        resolve(calculateWaveformPeaks(channelData, samples));
+        cleanup();
+        resolve(fallback());
       };
 
       this.waveformWorker.addEventListener('message', onMessage);
@@ -429,7 +444,7 @@ export class PlayerController {
             } else {
               resolve(e.data.audioBuffer);
             }
-          } else if (e.data.type === 'DEMUX_FAILED') {
+          } else if (e.data.type === 'DEMUX_FAILED' || e.data.type === 'ERROR') {
             this.waveformWorker.removeEventListener('message', onMessage);
             this.waveformWorker.removeEventListener('error', onError);
             resolve(null);
@@ -474,7 +489,7 @@ export class PlayerController {
     const taskId = ++this.waveformTaskId;
 
     if (file.size > maxDecodeSize) {
-      this.generateSyntheticWaveform(file, state.duration);
+      this.markWaveformUnavailable();
       return;
     }
     try {
@@ -498,7 +513,8 @@ export class PlayerController {
       // Fast Path 1: For non-WebM containers (MP4, MP3, WAV, AAC, FLAC, OGG), try direct decode
       if (!isWebMOrMkv) {
         try {
-          audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+          // Non-WebM buffers aren't reused afterwards, so decode without an extra copy
+          audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
         } catch (directErr) {
           console.log('[Waveform] Direct decode skipped/failed, evaluating demuxer fallback');
         }
@@ -525,7 +541,7 @@ export class PlayerController {
 
         if (demuxResult && demuxResult.noAudioTrack) {
           // File is a video with no audio track (e.g. screen recording or muted clip)
-          this.generateSyntheticWaveform(file, state.duration);
+          this.markWaveformUnavailable();
           audioCtx.close();
           return;
         } else if (demuxResult instanceof ArrayBuffer) {
@@ -537,12 +553,12 @@ export class PlayerController {
         }
       }
 
-      // Fallback Path 3: Try direct decode if not already attempted
+      // Fallback Path 3: Try direct decode if not already attempted (last use of the buffer)
       if (!audioBuffer && isWebMOrMkv) {
         try {
-          audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+          audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
         } catch (finalErr) {
-          // Fall through to synthetic waveform
+          // Fall through to the flat track
         }
       }
 
@@ -563,18 +579,23 @@ export class PlayerController {
           return;
         }
 
+        if (!peaks) {
+          this.markWaveformUnavailable();
+          audioCtx.close();
+          return;
+        }
+
         state.waveformPeaks = peaks;
-        state.isSyntheticWaveform = false;
+        state.isWaveformPending = false;
         audioCtx.close();
         state.emit('timelinechanged');
       } else {
-        // High-fidelity synthetic fallback
-        this.generateSyntheticWaveform(file, state.duration);
+        this.markWaveformUnavailable();
         audioCtx.close();
       }
     } catch (err) {
       console.warn('Waveform decode fallback:', err);
-      this.generateSyntheticWaveform(file, state.duration);
+      this.markWaveformUnavailable();
     }
   }
 
@@ -633,6 +654,7 @@ export class PlayerController {
   }
 
   async loadYouTube(parsed, options = {}) {
+    const orphanNotes = options.isRestoring ? [] : this.takeOrphanNotes();
     if (!options.isRestoring && state.notes.length > 0) {
       state.emit('requestsave');
     }
@@ -679,7 +701,7 @@ export class PlayerController {
     state.mediaUrl = parsed.url;
 
     if (!options.isRestoring) {
-      state.notes = [];
+      state.notes = orphanNotes;
       state.activeNoteId = null;
       state.editingNoteId = null;
       state.APoint = null;
@@ -687,7 +709,7 @@ export class PlayerController {
       state.isLooping = false;
       state.isTimeStamped = false;
       state.waveformPeaks = null;
-      state.isSyntheticWaveform = true;
+      state.isWaveformPending = false;
       state.duration = 0;
       state.currentTime = 0;
       state.zoom = 1;
@@ -762,10 +784,6 @@ export class PlayerController {
             }
           }
         } catch (e) { }
-
-        if (state.duration > 0) {
-          this.generateSyntheticWaveform(state.mediaTitle || parsed.videoId, state.duration);
-        }
 
         try {
           if (this.ytPlayer.setVolume) this.ytPlayer.setVolume(Math.round(state.volume * 100));
@@ -863,7 +881,6 @@ export class PlayerController {
           const dur = this.ytPlayer.getDuration();
           if (dur && dur > 0 && Math.abs(dur - state.duration) > 1) {
             state.duration = dur;
-            this.generateSyntheticWaveform(state.mediaTitle || state.youtubeVideoId, state.duration);
           }
           this.updateTimeDisplay();
           state.emit('timeupdate', state.currentTime);
@@ -901,6 +918,7 @@ export class PlayerController {
   }
 
   async loadDirectUrl(parsed, options = {}) {
+    const orphanNotes = options.isRestoring ? [] : this.takeOrphanNotes();
     if (!options.isRestoring && state.notes.length > 0) {
       state.emit('requestsave');
     }
@@ -927,7 +945,7 @@ export class PlayerController {
     state.mediaUrl = parsed.url;
 
     if (!options.isRestoring) {
-      state.notes = [];
+      state.notes = orphanNotes;
       state.activeNoteId = null;
       state.editingNoteId = null;
       state.APoint = null;
@@ -935,7 +953,7 @@ export class PlayerController {
       state.isLooping = false;
       state.isTimeStamped = false;
       state.waveformPeaks = null;
-      state.isSyntheticWaveform = true;
+      state.isWaveformPending = false;
       state.duration = 0;
       state.currentTime = 0;
       state.zoom = 1;
@@ -956,6 +974,8 @@ export class PlayerController {
       url: parsed.url
     });
 
+    // Remote media is usually cross-origin; routed through Web Audio without CORS it would be silent
+    this.releaseAudioGraph();
     this.videoEl.src = parsed.url;
     this.videoEl.volume = state.volume;
     this.videoEl.muted = state.isMuted;
@@ -978,6 +998,7 @@ export class PlayerController {
 
     state.emit('filereset');
     showToast(options.isRestoring ? `Restored ${state.notes.length} notes for ${state.mediaTitle}` : `Loaded ${state.mediaTitle}`);
+    return true;
   }
 
   updateMediaBadgeForUrl(info) {
@@ -1021,6 +1042,25 @@ export class PlayerController {
     }
   }
 
+  /** Pauses whichever source is active (local/URL media element or YouTube). */
+  pause() {
+    if (state.mediaSourceType === 'youtube') {
+      if (this.ytPlayer && typeof this.ytPlayer.pauseVideo === 'function') this.ytPlayer.pauseVideo();
+    } else if (this.videoEl && !this.videoEl.paused) {
+      this.videoEl.pause();
+    }
+  }
+
+  /** Resumes whichever source is active; no-op in detached review mode. */
+  play() {
+    if (state.detachedMode || !state.hasMedia()) return;
+    if (state.mediaSourceType === 'youtube') {
+      if (this.ytPlayer && typeof this.ytPlayer.playVideo === 'function') this.ytPlayer.playVideo();
+    } else if (this.videoEl && this.videoEl.paused) {
+      this.videoEl.play().catch(() => { });
+    }
+  }
+
   toggleLoop() {
     if (state.APoint === null || state.BPoint === null) {
       showToast('Set both In and Out points to loop');
@@ -1045,7 +1085,7 @@ export class PlayerController {
   }
 
   seekTo(time) {
-    const hasMedia = Boolean(state.mediaFile || state.mediaSourceType === 'youtube' || state.mediaSourceType === 'url' || state.detachedMode);
+    const hasMedia = state.hasMedia();
     if (!hasMedia) return;
     const target = Math.max(0, Math.min(state.duration, time));
     state.currentTime = target;
@@ -1084,6 +1124,11 @@ export class PlayerController {
       this.ytPlayer.setVolume(Math.round(state.volume * 100));
     }
     state.isMuted = state.volume === 0;
+    if (this.videoEl) this.videoEl.muted = state.isMuted;
+    if (this.ytPlayer) {
+      const fn = state.isMuted ? this.ytPlayer.mute : this.ytPlayer.unMute;
+      if (typeof fn === 'function') fn.call(this.ytPlayer);
+    }
     this.updateVolumeIcon();
   }
 
@@ -1256,6 +1301,31 @@ export class PlayerController {
     }
   }
 
+  /**
+   * A media element can only ever feed one MediaElementAudioSourceNode and stays routed
+   * through Web Audio for life. Swap in a fresh <video> element so later sources play
+   * directly (needed for cross-origin URLs served without CORS headers).
+   */
+  releaseAudioGraph() {
+    if (!this.audioSourceNode) return;
+    try { this.audioSourceNode.disconnect(); } catch (e) { }
+    try { if (this.audioCtx) this.audioCtx.close(); } catch (e) { }
+    this.audioSourceNode = null;
+    this.analyserNode = null;
+    this.audioCtx = null;
+    this.freqData = null;
+
+    const oldEl = this.videoEl;
+    const fresh = oldEl.cloneNode(false);
+    fresh.removeAttribute('src');
+    try { oldEl.pause(); } catch (e) { }
+    oldEl.removeAttribute('src');
+    oldEl.load();
+    oldEl.replaceWith(fresh);
+    this.videoEl = fresh;
+    this.initEvents();
+  }
+
   initAudioContext() {
     if (this.audioSourceNode) return;
     if (!state.isAudio) return; // Only route through Web Audio when playing audio files to avoid muting videos in Firefox
@@ -1388,19 +1458,6 @@ export class PlayerController {
         this.audioBarElements[i].style.height = `${this.audioBarHeights[i].toFixed(1)}px`;
       }
 
-      // Real-time waveform refinement for synthetic waveforms during audio playback
-      if (state.isSyntheticWaveform && state.waveformPeaks && state.duration > 0) {
-        let peakEnergy = 0;
-        for (let b = 1; b < Math.min(120, this.analyserNode.frequencyBinCount); b++) {
-          if (this.freqData[b] > peakEnergy) peakEnergy = this.freqData[b];
-        }
-        const liveAmp = Math.min(1.0, (peakEnergy / 255) / (vol > 0.05 ? vol : 1.0));
-        if (liveAmp > 0.03) {
-          const progress = Math.max(0, Math.min(1, state.currentTime / state.duration));
-          const idx = Math.floor(progress * (state.waveformPeaks.length - 1));
-          state.waveformPeaks[idx] = state.waveformPeaks[idx] * 0.25 + liveAmp * 0.75;
-        }
-      }
       return;
     }
 

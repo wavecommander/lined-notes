@@ -30,7 +30,7 @@ export class ToastNotification extends HTMLElement {
     if (btn) btn.addEventListener('click', this._onUndoClick);
   }
 
-  show(msg, showUndo = false, onUndo = null, duration = 2800) {
+  show(msg, showUndo = false, onUndo = null, duration = 2800, actionLabel = 'Undo') {
     const textEl = this.querySelector('#toast-text');
     const undoBtn = this.querySelector('#toast-action');
     if (!textEl) return;
@@ -40,6 +40,7 @@ export class ToastNotification extends HTMLElement {
 
     if (undoBtn) {
       undoBtn.style.display = showUndo ? 'inline-block' : 'none';
+      undoBtn.textContent = actionLabel;
     }
 
     this.classList.add('show');

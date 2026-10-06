@@ -3,11 +3,7 @@
    Off-thread audio demuxing, peak analysis & waveform calculation
    ========================================================================== */
 
-import {
-  calculateWaveformPeaks,
-  extractAudioFromWebM,
-  generateSyntheticWaveform
-} from './waveform-utils.js';
+import { calculateWaveformPeaks, extractAudioFromWebM } from './waveform-utils.js';
 
 // Worker message dispatcher
 self.onmessage = function (e) {
@@ -40,15 +36,6 @@ self.onmessage = function (e) {
           audioBuffer: result
         }, [result]);
       }
-    } else if (type === 'GENERATE_SYNTHETIC') {
-      const { fileName, fileSize, duration, samples } = e.data;
-      const peaks = generateSyntheticWaveform(fileName, fileSize, duration, samples || 1600);
-
-      self.postMessage({
-        type: 'SYNTHETIC_COMPLETED',
-        taskId,
-        peaksBuffer: peaks.buffer
-      }, [peaks.buffer]);
     }
   } catch (err) {
     self.postMessage({
