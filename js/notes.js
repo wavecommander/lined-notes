@@ -60,17 +60,31 @@ export class NotesManager {
   }
 
   undo() {
-    const entry = state.undoHistory.pop();
+    const entry = state.undoHistory.undo(state.notes);
     if (!entry) {
       showToast('Nothing to undo');
       return;
     }
-    state.notes = entry.notes;
+    this.restoreNotesSnapshot(entry.notes);
+    showToast(`Undid ${entry.label}`, true, () => this.redo(), 4000, 'Redo');
+  }
+
+  redo() {
+    const entry = state.undoHistory.redo(state.notes);
+    if (!entry) {
+      showToast('Nothing to redo');
+      return;
+    }
+    this.restoreNotesSnapshot(entry.notes);
+    showToast(`Redid ${entry.label}`, true, () => this.undo(), 4000, 'Undo');
+  }
+
+  restoreNotesSnapshot(notes) {
+    state.notes = notes;
     state.editingNoteId = null;
     state.emit('noteschange');
     state.emit('timelinechanged');
     state.emit('requestsave');
-    showToast(`Undid ${entry.label}`);
   }
 
   resetRangeAndInputState() {

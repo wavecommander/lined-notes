@@ -195,87 +195,9 @@
     }
   }
 
-  /* Mobile Overflow Menu */
+  /* Overflow menu: base styles live in header.css; keep it at the end of the compact header */
   .mobile-menu-wrap {
-    display: block;
-    position: relative;
     order: 20;
-  }
-
-  .mobile-menu-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .mobile-dropdown-menu {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: calc(100% + 6px);
-    background: var(--bg-card);
-    border: 1px solid var(--border-bright);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--modal-card-shadow);
-    padding: 6px;
-    min-width: 195px;
-    z-index: 100;
-    backdrop-filter: blur(16px);
-  }
-
-  .mobile-dropdown-menu.open {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    animation: menuFadeIn 0.15s ease-out;
-  }
-
-  @keyframes menuFadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-6px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: var(--radius-md);
-    font-size: var(--text-xs);
-    font-weight: var(--fw-medium);
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
-  }
-
-  .dropdown-item:hover,
-  .dropdown-item:active {
-    background: var(--bg-card-hover);
-    color: var(--accent-primary);
-  }
-
-  .dropdown-item.text-danger {
-    color: #c85a54;
-  }
-
-  .dropdown-item.text-danger:hover {
-    background: rgba(200, 90, 84, 0.12);
-  }
-
-  .dropdown-divider {
-    height: 1px;
-    background: var(--border);
-    margin: 4px 0;
   }
 
   /* Responsive Viewport View Toggling */

@@ -271,7 +271,7 @@ export function interpolateColor(c1, c2, t) {
   return a >= 0.999 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
-export function showToast(msg, showUndo = false, onUndo = null, duration = 2800) {
+export function showToast(msg, showUndo = false, onUndo = null, duration = 2800, actionLabel = 'Undo') {
   const toastEl = document.querySelector('toast-notification') || document.getElementById('toast');
   if (toastEl) {
     const isNotesTab = window.innerWidth <= 1024 && document.getElementById('app')?.getAttribute('data-mobile-view') === 'notes';
@@ -284,7 +284,7 @@ export function showToast(msg, showUndo = false, onUndo = null, duration = 2800)
   }
 
   if (toastEl && typeof toastEl.show === 'function') {
-    toastEl.show(msg, showUndo, onUndo, duration);
+    toastEl.show(msg, showUndo, onUndo, duration, actionLabel);
     return;
   }
 
@@ -298,6 +298,7 @@ export function showToast(msg, showUndo = false, onUndo = null, duration = 2800)
 
   if (undoBtn) {
     undoBtn.style.display = showUndo ? 'inline-block' : 'none';
+    undoBtn.textContent = actionLabel;
     undoBtn.onclick = () => {
       if (typeof currentUndoHandler === 'function') {
         currentUndoHandler();

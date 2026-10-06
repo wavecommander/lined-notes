@@ -148,6 +148,6 @@ Plan: `~/.claude/plans/vectorized-tumbling-rainbow.md`. Verified in Chrome via p
   thumbnails 320 px @ 0.6; in-app `confirmDialog()` replaces `window.confirm()` for clear-all and delete-project.
 - **Note editing**: edit start/end ("Now" buttons) and tag of saved notes; `Shift+,`/`Shift+.` nudge ±0.1 s;
   "Stamp earlier while playing" (0–3 s); pause-while-typing now resumes after saving (works for YouTube too via
-  `player.pause()/play()`); `UndoHistory` (`js/history.js`) with `Ctrl/Cmd+Z` for add/edit/delete/nudge/import/clear.
+  `player.pause()/play()`); `UndoHistory` (`js/history.js`) with `Ctrl/Cmd+Z` for add/edit/delete/nudge/import/clear, and redo via `Ctrl/Cmd+Shift+Z` / `Ctrl+Y` or the Redo button on the "Undid …" toast.
 - Not verifiable in the background test tab: real OS file launch, the Android share sheet, actual playback
   resume, and how the new edit fields look at narrow widths.

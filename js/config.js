@@ -15,6 +15,7 @@ export const APP_CONFIG = {
   pauseOnTypeKey: 'ln_pause_on_type',
   copyIncludeTimestampKey: 'ln_copy_include_timestamp',
   stampOffsetKey: 'ln_stamp_offset',
+  onboardingSeenKey: 'ln_onboarding_seen',
 
   // Audio waveform decoding limits (memory safe for desktop and mobile)
   maxDecodeSizeDesktop: 500 * 1024 * 1024, // 500MB

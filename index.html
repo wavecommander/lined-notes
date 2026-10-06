@@ -261,6 +261,14 @@
             </svg>
             <span>Import Annotations…</span>
           </div>
+          <div class="dropdown-item" onclick="app.openOnboarding(); app.closeMobileMenu();">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" width="14" height="14">
+              <circle cx="12" cy="12" r="10" />
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+            </svg>
+            <span>Getting Started</span>
+          </div>
           <div class="dropdown-item" onclick="app.openShortcutsModal(); app.closeMobileMenu();">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round" width="14" height="14">
@@ -870,6 +878,9 @@
         <div class="shortcut-keys"><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>Z</kbd></div>
         <div class="shortcut-desc">Undo the last note change (add, edit, delete, import, clear)</div>
 
+        <div class="shortcut-keys"><kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> or <kbd>Ctrl</kbd> + <kbd>Y</kbd></div>
+        <div class="shortcut-desc">Redo the last undone change</div>
+
         <div class="shortcut-keys"><kbd>+</kbd> / <kbd>−</kbd></div>
         <div class="shortcut-desc">Zoom timeline in / out (or Ctrl + Scroll)</div>
 
@@ -891,6 +902,7 @@
 
       <div class="modal-footer" style="margin-top:16px;">
         <button class="btn btn-primary" data-modal-close onclick="app.closeShortcutsModal()">Got It</button>
+        <button class="btn btn-ghost" onclick="app.openOnboarding()">Take the tour</button>
       </div>
     </div>
   </modal-dialog>
@@ -1006,6 +1018,25 @@
         <button class="btn btn-ghost" data-modal-close onclick="app.closeUrlModal()">Cancel</button>
         <button class="btn btn-primary" id="url-modal-load-btn" onclick="app.loadFromUrlModal()">Load Video</button>
       </div>
+    </div>
+  </modal-dialog>
+
+  <!-- GETTING STARTED GUIDE (js/onboarding.js) -->
+  <modal-dialog id="onboarding-modal" aria-labelledby="onboarding-title">
+    <div class="modal-card onboarding-card">
+      <div class="onboarding-top">
+        <button class="modal-close-btn" data-modal-close aria-label="Close guide">✕</button>
+      </div>
+      <div id="onboarding-step" class="onboarding-step" aria-live="polite"></div>
+      <div id="onboarding-dots" class="onboarding-dots"></div>
+      <div class="onboarding-footer">
+        <button type="button" class="btn btn-ghost btn-sm" id="onboarding-skip">Skip tour</button>
+        <div class="onboarding-nav">
+          <button type="button" class="btn btn-ghost btn-sm" id="onboarding-back">Back</button>
+          <button type="button" class="btn btn-primary btn-sm" id="onboarding-next">Next →</button>
+        </div>
+      </div>
+      <div class="onboarding-reopen-hint">You can reopen this guide anytime from the ⋮ menu → Getting Started.</div>
     </div>
   </modal-dialog>
 

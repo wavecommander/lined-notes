@@ -111,18 +111,48 @@ test('UndoHistory caps size, snapshots shallowly and merges repeated keys', () =
   const notes = [{ id: 'a', start: 1 }];
   for (let i = 0; i < 5; i++) h.push(`op${i}`, notes);
   assert.equal(h.size, 3);
-  assert.equal(h.pop().label, 'op4');
+  assert.equal(h.undo(notes).label, 'op4');
 
   const h2 = new UndoHistory();
   h2.push('nudge', [{ id: 'a', start: 1 }], 'nudge:a');
   h2.push('nudge', [{ id: 'a', start: 1.1 }], 'nudge:a');
   assert.equal(h2.size, 1);
-  assert.equal(h2.pop().notes[0].start, 1); // the run reverts to before the first nudge
+  assert.equal(h2.undo([]).notes[0].start, 1); // the run reverts to before the first nudge
 
   const live = [{ id: 'b', start: 2 }];
   h2.push('edit', live);
   live[0].start = 99;
-  assert.equal(h2.pop().notes[0].start, 2); // later mutation doesn't leak into the snapshot
+  assert.equal(h2.undo(live).notes[0].start, 2); // later mutation doesn't leak into the snapshot
+});
+
+test('UndoHistory redo walks forward and is cleared by a new change', () => {
+  const h = new UndoHistory();
+  const v0 = [{ id: 'a', text: 'v0' }];
+  const v1 = [{ id: 'a', text: 'v1' }];
+  const v2 = [{ id: 'a', text: 'v2' }];
+  h.push('edit', v0); // v0 -> v1
+  h.push('edit', v1); // v1 -> v2
+  assert.equal(h.undo(v2).notes[0].text, 'v1');
+  assert.equal(h.undo(v1).notes[0].text, 'v0');
+  assert.equal(h.undo(v0), null);
+  assert.equal(h.redo(v0).notes[0].text, 'v1');
+  assert.equal(h.redo(v1).notes[0].text, 'v2');
+  assert.equal(h.redo(v2), null);
+
+  assert.equal(h.undo(v2).notes[0].text, 'v1');
+  h.push('delete', v1); // a new change after undo drops the redo branch
+  assert.equal(h.redoSize, 0);
+  assert.equal(h.redo(v1), null);
+});
+
+test('UndoHistory only merges back-to-back runs', () => {
+  const h = new UndoHistory();
+  h.push('nudge', [{ id: 'a', start: 1 }], 'nudge:a');   // run 1 starts at 1
+  h.undo([{ id: 'a', start: 1.3 }]);                    // undo run 1
+  h.redo([{ id: 'a', start: 1 }]);                      // redo it -> start 1.3
+  h.push('nudge', [{ id: 'a', start: 1.3 }], 'nudge:a'); // run 2 must be its own step
+  assert.equal(h.size, 2);
+  assert.equal(h.undo([{ id: 'a', start: 1.6 }]).notes[0].start, 1.3);
 });
 
 test('parseBackup validates the file and sanitises notes', () => {
@@ -148,4 +178,29 @@ test('mergeSessionData keeps existing metadata and unions notes by id', () => {
   assert.deepEqual(merged.notes.map(n => n.id), ['2', '1']);
   assert.equal(merged.updatedAt, '2026-03-01T00:00:00Z');
   assert.equal(mergeSessionData(null, incoming), incoming);
+});
+
+// ─── Getting Started guide ──────────────────────────────────────────────
+
+import { shouldAutoShowOnboarding, ONBOARDING_STEPS } from '../js/onboarding.js';
+
+test('onboarding auto-shows only on a genuine first visit', () => {
+  const fresh = { seen: false, hasSavedProjects: false, launchedWithMedia: false };
+  assert.deepEqual(shouldAutoShowOnboarding(fresh), { show: true, markSeen: true });
+  assert.deepEqual(shouldAutoShowOnboarding({ ...fresh, seen: true }), { show: false, markSeen: false });
+  // existing users aren't first-time visitors
+  assert.deepEqual(shouldAutoShowOnboarding({ ...fresh, hasSavedProjects: true }), { show: false, markSeen: true });
+  // opened straight into media: don't interrupt, show next time
+  assert.deepEqual(shouldAutoShowOnboarding({ ...fresh, launchedWithMedia: true }), { show: false, markSeen: false });
+});
+
+test('onboarding steps provide desktop and touch copy', () => {
+  assert.equal(ONBOARDING_STEPS.length, 6);
+  for (const step of ONBOARDING_STEPS) {
+    assert.ok(step.title && step.body(false).trim() && step.body(true).trim(), step.id);
+  }
+  // keyboard tips are swapped out on touch devices
+  const capture = ONBOARDING_STEPS.find(s => s.id === 'capture');
+  assert.match(capture.body(false), /<kbd>N<\/kbd>/);
+  assert.doesNotMatch(capture.body(true), /<kbd>/);
 });

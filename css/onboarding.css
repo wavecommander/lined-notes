@@ -1,0 +1,127 @@
+/* ==========================================================================
+   Getting Started Guide (js/onboarding.js)
+   ========================================================================== */
+
+.onboarding-card {
+  width: 520px;
+  max-width: 94vw;
+  padding: 14px 24px 16px;
+  /* Short phone screens: scroll inside the sheet instead of clipping */
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.onboarding-top {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.onboarding-step {
+  text-align: center;
+  min-height: 300px;
+}
+
+.onboarding-step-enter {
+  animation: onboardingStepIn 0.22s ease-out;
+}
+
+@keyframes onboardingStepIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-step-enter { animation: none; }
+}
+
+.onboarding-illustration {
+  color: var(--text-secondary);
+  margin: 0 auto 12px;
+  width: 160px;
+  height: 88px;
+}
+
+.onboarding-illustration svg { width: 100%; height: 100%; }
+.onboarding-illustration .accent { stroke: var(--accent-primary); }
+.onboarding-illustration .accent-fill { fill: var(--accent-primary); }
+
+.onboarding-step-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.onboarding-title {
+  margin: 0 0 10px;
+  font-size: var(--text-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+.onboarding-body {
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+  text-align: left;
+}
+
+.onboarding-body p { margin: 0 0 10px; }
+.onboarding-body b { color: var(--text-primary); font-weight: var(--fw-semibold); }
+
+.onboarding-body kbd {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-bright);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  padding: 0 5px;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-primary);
+}
+
+.onboarding-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px 0 14px;
+}
+
+.onboarding-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--border-bright);
+  cursor: pointer;
+  transition: background 0.15s ease, width 0.15s ease;
+}
+
+.onboarding-dot.active {
+  width: 20px;
+  background: var(--accent-primary);
+}
+
+.onboarding-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.onboarding-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.onboarding-reopen-hint {
+  margin-top: 12px;
+  text-align: center;
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+}
+
+@media (max-width: 480px) {
+  .onboarding-step { min-height: 340px; }
+}

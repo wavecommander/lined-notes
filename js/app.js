@@ -12,6 +12,7 @@ import { NotesManager } from './notes.js';
 import { SessionsManager } from './sessions.js';
 import { ExportManager } from './export.js';
 import { ImportManager } from './import.js';
+import { OnboardingGuide } from './onboarding.js';
 import { showToast, parseLaunchParams, formatBytes } from './utils.js';
 
 export class LinedNotesApp {
@@ -24,6 +25,11 @@ export class LinedNotesApp {
     this.sessions = new SessionsManager(this.db, this.player);
     this.export = new ExportManager();
     this.import = new ImportManager();
+    this.onboarding = new OnboardingGuide({
+      storageKey: APP_CONFIG.onboardingSeenKey,
+      hasSavedProjects: async () => (await this.db.getAllSessions()).length > 0,
+      notify: (msg) => showToast(msg, false, null, 5000)
+    });
 
     this.shortcutsModal = document.getElementById('shortcuts-modal');
     this.settingsModal = document.getElementById('settings-modal');
@@ -43,7 +49,14 @@ export class LinedNotesApp {
     // Listen for mobile tab requests from notes manager
     state.on('requestmobiletab', (tab) => this.setMobileTab(tab));
 
-    this.handleLaunchParams();
+    const launchedWithMedia = this.handleLaunchParams();
+    // First visit only; deferred if the app was opened straight into media
+    this.onboarding.maybeAutoShow({ launchedWithMedia, shouldDefer: () => state.hasMedia() });
+  }
+
+  openOnboarding() {
+    this.closeAllModals();
+    this.onboarding.open(0);
   }
 
   /**
@@ -52,7 +65,7 @@ export class LinedNotesApp {
    */
   handleLaunchParams() {
     const { action, mediaInput } = parseLaunchParams(window.location.search, window.location.hash);
-    if (!action && !mediaInput) return;
+    if (!action && !mediaInput) return false;
     // Strip the params so a reload doesn't re-trigger them
     try {
       history.replaceState(null, '', window.location.pathname);
@@ -60,7 +73,7 @@ export class LinedNotesApp {
 
     if (mediaInput) {
       this.player.loadExternalUrl(mediaInput);
-      return;
+      return true;
     }
     if (action === 'open' && this.dropZone) {
       // A file picker can't be opened without a user gesture: point at the drop zone instead
@@ -69,6 +82,7 @@ export class LinedNotesApp {
       setTimeout(() => this.dropZone.classList.remove('dragging'), 1600);
       showToast('Click here or drop a file to open media', false, null, 5000);
     }
+    return false;
   }
 
   initTheme() {
@@ -314,12 +328,21 @@ export class LinedNotesApp {
         return;
       }
 
-      // Ctrl/Cmd+Z outside text fields undoes the last note change
+      // Outside text fields: Ctrl/Cmd+Z undoes the last note change;
+      // Ctrl/Cmd+Shift+Z or Ctrl+Y redoes it
       const modalOpen = Boolean(document.querySelector('modal-dialog.open'));
-      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (e.key || '').toLowerCase() === 'z' && !modalOpen) {
-        e.preventDefault();
-        this.notes.undo();
-        return;
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !modalOpen) {
+        const k = (e.key || '').toLowerCase();
+        if (k === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          this.notes.undo();
+          return;
+        }
+        if ((k === 'z' && e.shiftKey) || (k === 'y' && !e.shiftKey)) {
+          e.preventDefault();
+          this.notes.redo();
+          return;
+        }
       }
 
       // Leave browser/OS shortcuts (Ctrl/Cmd+A, Ctrl+−, Ctrl+P, Alt+←, …) alone

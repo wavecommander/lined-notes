@@ -45,6 +45,7 @@ const PRECACHE_ASSETS = [
   './css/controls.css',
   './css/notes.css',
   './css/modals.css',
+  './css/onboarding.css',
   './css/mobile.css',
   // Modular JS
   './js/app.js',
@@ -59,6 +60,7 @@ const PRECACHE_ASSETS = [
   './js/export.js',
   './js/import.js',
   './js/history.js',
+  './js/onboarding.js',
   './js/waveform-utils.js',
   './js/waveform-worker.js',
   // Web Components
