@@ -38,12 +38,17 @@ export function parseBackup(text) {
 
 /**
  * Merges a restored session into an existing one: existing metadata wins, notes are unioned by id.
+ * A note present on both sides keeps whichever copy was edited more recently (ties keep the existing one).
  */
 export function mergeSessionData(existing, incoming) {
   if (!existing) return incoming;
-  const ids = new Set((existing.notes || []).map(n => String(n.id)));
-  const added = (incoming.notes || []).filter(n => !ids.has(String(n.id)));
-  const notes = [...(existing.notes || []), ...added].sort((a, b) => a.start - b.start);
+  const editedAt = n => n.updatedAt || n.createdAt || '';
+  const byId = new Map((existing.notes || []).map(n => [String(n.id), n]));
+  (incoming.notes || []).forEach(n => {
+    const current = byId.get(String(n.id));
+    if (!current || editedAt(n) > editedAt(current)) byId.set(String(n.id), n);
+  });
+  const notes = [...byId.values()].sort((a, b) => a.start - b.start);
   const newer = [existing.updatedAt, incoming.updatedAt].filter(Boolean).sort().pop();
   return { ...incoming, ...existing, notes, updatedAt: newer || new Date().toISOString() };
 }

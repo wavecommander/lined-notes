@@ -180,6 +180,25 @@ test('mergeSessionData keeps existing metadata and unions notes by id', () => {
   assert.equal(mergeSessionData(null, incoming), incoming);
 });
 
+test('backup restore keeps note edit times and the newer copy of a note', () => {
+  const [entry] = parseBackup(JSON.stringify({
+    type: 'backup',
+    sessions: [{ key: 'ln_session_a.mp4_1', data: { notes: [
+      { id: 'x', start: 1, text: 'laptop edit', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-05-01T00:00:00.000Z' },
+      { id: 'y', start: 2, text: 'stale', createdAt: '2026-01-01T00:00:00.000Z' }
+    ] } }]
+  }));
+  assert.equal(entry.data.notes[0].updatedAt, '2026-05-01T00:00:00.000Z');
+  assert.equal('updatedAt' in entry.data.notes[1], false);
+
+  const existing = { notes: [
+    { id: 'x', start: 1, text: 'old', createdAt: '2026-01-01T00:00:00.000Z' },
+    { id: 'y', start: 2, text: 'phone edit', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-04-01T00:00:00.000Z' }
+  ] };
+  const merged = mergeSessionData(existing, entry.data);
+  assert.deepEqual(merged.notes.map(n => n.text), ['laptop edit', 'phone edit']);
+});
+
 // ─── Getting Started guide ──────────────────────────────────────────────
 
 import { shouldAutoShowOnboarding, ONBOARDING_STEPS } from '../js/onboarding.js';
