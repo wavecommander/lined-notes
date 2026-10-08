@@ -197,11 +197,12 @@ export class SessionsManager {
     const activeKey = state.getStorageKey();
     let created = 0, merged = 0;
     for (const { key, data } of entries) {
+      const saved = await this.db.get(key);
       // The active project's notes live in memory and would overwrite the DB on the next save: merge into both
-      const existing = key === activeKey ? { ...((await this.db.get(key)) || {}), notes: state.notes } : await this.db.get(key);
+      const existing = key === activeKey ? { ...(saved || {}), notes: state.notes } : saved;
       const result = mergeSessionData(existing, data);
       await this.db.set(key, result);
-      if (existing) merged++; else created++;
+      if (saved) merged++; else created++;
       if (key === activeKey) {
         state.notes = result.notes;
         state.emit('noteschange');
