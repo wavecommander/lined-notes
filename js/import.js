@@ -23,7 +23,9 @@ export function normalizeNote(n) {
     text: typeof n.text === 'string' ? n.text : String(n.text ?? ''),
     tag,
     thumb: sanitizeImageSrc(n.thumb),
-    createdAt: typeof n.createdAt === 'string' ? n.createdAt : new Date().toISOString()
+    createdAt: typeof n.createdAt === 'string' ? n.createdAt : new Date().toISOString(),
+    // Only edited notes carry updatedAt; backup merges use it to pick the newer copy
+    ...(typeof n.updatedAt === 'string' ? { updatedAt: n.updatedAt } : {})
   };
 }
 
