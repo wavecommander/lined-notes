@@ -620,16 +620,9 @@ export class SessionsManager {
     this.player.resetPlaybackState();
     state.emit('filereset');
 
-    // Check if active media file matches (by storage key, original filename, or disk name)
-    const isCurrentFileMatch = Boolean(
-      state.mediaFile && (
-        state.getStorageKey() === key ||
-        (state.mediaFile.size === fileSize && (
-          state.mediaFile.name === fileName ||
-          (originalFileName && state.mediaFile.name === originalFileName)
-        ))
-      )
-    );
+    // Only reuse the loaded file if it *is* this project's file: saves go to the file's storage key,
+    // so matching on a display name would write this project's notes into another project
+    const isCurrentFileMatch = Boolean(state.mediaFile && state.getStorageKey() === key);
 
     if (isCurrentFileMatch) {
       state.detachedMode = false;
