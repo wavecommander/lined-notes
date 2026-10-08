@@ -204,12 +204,15 @@ export class PlayerController {
   async loadFile(file) {
     if (!file) return;
 
-    // Check if attaching to an existing detached review session
+    // Check if attaching to an existing detached review session. The size must match too: a different
+    // video with the same name (video.mp4, IMG_0001.MOV…) would otherwise get this project's notes
     const isDetachedMatch = Boolean(
       state.detachedMode && (
-        file.name === state.detachedSessionName ||
-        (state.detachedOriginalFileName && file.name === state.detachedOriginalFileName) ||
-        (state.detachedSessionKey && state.detachedSessionKey === `ln_session_${file.name}_${file.size}`)
+        (state.detachedSessionKey && state.detachedSessionKey === `ln_session_${file.name}_${file.size}`) ||
+        (file.size === state.detachedSessionSize && (
+          file.name === state.detachedSessionName ||
+          (state.detachedOriginalFileName && file.name === state.detachedOriginalFileName)
+        ))
       )
     );
 
