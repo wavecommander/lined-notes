@@ -328,9 +328,10 @@ export class SessionsManager {
     }
 
     const rawSessions = await this.db.getAllSessions();
+    // Prefer the project's own updatedAt: the IndexedDB record's is just the last write time (e.g. a restore)
     rawSessions.sort((a, b) => {
-      const tA = new Date(a.updatedAt || a.data?.updatedAt || 0).getTime();
-      const tB = new Date(b.updatedAt || b.data?.updatedAt || 0).getTime();
+      const tA = new Date(a.data?.updatedAt || a.updatedAt || 0).getTime();
+      const tB = new Date(b.data?.updatedAt || b.updatedAt || 0).getTime();
       return tB - tA;
     });
 
@@ -381,7 +382,7 @@ export class SessionsManager {
       const isAudio = !!item.data?.isAudio;
       const notes = item.data?.notes || [];
       const noteCount = notes.length;
-      const updatedAt = item.updatedAt || item.data?.updatedAt;
+      const updatedAt = item.data?.updatedAt || item.updatedAt;
       const timeAgoText = timeAgo(updatedAt);
 
       const sessionTags = Array.from(new Set(notes.map(n => n.tag).filter(Boolean)));
