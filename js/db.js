@@ -73,7 +73,8 @@ export class LinedNotesDB {
         const store = tx.objectStore(this.storeName);
         store.put({ key, data, updatedAt: new Date().toISOString() });
         tx.oncomplete = () => resolve();
-        tx.onerror = () => {
+        // A commit-time failure (e.g. quota exceeded) only fires 'abort', never 'error'
+        tx.onerror = tx.onabort = () => {
           try { localStorage.setItem(key, JSON.stringify(data)); } catch (err) { }
           resolve();
         };
@@ -94,7 +95,7 @@ export class LinedNotesDB {
         const store = tx.objectStore(this.storeName);
         store.delete(key);
         tx.oncomplete = () => resolve();
-        tx.onerror = () => resolve();
+        tx.onerror = tx.onabort = () => resolve();
       } catch (err) {
         resolve();
       }
