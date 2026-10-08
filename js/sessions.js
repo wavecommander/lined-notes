@@ -204,6 +204,8 @@ export class SessionsManager {
       await this.db.set(key, result);
       if (saved) merged++; else created++;
       if (key === activeKey) {
+        // Its own undo step: otherwise Ctrl+Z would jump back to a pre-restore snapshot and save over the restored notes
+        state.undoHistory.push('restore', state.notes);
         state.notes = result.notes;
         state.emit('noteschange');
         state.emit('timelinechanged');
